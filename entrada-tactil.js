@@ -8,8 +8,9 @@
 const EntradaTactil = (() => {
   const UMBRAL_TOQUE = 10;   // px de movimiento que convierten un toque en arrastre
 
-  function conectar({ lienzo, contenedor, acciones }) {
+  function conectar({ lienzo, contenedor, limites, acciones }) {
     const a = acciones;
+    const limitar = (v, min, max) => Math.max(min, Math.min(max, v));
     const toques = new Map();   // id -> { x, y } ultima posicion de cada dedo
     let toque = null;           // { id, x0, y0, c } dedo que puede acabar en toque corto
     let pellizco = null;        // { d, z, mx, my } distancia, zoom y punto medio de partida
@@ -37,7 +38,8 @@ const EntradaTactil = (() => {
     function seguirPellizco() {
       const [p, q] = dedos();
       const m = medio(p, q);
-      const nuevo = Math.round(pellizco.z * distancia(p, q) / pellizco.d);
+      // El zoom se recorta ya aqui: en los limites, el pellizco sigue moviendo el dibujo.
+      const nuevo = limitar(Math.round(pellizco.z * distancia(p, q) / pellizco.d), limites.zoomMin, limites.zoomMax);
       // Con el mismo zoom, los dedos mueven el dibujo; al cambiar, el zoom se ancla al punto medio.
       if (nuevo !== a.zoomActual()) a.zoom(nuevo, { clientX: m.x, clientY: m.y });
       else desplazar(m.x - pellizco.mx, m.y - pellizco.my);

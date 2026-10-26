@@ -229,6 +229,26 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(s1[0] > s0[0] && s1[1] > s0[1] && await prog() === 'Construidos: 1/208 (0 %)',
     `TACTIL: arrastrar con un dedo desplaza el dibujo (${s0[0]},${s0[1]} -> ${s1[0]},${s1[1]})`);
 
+  // A1: en el zoom maximo (48) el pellizco ya no puede acercar mas, pero debe seguir desplazando.
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 48; z.dispatchEvent(new Event('input')); const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 200; w.scrollTop = 200; })()`);
+  await esperar(150);
+  const sA1 = await ev(leerScroll);
+  const wcA1 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  const dedosA1 = (dx, dy, sep) => [
+    { x: wcA1[0] - sep + dx, y: wcA1[1] + dy, id: 1 },
+    { x: wcA1[0] + sep + dx, y: wcA1[1] + dy, id: 2 },
+  ];
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: dedosA1(0, 0, 40) });
+  // Los dos dedos se mueven en paralelo (el contenedor puede moverse) y se separan un 2 %: 80 -> 81.6 px.
+  await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: dedosA1(30, 10, 40) });
+  await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: dedosA1(30, 10, 40.8) });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(150);
+  const sA1b = await ev(leerScroll);
+  // Sin recortar el zoom, los dos primeros movimientos se perderian y solo se desplazaria la mitad.
+  ok(await zoom() === 48 && sA1[0] - sA1b[0] >= 25 && sA1b[1] < sA1[1] && await prog() === 'Construidos: 1/208 (0 %)',
+    `TACTIL A1: con zoom 48 el pellizco sigue desplazando (${sA1[0]},${sA1[1]} -> ${sA1b[0]},${sA1b[1]})`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
 })().catch(e => { console.error(e); edge.kill(); process.exit(1); });

@@ -207,7 +207,7 @@
 
   const teclado = EntradaTeclado.conectar({ lienzo: cv, acciones });
   EntradaRaton.conectar({ lienzo: cv, contenedor: wrap, acciones });
-  EntradaTactil.conectar({ lienzo: cv, contenedor: wrap, acciones });
+  EntradaTactil.conectar({ lienzo: cv, contenedor: wrap, limites: LIMITES, acciones });
 
   // --- exportacion ------------------------------------------------------------------
   const exportador = Exportar.crear({
