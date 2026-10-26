@@ -134,16 +134,18 @@
       cursor: document.activeElement === cv && teclado ? teclado.cursor() : null,
       dpr: window.devicePixelRatio || 1,
     });
+    $('zoom').value = st.zoom;
     $('zoomTxt').textContent = `${st.zoom} px/bloque` + (geo.ocultos ? ' · acércate para ver todos los números' : '');
     $('zoomMenos').disabled = st.zoom <= LIMITES.zoomMin;
     $('zoomMas').disabled = st.zoom >= LIMITES.zoomMax;
   }
 
   const zoom = Zoom.crear({
-    lienzo: cv, contenedor: wrap, limites: LIMITES, medir: Render.medir,
-    geometria: () => geo, obtener: () => st.zoom, definir: n => { st.zoom = n; },
-    control: $('zoom'), redibujar: dibujar, guardar: guardarEstado,
-    opciones: () => st, capa: () => capas[st.capa],
+    lienzo: cv, contenedor: wrap, limites: LIMITES,
+    medir: s => Render.medir(capas[st.capa], s, st),
+    geometria: () => geo, obtener: () => st.zoom,
+    fijar: n => { st.zoom = n; guardarEstado(); },
+    alDibujar: dibujar,
   });
 
   function nombreForma() {
@@ -205,20 +207,32 @@
   }
 
   // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni capas).
-  const acciones = {
+  // Cada entrada recibe solo los grupos que usa.
+  const accionesDibujo = {
     celda, describir, informar, programarDibujo, refrescar, dibujar,
-    infoInicial: INFO_INICIAL,
-    estaHecho: (x, y) => marcas.tiene(st.capa, x, y),
-    hayBloque, fijar, antesDeMarcar, trasMarcar, descartarPaso,
-    zoom: (n, punto) => zoom.fijar(n, punto), zoomActual: () => st.zoom,
-    pasoZoom: dir => zoom.paso(dir), ajustarZoom: () => zoom.ajustar(),
-    irCapa, capaActual: () => st.capa, capaTexto: () => $('capaTxt').textContent,
-    anunciar: avisos.anunciar, cursorInicial, dimensionesCapa, verCursor, deshacer, rehacer,
+    infoInicial: INFO_INICIAL, anunciar: avisos.anunciar,
+    cursorInicial, dimensionesCapa, verCursor,
   };
+  const accionesMarcas = { estaHecho: (x, y) => marcas.tiene(st.capa, x, y), hayBloque, fijar, antesDeMarcar, trasMarcar, descartarPaso };
+  const accionesZoom = {
+    zoom: (n, punto) => zoom.aplicar(n, punto), zoomActual: () => st.zoom,
+    pasoZoom: dir => zoom.paso(dir), ajustarZoom: () => zoom.ajustar(),
+  };
+  const accionesCapas = { irCapa, capaActual: () => st.capa, capaTexto: () => $('capaTxt').textContent };
+  const accionesHistorial = { deshacer, rehacer };
 
-  teclado = EntradaTeclado.conectar({ lienzo: cv, acciones });
-  EntradaRaton.conectar({ lienzo: cv, contenedor: wrap, acciones });
-  EntradaTactil.conectar({ lienzo: cv, contenedor: wrap, limites: LIMITES, acciones });
+  teclado = EntradaTeclado.conectar({
+    lienzo: cv,
+    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom, ...accionesCapas, ...accionesHistorial },
+  });
+  EntradaRaton.conectar({
+    lienzo: cv, contenedor: wrap,
+    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom },
+  });
+  EntradaTactil.conectar({
+    lienzo: cv, contenedor: wrap, limites: LIMITES,
+    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom },
+  });
 
   // --- exportacion ------------------------------------------------------------------
   const exportador = Exportar.crear({
@@ -235,7 +249,7 @@
   for (const id of Panel.CAMPOS) { al(id, 'input', regenerarDiferido); al(id, 'change', () => regenerar()); }
   for (const id of Panel.SELECTS) al(id, 'input', () => regenerar());
   for (const k of Panel.TOGGLES) al(k, 'input', () => { panel.leer(); guardarEstado(); programarDibujo(); });
-  al('zoom', 'input', () => zoom.fijar(+$('zoom').value));
+  al('zoom', 'input', () => zoom.aplicar(+$('zoom').value));
   al('zoomMenos', 'click', () => zoom.paso(-1));
   al('zoomMas', 'click', () => zoom.paso(1));
   al('zoomAjustar', 'click', () => zoom.ajustar());
