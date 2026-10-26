@@ -349,6 +349,11 @@
       `${Render.etiquetaRel(Render.relativo(c.y, geo.h))}) · ${estado}`;
   }
 
+  const INFO_INICIAL = matchMedia('(pointer: coarse)').matches
+    ? 'Toca un bloque para ver su posición y marcarlo.'
+    : 'Pasa el ratón por el dibujo para ver la posición de cada bloque.';
+  $('info').textContent = INFO_INICIAL;
+
   let trazo = null;   // { valor, cambio, id } mientras se pinta con raton/lapiz
   let toque = null;   // { x, y, c } inicio de un toque
   const toques = new Map();   // dedos sobre el dibujo (para pellizcar)
@@ -391,7 +396,8 @@
       }
     }
     const c = celda(ev);
-    $('info').textContent = c ? describir(c) : 'Pasa el ratón por el dibujo para ver la posición de cada bloque.';
+    if (ev.pointerType === 'touch') return;
+    $('info').textContent = c ? describir(c) : INFO_INICIAL;
     if (trazo && ev.pointerId === trazo.id) pintar(c);
   });
   function finTrazo(ev) {
@@ -403,6 +409,7 @@
       const movido = Math.hypot(ev.clientX - toque.x, ev.clientY - toque.y) > 10;
       if (!movido && ev.type === 'pointerup' && toque.c) {
         const { x, y } = toque.c;
+        $('info').textContent = describir(toque.c);
         antesDeMarcar();
         if (fijar(st.capa, x, y, !hechos.has(clave(st.capa, x, y)))) trasMarcar(); else pilaDeshacer.pop();
       }
@@ -558,6 +565,21 @@
     marcarCapas(todas(), true);
   });
   $('limpiar').addEventListener('click', () => marcarCapas(todas(), false));
+
+  // --- navegacion inferior (movil): resalta la seccion visible ------------------------------
+  const enlacesNav = [...document.querySelectorAll('.navmovil a')];
+  if ('IntersectionObserver' in window) {
+    const visibles = new Map();
+    const io = new IntersectionObserver(entradas => {
+      for (const e of entradas) visibles.set(e.target.id, e.intersectionRatio);
+      let mejor = null, max = 0;
+      for (const [id, r] of visibles) if (r > max) { max = r; mejor = id; }
+      for (const a of enlacesNav) {
+        if (a.hash === '#' + mejor) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+      }
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+    for (const a of enlacesNav) io.observe($(a.hash.slice(1)));
+  }
 
   // --- arranque ----------------------------------------------------------------------
   ponerUI();
