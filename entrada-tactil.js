@@ -73,7 +73,13 @@ const EntradaTactil = (() => {
       if (ev.pointerType !== 'touch') return;
       toques.delete(ev.pointerId);
       try { lienzo.releasePointerCapture(ev.pointerId); } catch (e) { /* ya liberado */ }
-      if (toques.size < 2) pellizco = null;
+
+      // Con tres dedos se ignora el gesto: al levantar uno, los dos que quedan siguen con el
+      // pellizco desde donde estan.
+      if (toques.size === 2) { empezarPellizco(); toque = null; return; }
+      // Al quedar un dedo, sigue desplazando desde su posicion (sin salto) y ya no es un toque.
+      if (toques.size === 1 && pellizco) { pellizco = null; toque = null; return; }
+      pellizco = null;
 
       // Toque corto (sin arrastrar ni pellizcar): marca o desmarca la celda.
       const corto = ev.type === 'pointerup' && toque && toque.id === ev.pointerId && toque.c &&

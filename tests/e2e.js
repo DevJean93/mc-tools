@@ -280,6 +280,31 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await zoom() > zA2 && ca && Math.abs(ca - cb) <= 1 && Math.abs(ra - rb) <= 1 && await prog() === 'Construidos: 1/208 (0 %)',
     `TACTIL A2: pellizcar y arrastrar mantiene la celda bajo los dedos (${celdaA2a} -> ${celdaA2b})`);
 
+  // A3: con tres dedos se ignora el gesto; al levantar uno, los dos que quedan reanudan el pellizco.
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0; })()`);
+  await esperar(150);
+  const wcA3 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  const tresA3 = sep => [
+    { x: wcA3[0] - sep, y: wcA3[1], id: 1 },
+    { x: wcA3[0] + sep, y: wcA3[1], id: 2 },
+    { x: wcA3[0], y: wcA3[1] + 120, id: 3 },
+  ];
+  const zA3 = await zoom(), progA3 = await prog();
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: tresA3(40) });
+  // touchEnd lleva los dedos que se sueltan: solo el tercero.
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [tresA3(40)[2]] });
+  await esperar(60);
+  for (const sep of [55, 70, 85]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [
+      { x: wcA3[0] - sep, y: wcA3[1], id: 1 }, { x: wcA3[0] + sep, y: wcA3[1], id: 2 },
+    ] });
+    await esperar(30);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  ok(await zoom() > zA3 * 1.4 && await prog() === progA3,
+    `TACTIL A3: al levantar el tercer dedo el pellizco continua (${zA3} -> ${await zoom()})`);
+
   // FORM: el campo de ancho se puede vaciar. Vacio no se rellena con el minimo ni cambia la forma.
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = '16'; w.dispatchEvent(new Event('change')); })()`);
   await esperar(300);
