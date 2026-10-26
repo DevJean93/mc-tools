@@ -364,6 +364,33 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`window.scrollY`) === yA5 && sA5b[0] > sA5[0] && sA5b[1] > sA5[1],
     `TACTIL A5: a 3x el arrastre mueve el dibujo y no la pagina (scrollY ${yA5} -> ${await ev(`window.scrollY`)})`);
 
+  // A1 lento: un dibujo que cabe entero no puede desplazarse dentro del contenedor, asi que
+  // cada movimiento (aunque sea de 0,8 px) debe pasar a la pagina.
+  await ev(`(() => {
+    const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input'));
+    const w = document.getElementById('w'); w.value = '16'; w.dispatchEvent(new Event('change'));
+  })()`);
+  await esperar(400);
+  await ev(`(() => {
+    const z = document.getElementById('zoom'); z.value = 8; z.dispatchEvent(new Event('input'));
+    const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0;
+    window.scrollTo(0, 0);
+  })()`);
+  await esperar(300);
+  const lento0 = await ev(`(() => { const c = document.getElementById('lienzo'), w = c.parentElement;
+    return { y: window.scrollY, st: w.scrollTop, cabe: c.offsetWidth <= w.clientWidth && c.offsetHeight <= w.clientHeight }; })()`);
+  const lentoProg = await prog();
+  const wcLento = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: wcLento[0], y: wcLento[1], id: 1 }] });
+  for (let i = 1; i <= 120; i++) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: wcLento[0], y: wcLento[1] - i * 0.8, id: 1 }] });
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  const lentoY = await ev(`window.scrollY`);
+  ok(lento0.cabe && lentoY - lento0.y > 50 && await ev(`document.getElementById('lienzo').parentElement.scrollTop`) === lento0.st && await prog() === lentoProg,
+    `TACTIL A1: arrastre lento (0,8 px) sobre un dibujo que cabe desplaza la pagina (scrollY ${lento0.y} -> ${lentoY})`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
 })().catch(e => { console.error(e); edge.kill(); process.exit(1); });

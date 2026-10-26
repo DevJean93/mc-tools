@@ -24,13 +24,15 @@ const EntradaTactil = (() => {
       const l0 = contenedor.scrollLeft, t0 = contenedor.scrollTop;
       contenedor.scrollLeft = l0 - dx;
       contenedor.scrollTop = t0 - dy;
-      // Solo se encadena con la pagina si el contenedor ya esta en ese borde y sobra mas de
-      // 1 px: un resto por redondeo (pantallas de alta densidad) no debe mover la pagina.
+      // Solo se encadena con la pagina si el contenedor ya esta en ese borde: asi un resto
+      // por redondeo (pantallas de alta densidad) no mueve la pagina mientras el contenedor
+      // aun puede desplazarse. En el borde se pasa todo el resto, sin umbral: un dedo lento
+      // avanza menos de 1 px por evento y aun asi debe mover la pagina.
       const restoY = -dy - (contenedor.scrollTop - t0);
       const enBorde = restoY < 0
         ? contenedor.scrollTop <= 0
         : contenedor.scrollTop + contenedor.clientHeight >= contenedor.scrollHeight - 1;
-      if (Math.abs(restoY) > 1 && enBorde) window.scrollBy(0, restoY);
+      if (enBorde) window.scrollBy(0, restoY);
     }
 
     function empezarPellizco() {
