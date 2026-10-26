@@ -151,7 +151,6 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   // Zoom no borra marcas ni regenera
   ok((await prog()).startsWith('Construidos:'), 'ZOOM: progreso intacto');
 
-  // 11) Movil 375 px
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'B5: sin scroll horizontal a 375 px');
@@ -168,6 +167,67 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`document.querySelector('.navmovil a[href="#secDibujo"]').click()`); await esperar(300);
   ok(await ev(`document.getElementById('panel').hidden`), 'B5: Dibujo cierra el menu');
   await shot('04-movil.png');
+
+
+  // Tactil: el lienzo lleva touch-action: none, asi que la app gestiona dedos y toques.
+  // Se prueba en movil (375 px), que es donde importa.
+  await ev(`(() => {
+    const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input'));
+    const w = document.getElementById('w'); w.value = 16; w.dispatchEvent(new Event('change'));
+    document.getElementById('lienzo').scrollIntoView({ block: 'center' });
+  })()`);
+  await esperar(350);
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(150);
+  const rect = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.left, r.top]; })()`);
+  const progTactil = await prog();
+  // Dedos escalonados: el primero llega y se mueve antes que el segundo.
+  const zt = await zoom();
+  const wc0 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  const t1 = [wc0[0] - 60, wc0[1] - 20];
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: t1[0], y: t1[1], id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: t1[0] + 14, y: t1[1] + 6, id: 1 }] });
+  await esperar(60);
+  const zTrasUno = await zoom();
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [
+    { x: t1[0] + 14, y: t1[1] + 6, id: 1 }, { x: t1[0] + 54, y: t1[1] + 6, id: 2 },
+  ] });
+  for (const d of [70, 90, 120, 150]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [
+      { x: t1[0] + 14, y: t1[1] + 6, id: 1 }, { x: t1[0] + 14 + d, y: t1[1] + 6, id: 2 },
+    ] });
+    await esperar(30);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  ok(zTrasUno === zt && await zoom() > zt * 1.5,
+    `TACTIL: dedos escalonados -> pellizco (${zt} -> ${await zoom()})`);
+  ok(await prog() === progTactil, 'TACTIL: el pellizco no marca bloques');
+  // Un toque corto sigue marcando (el pellizco no deja el gesto bloqueado).
+  await ev(`(() => { const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0; const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(150);
+  const rect2 = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.left, r.top]; })()`);
+  const pTap = [rect2[0] + L + 8 * 26 + 13, rect2[1] + T + 7 * 26 + 13];
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pTap[0], y: pTap[1], id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  ok(await prog() === 'Construidos: 1/208 (0 %)', 'TACTIL: un toque corto marca la celda -> ' + await prog());
+  // Arrastrar con un dedo desplaza el dibujo (no marca).
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 48; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(200);
+  const leerScroll = `(() => { const w = document.getElementById('lienzo').parentElement; return [w.scrollLeft, w.scrollTop]; })()`;
+  const s0 = await ev(leerScroll);
+  const wc = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: wc[0], y: wc[1], id: 1 }] });
+  for (const d of [20, 40, 60, 80]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: wc[0] - d, y: wc[1] - d, id: 1 }] });
+    await esperar(20);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(150);
+  const s1 = await ev(leerScroll);
+  ok(s1[0] > s0[0] && s1[1] > s0[1] && await prog() === 'Construidos: 1/208 (0 %)',
+    `TACTIL: arrastrar con un dedo desplaza el dibujo (${s0[0]},${s0[1]} -> ${s1[0]},${s1[1]})`);
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
