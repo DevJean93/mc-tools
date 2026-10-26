@@ -9,6 +9,9 @@ function montar(almacen = Almacen.memoria()) {
   const st = Estado.cargar(almacen);
   const avisos = {
     dichos: [],
+    notas: [],          // notas fijas visibles, en orden (null = se ocultó)
+    nota(t) { this.notas.push(t); },
+    ocultarNota() { this.notas.push(null); },
     avisar(t) { this.dichos.push(t); },
     anunciar(t) { this.dichos.push(t); },
     ocultarError() {},
@@ -118,21 +121,43 @@ test('irCapa recorta al rango y guarda la capa', () => {
   assert.equal(doc.capa(), 0);
 });
 
-test('sin almacenamiento persistente avisa una sola vez', () => {
+test('sin almacenamiento persistente muestra una sola nota fija desde el arranque', () => {
   const almacen = { persistente: false, leer: () => null, escribir: () => false };
   const { doc, avisos } = montar(almacen);
-  assert.equal(avisos.dichos.length, 0, 'no avisa antes de generar');
+  assert.equal(avisos.notas.length, 1, 'la nota sale al crear el documento');
+  assert.match(avisos.notas[0], /bloquea el almacenamiento/);
   doc.regenerar();
   doc.marcarCapas(doc.todas(), true);
-  const bloqueos = avisos.dichos.filter(t => t.includes('bloquea el almacenamiento'));
-  assert.equal(bloqueos.length, 1);
+  assert.equal(avisos.notas.length, 1, 'no se repite');
+  assert.ok(!avisos.dichos.some(t => /almacenamiento/.test(t)), 'no es un aviso temporal');
 });
 
-test('el aviso de almacenamiento no lo tapa el de grosor recortado', () => {
+test('la nota de almacenamiento no la tapa el aviso de grosor recortado', () => {
   const almacen = { persistente: false, leer: () => null, escribir: () => false };
   const { st, doc, avisos } = montar(almacen);
   st.w = 6; st.h = 6; st.modo = 'hueco'; st.grosor = 50;
   doc.regenerar();
-  assert.ok(avisos.dichos.some(t => t.includes('Grosor máximo')));
-  assert.match(avisos.dichos[avisos.dichos.length - 1], /bloquea el almacenamiento/);
+  assert.ok(avisos.dichos.some(t => t.includes('Grosor máximo')), 'el aviso de grosor sigue ahi');
+  assert.match(avisos.notas[0], /bloquea el almacenamiento/, 'y la nota fija tambien');
+});
+
+test('almacenamiento lleno: la nota sale al primer fallo y se quita al volver a guardar', () => {
+  let cabe = false;
+  const datos = new Map();
+  const almacen = {
+    persistente: true,
+    leer: k => (datos.has(k) ? datos.get(k) : null),
+    escribir: (k, v) => { if (!cabe) return false; datos.set(k, v); return true; },
+  };
+  const { doc, avisos } = montar(almacen);
+  assert.deepEqual(avisos.notas, [], 'un almacen lleno pero legible no avisa hasta que falla un guardado');
+  doc.regenerar();
+  assert.equal(avisos.notas.length, 1);
+  assert.match(avisos.notas[0], /lleno/);
+  doc.marcarCapas(doc.todas(), true);
+  assert.equal(avisos.notas.length, 1, 'no se repite en cada guardado fallido');
+
+  cabe = true;
+  doc.marcarCapas(doc.todas(), false);
+  assert.equal(avisos.notas[avisos.notas.length - 1], null, 'al volver a haber sitio la nota se oculta');
 });

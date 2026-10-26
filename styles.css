@@ -115,6 +115,9 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 #tablaCapas { max-height: 260px; overflow: auto; }
 
 .error { margin: 12px 16px 0; padding: 10px 14px; background: rgba(239, 68, 68, .15); border: 1px solid var(--destructive); border-radius: var(--radio); color: #FECACA; }
+/* Estado que no desaparece (p. ej. el almacenamiento no guarda): fijo bajo la cabecera, con icono y texto. */
+.nota { display: flex; align-items: flex-start; gap: 10px; margin: 12px 16px 0; padding: 10px 14px; background: rgba(250, 204, 21, .12); border: 1px solid var(--oro); border-radius: var(--radio); color: var(--fg); font-size: 14px; }
+.nota .ico { color: var(--oro); margin-top: 2px; }
 .aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100% - 32px); background: var(--card); border: 1px solid var(--oro); border-radius: var(--radio); padding: 10px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 20; }
 .aviso button { border-color: var(--oro); }
 .pie { padding: 8px 16px 24px; color: var(--fg-mut); font-size: 12px; }

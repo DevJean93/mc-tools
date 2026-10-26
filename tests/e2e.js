@@ -38,8 +38,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     source: `Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('bloqueado', 'SecurityError'); } });`,
   });
   await cargar();
-  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('bloquea') && document.querySelector('.tot').textContent.startsWith('208')`),
-    'A4: con el almacenamiento bloqueado avisa y la app arranca');
+  ok(await ev(`!document.getElementById('nota').hidden && document.getElementById('notaTxt').textContent.includes('bloquea') && document.querySelector('.tot').textContent.startsWith('208')`),
+    'A4: con el almacenamiento bloqueado hay una nota fija y la app arranca');
+  ok(await ev(`(() => { const n = document.getElementById('nota'); return n.getAttribute('role') === 'status' && n.querySelector('svg') && n.getBoundingClientRect().height > 0; })()`),
+    'B1: la nota es role=status, lleva icono y se ve');
+  await shot('00-nota-almacenamiento.png');
+  await esperar(5600);   // mas que lo que dura un aviso temporal
+  ok(await ev(`!document.getElementById('nota').hidden`), 'B1: la nota sigue visible pasados los 5 s de un aviso temporal');
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueo.identifier });
   await cargar();
 
@@ -50,8 +55,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     source: `Storage.prototype.setItem = function () { throw new DOMException('cuota 0', 'QuotaExceededError'); };`,
   });
   await cargar();
-  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('bloquea') && !document.getElementById('avisoTxt').textContent.includes('lleno') && document.querySelector('.tot').textContent.startsWith('208')`),
-    'C4: sin escritura avisa de que el navegador bloquea el almacenamiento');
+  ok(await ev(`!document.getElementById('nota').hidden && document.getElementById('notaTxt').textContent.includes('bloquea') && !document.getElementById('notaTxt').textContent.includes('lleno') && document.querySelector('.tot').textContent.startsWith('208')`),
+    'C4: sin escritura la nota dice que el navegador bloquea el almacenamiento');
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: soloLectura.identifier });
   await cargar();
 
@@ -66,7 +71,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await cargar();
   ok(await ev(`document.getElementById('forma').value === 'triangulo'`) && await prog() === progLleno,
     `A1: con el almacenamiento lleno se recupera el progreso (${await prog()})`);
-  ok(await ev(`(() => { const a = document.getElementById('avisoTxt').textContent; return !a.includes('bloquea'); })()`),
+  ok(await ev(`(() => { const n = document.getElementById('notaTxt').textContent, a = document.getElementById('avisoTxt').textContent; return !n.includes('bloquea') && !a.includes('bloquea'); })()`),
     'A1: con el almacenamiento lleno no dice que el navegador lo bloquea');
   await ev(`localStorage.clear()`);
   await cargar();

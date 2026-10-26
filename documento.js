@@ -6,12 +6,18 @@ const Documento = (() => {
   const Marcas = typeof module !== 'undefined' ? require('./marcas.js') : globalThis.Marcas;
   const Historial = typeof module !== 'undefined' ? require('./historial.js') : globalThis.Historial;
 
+  const MSG_BLOQUEADO = 'El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.';
+  const MSG_LLENO = 'El almacenamiento del navegador está lleno: lo que marques ahora no se guardará al recargar.';
+
   function crear({ st, almacen, avisos, panel, alCambiar, alCambiarTamano, alRestringir }) {
     const marcas = Marcas.crear(), historial = Historial.crear();
     let capas = [], totales = [], grosorMax = null;
     let firmaActual = null, firmaPedida = null, previos = null;
-    let avisoAlmacenamiento = !almacen.persistente;
-    let arranque = true;
+    let notaLlena = false;   // la nota fija visible es la de "almacenamiento lleno"
+
+    // El estado del almacenamiento es una nota fija, no un aviso temporal: sigue siendo cierto
+    // mientras dure y no lo tapa ningun otro aviso (p. ej. el de grosor recortado).
+    if (!almacen.persistente) avisos.nota(MSG_BLOQUEADO);
 
     const definicion = () => Formas.obtener(st.forma) || {};
     const es3D = () => !!definicion().es3D;
@@ -21,11 +27,11 @@ const Documento = (() => {
 
     const guardarEstado = () => Estado.guardar(st, almacen);
     function guardarMarcas() {
-      if (!Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen) && !avisoAlmacenamiento) {
-        avisoAlmacenamiento = true;
-        avisos.avisar(almacen.persistente
-          ? 'No se pudo guardar el progreso: el almacenamiento del navegador está lleno.'
-          : 'No se pudo guardar el progreso: el navegador bloquea el almacenamiento.');
+      if (Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen)) {
+        if (notaLlena) { notaLlena = false; avisos.ocultarNota(); }   // vuelve a haber sitio
+      } else if (almacen.persistente && !notaLlena) {
+        notaLlena = true;
+        avisos.nota(MSG_LLENO);
       }
     }
 
@@ -75,14 +81,6 @@ const Documento = (() => {
       panel.poner(grosorMax); guardarEstado(); guardarMarcas();
       alCambiar();
       if (cambioTamano) alCambiarTamano();
-      // El aviso de almacenamiento se da tras la primera generacion: asi no lo tapa el
-      // aviso de grosor recortado que puede salir en ese mismo arranque.
-      if (arranque) {
-        arranque = false;
-        if (!almacen.persistente) {
-          avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
-        }
-      }
     }
 
     function irCapa(i) {

@@ -9,6 +9,7 @@
 
   const avisos = Avisos.crear({
     caja: $('aviso'), texto: $('avisoTxt'), boton: $('avisoAccion'), error: $('error'), anuncio: $('anuncio'),
+    nota: $('nota'), notaTexto: $('notaTxt'),
   });
 
   const st = Estado.cargar(almacen);
