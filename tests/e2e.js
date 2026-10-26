@@ -54,6 +54,9 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     const ops = [...document.getElementById('forma').options];
     return ops.length === Formas.FORMAS.length && ops.every(o => Formas.FORMAS.includes(o.value) && o.textContent === Formas.obtener(o.value).nombre);
   })()`), 'B2: el selector de formas sale del registro (FORMAS + nombre)');
+  ok(await ev(`[...document.getElementById('forma').options].map(o => o.textContent).join('|') ===
+    'Círculo / Óvalo|Cuadrado / Rectángulo|Triángulo|Rombo|Hexágono|Esfera / Cúpula (3D)'`),
+  'A2: el selector conserva el orden Círculo, Cuadrado, Triángulo, Rombo, Hexágono, Esfera');
 
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
   const geo = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);

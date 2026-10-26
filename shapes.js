@@ -158,15 +158,15 @@ const Formas = (() => {
 
   registrar('rectangulo', forma2D('Cuadrado / Rectángulo', () => true));
 
-  registrar('rombo', forma2D('Rombo', (x, y, z, p, { w, h }) =>
-    Math.abs(x - w / 2) / (w / 2) + Math.abs(y - h / 2) / (h / 2) <= 1));
-
   // Los poligonos se construyen una sola vez por generar(), no en cada celda.
   const puntosTriangulo = (p, { w, h }) => [[w / 2, 0], [w, h], [0, h]];
   registrar('triangulo', forma2D('Triángulo',
     (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
     { preparar: puntosTriangulo },
   ));
+
+  registrar('rombo', forma2D('Rombo', (x, y, z, p, { w, h }) =>
+    Math.abs(x - w / 2) / (w / 2) + Math.abs(y - h / 2) / (h / 2) <= 1));
 
   const puntosHexagono = (p, { w, h }) => {
     const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2;
