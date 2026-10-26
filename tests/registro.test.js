@@ -33,3 +33,30 @@ test('una forma desconocida sigue dando un error claro', () => {
   const almacen = Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ forma: 'no-existe' }) });
   assert.equal(Estado.cargar(almacen).forma, 'circulo', 'al cargar cae en el valor por defecto');
 });
+
+test('una forma 3D nueva usa el maximo 3D y genera una capa por nivel', () => {
+  Formas.registrar('cubo', {
+    nombre: 'Cubo de prueba',
+    es3D: true,
+    dimensiones: p => {
+      const n = Math.max(1, Math.min(Formas.MAX_3D, Math.round(+p.w || 1)));
+      return { w: n, h: n, d: n };
+    },
+    llenar: () => true,
+  });
+
+  // Estado la acepta y usa el limite 3D sin tocar estado.js.
+  const almacen = Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ forma: 'cubo', w: 300 }) });
+  const st = Estado.cargar(almacen);
+  assert.equal(st.forma, 'cubo');
+  assert.equal(st.w, Estado.LIMITES.w3d, 'el ancho se limita al maximo 3D');
+
+  // La firma usa w como alto (es 3D) y solo cambia con la geometria.
+  assert.equal(Estado.firma({ ...st, zoom: 40 }), Estado.firma(st));
+  assert.notEqual(Estado.firma({ ...st, w: 5 }), Estado.firma(st));
+
+  // Generar devuelve w capas de w x w.
+  const r = Formas.generar({ forma: 'cubo', w: 4, h: 4, modo: 'relleno' });
+  assert.equal(r.capas.length, 4, 'una capa por nivel');
+  assert.equal(Formas.contar(r.capas[0]), 16);
+});

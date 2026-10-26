@@ -23,7 +23,8 @@
     avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
   }
 
-  const es3D = () => st.forma === 'esfera';
+  const definicion = () => Formas.obtener(st.forma) || {};
+  const es3D = () => !!definicion().es3D;
   const paramsGeo = () => Object.fromEntries(CLAVES_GEO.map(k => [k, st[k]]));
   const todas = () => capas.map((_, i) => i);
 
@@ -145,7 +146,11 @@
     opciones: () => st, capa: () => capas[st.capa],
   });
 
-  const nombreForma = () => (es3D() ? (st.esfera === 'cupula' ? 'Cúpula' : 'Esfera') : $('forma').selectedOptions[0].textContent);
+  function nombreForma() {
+    const def = definicion();
+    const variante = (def.variantes || []).find(v => v.valor === st.esfera);
+    return (es3D() && variante && variante.nombre) || def.nombre || $('forma').selectedOptions[0].textContent;
+  }
   const dimensiones = () => (es3D() ? `Ø${st.w}` : `${st.w}×${st.h}`);
   const textoModo = () => (st.modo === 'hueco' ? `hueco, grosor ${st.grosor}` : 'sólido');
 
@@ -221,7 +226,7 @@
     contexto: () => ({
       capas, totales, hechos: marcas.conjunto(), op: st, zoom: st.zoom,
       nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(),
-      variante: es3D() ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: es3D(),
+      variante: es3D() && definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: es3D(),
       w: st.w, h: st.h, porCapa: marcas.porCapa(capas.length), stacks: Materiales.fmtStacks,
     }),
   });

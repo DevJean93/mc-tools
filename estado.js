@@ -61,7 +61,7 @@ const Estado = (() => {
     for (const [clave, valores] of Object.entries(ENUMS)) {
       if (valores.includes(raw[clave])) st[clave] = raw[clave];
     }
-    st.w = num(raw.w, 1, st.forma === 'esfera' ? LIMITES.w3d : LIMITES.w2d, st.w);
+    st.w = num(raw.w, 1, (Formas.obtener(st.forma) || {}).es3D ? LIMITES.w3d : LIMITES.w2d, st.w);
     st.h = num(raw.h, 1, LIMITES.h, st.h);
     st.grosor = num(raw.grosor, 1, LIMITES.grosor, st.grosor);
     st.zoom = num(raw.zoom, LIMITES.zoomMin, LIMITES.zoomMax, st.zoom);
@@ -74,14 +74,18 @@ const Estado = (() => {
     return almacenValido(almacen).escribir(KEY, JSON.stringify(st));
   }
 
-  // Identifica la geometria; solo cuenta lo que de verdad la cambia.
+  // Identifica la geometria; solo cuenta lo que de verdad la cambia. Los dos ultimos huecos
+  // son los parametros propios de cada forma (variante 3D y orientacion): se mantienen
+  // siempre para que las marcas ya guardadas sigan valiendo.
   function firma(p) {
-    const es3D = p.forma === 'esfera';
+    const def = Formas.obtener(p.forma) || {};
+    const opciones = def.opciones || [];
+    const propios = [];
+    for (let i = 0; i < Math.max(2, opciones.length); i++) propios.push(opciones[i] ? p[opciones[i]] : '');
     return [
-      p.forma, p.w, es3D ? p.w : p.h, p.modo,
+      p.forma, p.w, def.es3D ? p.w : p.h, p.modo,
       p.modo === 'hueco' ? p.grosor : '',
-      es3D ? p.esfera : '',
-      p.forma === 'hexagono' ? p.orient : '',
+      ...propios,
     ].join('|');
   }
 

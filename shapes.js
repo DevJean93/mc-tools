@@ -149,21 +149,23 @@ const Formas = (() => {
     h: entero(p.h, 'Alto', 1, MAX_2D),
     d: 1,
   });
-  const forma2D = (llenar, preparar) => ({ es3D: false, dimensiones: dimensiones2D, llenar, preparar });
+  const forma2D = (nombre, llenar, extra = {}) => ({
+    nombre, es3D: false, dimensiones: dimensiones2D, llenar, ...extra,
+  });
 
-  registrar('circulo', forma2D((x, y, z, p, { w, h }) =>
+  registrar('circulo', forma2D('Círculo / Óvalo', (x, y, z, p, { w, h }) =>
     ((x - w / 2) / (w / 2)) ** 2 + ((y - h / 2) / (h / 2)) ** 2 <= 1));
 
-  registrar('rectangulo', forma2D(() => true));
+  registrar('rectangulo', forma2D('Cuadrado / Rectángulo', () => true));
 
-  registrar('rombo', forma2D((x, y, z, p, { w, h }) =>
+  registrar('rombo', forma2D('Rombo', (x, y, z, p, { w, h }) =>
     Math.abs(x - w / 2) / (w / 2) + Math.abs(y - h / 2) / (h / 2) <= 1));
 
   // Los poligonos se construyen una sola vez por generar(), no en cada celda.
   const puntosTriangulo = (p, { w, h }) => [[w / 2, 0], [w, h], [0, h]];
-  registrar('triangulo', forma2D(
+  registrar('triangulo', forma2D('Triángulo',
     (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
-    puntosTriangulo,
+    { preparar: puntosTriangulo },
   ));
 
   const puntosHexagono = (p, { w, h }) => {
@@ -172,13 +174,19 @@ const Formas = (() => {
       ? [[cx, cy - ry], [cx + rx, cy - ry / 2], [cx + rx, cy + ry / 2], [cx, cy + ry], [cx - rx, cy + ry / 2], [cx - rx, cy - ry / 2]]
       : [[cx + rx, cy], [cx + rx / 2, cy + ry], [cx - rx / 2, cy + ry], [cx - rx, cy], [cx - rx / 2, cy - ry], [cx + rx / 2, cy - ry]];
   };
-  registrar('hexagono', forma2D(
+  registrar('hexagono', forma2D('Hexágono',
     (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
-    puntosHexagono,
+    { preparar: puntosHexagono, opciones: [null, 'orient'] },
   ));
 
   registrar('esfera', {
+    nombre: 'Esfera / Cúpula (3D)',
     es3D: true,
+    opciones: ['esfera', null],
+    variantes: [
+      { valor: 'esfera', nombre: 'Esfera', etiqueta: 'Esfera completa' },
+      { valor: 'cupula', nombre: 'Cúpula', etiqueta: 'Cúpula (mitad superior)' },
+    ],
     dimensiones: p => {
       const n = entero(p.w, 'Ancho', 1, MAX_3D);
       return { w: n, h: n, d: n };
@@ -186,6 +194,12 @@ const Formas = (() => {
     llenar: (x, y, z, p, { w }) => {
       const c = w / 2, r2 = c * c;
       return (x - c) ** 2 + (y - c) ** 2 + (z - c) ** 2 <= r2;
+    },
+    // La cupula es la mitad superior del volumen ya generado.
+    variante: ({ capas, totales }, p) => {
+      if (p.esfera !== 'cupula') return { capas, totales };
+      const desde = Math.floor(capas.length / 2);
+      return { capas: capas.slice(desde), totales: totales.slice(desde) };
     },
   });
 
