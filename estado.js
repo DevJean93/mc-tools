@@ -1,15 +1,22 @@
-// Estado de la aplicacion: valores por defecto, validacion, persistencia y firma de geometria.
+// Parametros de la aplicacion: valores por defecto, validacion, persistencia y firma de geometria.
+// El almacen se inyecta: Almacen.local() en la app, Almacen.memoria() en los tests.
 const Estado = (() => {
+  const Formas = typeof module !== 'undefined' ? require('./shapes.js') : globalThis.Formas;
+
   const KEY = 'mc-formas-v1';
   const KEY_MARCAS = KEY + ':marcas';
 
   const STACK = 64;
   const SHULKER = 27 * STACK;      // 1728
   const COFRE_DOBLE = 54 * STACK;  // 3456
-  const LIMITES = { w2d: 200, w3d: 100, h: 200, grosor: 50, zoomMin: 2, zoomMax: 48 };
+  const LIMITES = {
+    w2d: Formas.MAX_2D, w3d: Formas.MAX_3D, h: Formas.MAX_2D,
+    grosor: Formas.MAX_GROSOR, zoomMin: 2, zoomMax: 48,
+  };
 
+  // Las formas validas salen del registro de geometria: una sola lista, no dos.
   const ENUMS = {
-    forma: ['circulo', 'rectangulo', 'triangulo', 'rombo', 'hexagono', 'esfera'],
+    forma: Formas.FORMAS,
     modo: ['relleno', 'hueco'],
     orient: ['plano', 'punta'],
     esfera: ['esfera', 'cupula'],
@@ -29,17 +36,19 @@ const Estado = (() => {
     return v !== null && v !== '' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : def;
   };
 
-  function leerJSON(clave) {
+  const memoria = () => (typeof module !== 'undefined' ? require('./almacen.js') : globalThis.Almacen).memoria();
+
+  function leerJSON(almacen, clave) {
     try {
-      const raw = JSON.parse(localStorage.getItem(clave) || 'null');
+      const raw = JSON.parse((almacen || memoria()).leer(clave) || 'null');
       return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null;
     } catch (e) { return null; }
   }
 
   // Mezcla lo guardado con los valores por defecto, aceptando solo valores validos.
-  function cargar() {
+  function cargar(almacen) {
     const st = { ...DEFAULTS };
-    const raw = leerJSON(KEY) || {};
+    const raw = leerJSON(almacen, KEY) || {};
     for (const [clave, valores] of Object.entries(ENUMS)) {
       if (valores.includes(raw[clave])) st[clave] = raw[clave];
     }
@@ -52,8 +61,8 @@ const Estado = (() => {
     return st;
   }
 
-  function guardar(st) {
-    try { localStorage.setItem(KEY, JSON.stringify(st)); return true; } catch (e) { return false; }
+  function guardar(st, almacen) {
+    return (almacen || memoria()).escribir(KEY, JSON.stringify(st));
   }
 
   // Identifica la geometria; solo cuenta lo que de verdad la cambia.
@@ -68,19 +77,19 @@ const Estado = (() => {
   }
 
   // Marcas en formato compacto: { firma, porCapa: { "c": [x0, y0, x1, y1, ...] } }.
-  function guardarMarcas(f, hechos) {
+  function guardarMarcas(f, hechos, almacen) {
     const porCapa = {};
     for (const k of hechos) {
       const [c, x, y] = k.split(',');
       (porCapa[c] || (porCapa[c] = [])).push(+x, +y);
     }
-    try { localStorage.setItem(KEY_MARCAS, JSON.stringify({ firma: f, porCapa })); return true; } catch (e) { return false; }
+    return (almacen || memoria()).escribir(KEY_MARCAS, JSON.stringify({ firma: f, porCapa }));
   }
 
   // Devuelve solo las marcas validas para la geometria actual.
-  function cargarMarcas(f, capas) {
+  function cargarMarcas(f, capas, almacen) {
     const hechos = new Set();
-    const raw = leerJSON(KEY_MARCAS);
+    const raw = leerJSON(almacen, KEY_MARCAS);
     if (!raw || raw.firma !== f || !raw.porCapa || typeof raw.porCapa !== 'object') return hechos;
     for (const [c, xy] of Object.entries(raw.porCapa)) {
       const g = capas[+c];
@@ -93,5 +102,9 @@ const Estado = (() => {
     return hechos;
   }
 
-  return { STACK, SHULKER, COFRE_DOBLE, LIMITES, CLAVES_GEO, cargar, guardar, firma, guardarMarcas, cargarMarcas };
+  return {
+    STACK, SHULKER, COFRE_DOBLE, LIMITES, ENUMS, DEFAULTS, BOOLEANOS, CLAVES_GEO,
+    cargar, guardar, firma, guardarMarcas, cargarMarcas,
+  };
 })();
+if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;

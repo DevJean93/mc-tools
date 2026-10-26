@@ -3,8 +3,9 @@
   const { STACK, SHULKER, COFRE_DOBLE, LIMITES, CLAVES_GEO } = Estado;
   const $ = id => document.getElementById(id);
   const cv = $('lienzo');
+  const almacen = Almacen.local();
 
-  const st = Estado.cargar();
+  const st = Estado.cargar(almacen);
   let capas = [], totales = [], grosorMax = null;
   let hechos = new Set();          // "capa,x,y" de bloques marcados como construidos
   let firmaActual = null, firmaPedida = null, previos = null;
@@ -71,9 +72,9 @@
     $('maxG').textContent = grosorMax ? `(máx. ${grosorMax})` : '';
   }
 
-  function guardarEstado() { Estado.guardar(st); }
+  function guardarEstado() { Estado.guardar(st, almacen); }
   function guardarMarcas() {
-    if (!Estado.guardarMarcas(firmaActual, hechos) && !avisoAlmacenamiento) {
+    if (!Estado.guardarMarcas(firmaActual, hechos, almacen) && !avisoAlmacenamiento) {
       avisoAlmacenamiento = true;
       avisar('No se pudo guardar el progreso: el almacenamiento del navegador está lleno.');
     }
@@ -111,7 +112,7 @@
 
     const nueva = Estado.firma(st);
     if (firmaActual === null) {
-      hechos = Estado.cargarMarcas(nueva, capas);   // arranque: recuperar el progreso guardado
+      hechos = Estado.cargarMarcas(nueva, capas, almacen);   // arranque: recuperar el progreso guardado
     } else if (nueva !== firmaActual && hechos.size && !opts.conservar) {
       apilar(pilaDeshacer, { params: previos, hechos: [...hechos] });
       pilaRehacer.length = 0;
@@ -575,7 +576,7 @@
   const visibles = new Map();   // seccion -> fraccion visible (para la barra inferior)
 
   function prefMenu() {
-    try { return localStorage.getItem(KEY_MENU) !== '0'; } catch (e) { return true; }
+    return almacen.leer(KEY_MENU) !== '0';
   }
   function marcarNav() {
     let mejor = 'secDibujo';
@@ -594,9 +595,7 @@
     document.body.classList.toggle('menu-abierto', visible && esMovil.matches);
     $('verMenu').setAttribute('aria-expanded', String(visible));
     $('verMenuTxt').textContent = visible ? 'Ocultar menú' : 'Mostrar menú';
-    if (!esMovil.matches) {
-      try { localStorage.setItem(KEY_MENU, visible ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
-    }
+    if (!esMovil.matches) almacen.escribir(KEY_MENU, visible ? '1' : '0');
     marcarNav();
   }
   // En movil el foco va al boton Cerrar al abrir y vuelve al de la cabecera al cerrar.

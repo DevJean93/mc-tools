@@ -145,4 +145,4 @@ const Formas = (() => {
 
   return { generar, contar, FORMAS, MAX_2D, MAX_3D, MAX_GROSOR };
 })();
-if (typeof module !== 'undefined') module.exports = Formas;
+if (typeof module !== 'undefined') module.exports = Formas; else globalThis.Formas = Formas;
