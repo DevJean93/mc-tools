@@ -4,12 +4,11 @@
 //              si apenas se movio, es un toque y marca la celda.
 //   2 dedos -> pellizco con zoom anclado al punto medio; si la distancia no cambia, los
 //              dedos desplazan el dibujo. Los dedos pueden llegar en momentos distintos.
-// Las acciones se inyectan: no conoce el estado ni el resto de entradas.
+// No conoce el estado: recibe solo los grupos de acciones que usa (dibujo, marcas, zoom).
 const EntradaTactil = (() => {
   const UMBRAL_TOQUE = 10;   // px de movimiento que convierten un toque en arrastre
 
-  function conectar({ lienzo, contenedor, limites, limitar, acciones }) {
-    const a = acciones;
+  function conectar({ lienzo, contenedor, limites, limitar, dibujo, marcas, zoom }) {
     const toques = new Map();   // id -> { x, y } ultima posicion de cada dedo
     let toque = null;           // { id, x0, y0, c } dedo que puede acabar en toque corto
     let pellizco = null;        // { d, z, mx, my } distancia, zoom y punto medio de partida
@@ -37,7 +36,7 @@ const EntradaTactil = (() => {
     function empezarPellizco() {
       const [p, q] = dedos();
       const m = medio(p, q);
-      pellizco = { d: Math.max(1, distancia(p, q)), z: a.zoomActual(), mx: m.x, my: m.y };
+      pellizco = { d: Math.max(1, distancia(p, q)), z: zoom.zoomActual(), mx: m.x, my: m.y };
       toque = null;
     }
 
@@ -50,7 +49,7 @@ const EntradaTactil = (() => {
       pellizco.mx = m.x; pellizco.my = m.y;
       // El zoom se recorta ya aqui: en los limites, el pellizco sigue moviendo el dibujo.
       const nuevo = limitar(Math.round(pellizco.z * distancia(p, q) / pellizco.d), limites.zoomMin, limites.zoomMax);
-      if (nuevo !== a.zoomActual()) a.zoom(nuevo, { clientX: m.x, clientY: m.y });
+      if (nuevo !== zoom.zoomActual()) zoom.zoom(nuevo, { clientX: m.x, clientY: m.y });
     }
 
     lienzo.addEventListener('pointerdown', ev => {
@@ -60,7 +59,7 @@ const EntradaTactil = (() => {
       toques.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
 
       if (toques.size === 2) empezarPellizco();
-      else if (toques.size === 1) toque = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, c: a.celda(ev) };
+      else if (toques.size === 1) toque = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, c: dibujo.celda(ev) };
       else { toque = null; pellizco = null; }   // tres o mas dedos: se ignora el gesto
     });
 
@@ -94,10 +93,10 @@ const EntradaTactil = (() => {
       toque = null;
       if (!celda) return;
 
-      a.informar(a.describir(celda));
-      a.antesDeMarcar();
-      if (a.fijar(celda.x, celda.y, !a.estaHecho(celda.x, celda.y))) a.trasMarcar();
-      else a.descartarPaso();
+      dibujo.informar(dibujo.describir(celda));
+      marcas.antesDeMarcar();
+      if (marcas.fijar(celda.x, celda.y, !marcas.estaHecho(celda.x, celda.y))) marcas.trasMarcar();
+      else marcas.descartarPaso();
     }
     lienzo.addEventListener('pointerup', fin);
     lienzo.addEventListener('pointercancel', fin);

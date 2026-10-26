@@ -51,9 +51,14 @@
 
   const zoom = Zoom.crear({
     lienzo: cv, contenedor: wrap, limites: LIMITES,
-    medir: s => Render.medir(doc.capaActual(), s, st),
-    geometria: () => geo, obtener: () => st.zoom,
-    fijar: n => { st.zoom = n; doc.guardarEstado(); },
+    dibujo: {
+      medir: s => Render.medir(doc.capaActual(), s, st),
+      geometria: () => geo,
+    },
+    zoom: {
+      obtener: () => st.zoom,
+      fijar: n => { st.zoom = n; doc.guardarEstado(); },
+    },
     alDibujar: dibujar,
   });
 
@@ -133,16 +138,16 @@
 
   teclado = EntradaTeclado.conectar({
     lienzo: cv,
-    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom, ...accionesCapas, ...accionesHistorial },
+    dibujo: accionesDibujo, marcas: accionesMarcas, zoom: accionesZoom,
+    capas: accionesCapas, historial: accionesHistorial,
   });
   EntradaRaton.conectar({
     lienzo: cv, contenedor: wrap,
-    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom },
+    dibujo: accionesDibujo, marcas: accionesMarcas, zoom: accionesZoom,
   });
   EntradaTactil.conectar({
-    lienzo: cv, contenedor: wrap, limites: LIMITES,
-    limitar: Estado.clamp,
-    acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom },
+    lienzo: cv, contenedor: wrap, limites: LIMITES, limitar: Estado.clamp,
+    dibujo: accionesDibujo, marcas: accionesMarcas, zoom: accionesZoom,
   });
 
   // --- exportacion ------------------------------------------------------------------
