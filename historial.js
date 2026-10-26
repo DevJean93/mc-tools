@@ -22,7 +22,6 @@ const Historial = (() => {
       },
       // La accion apilada no cambio nada: se descarta.
       descartar() { deshacer.pop(); },
-      limpiarRehacer() { rehacer.length = 0; },
       puedeDeshacer: () => deshacer.length > 0,
       puedeRehacer: () => rehacer.length > 0,
       pendientes: () => ({ deshacer: deshacer.length, rehacer: rehacer.length }),

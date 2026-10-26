@@ -315,8 +315,7 @@ const Render = (() => {
   }
 
   return {
-    dibujar, medir, relativo, etiquetaRel, centro,
-    registrar, capas: () => CAPAS.map(c => c.nombre),
+    dibujar, medir, relativo, etiquetaRel, centro, registrar,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;

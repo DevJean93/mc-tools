@@ -5,9 +5,14 @@
 // el resto del archivo. El id es el valor que viaja en los parametros.
 //
 // Contrato de una definicion (todas las formas cumplen lo mismo, incluidas las 3D):
+//   nombre: etiqueta para el selector
 //   es3D: boolean
 //   dimensiones(p) -> { w, h, d }     ya validado y recortado a los maximos
-//   llenar(x, y, z, p, dims) -> boolean   x, y, z son el centro de la celda
+//   preparar(p, dims) -> datos        opcional; se calcula una vez por generar()
+//   llenar(x, y, z, p, dims, prep) -> boolean   x, y, z son el centro de la celda
+//   opciones: claves de los parametros propios, por hueco de la firma (null = hueco vacio)
+//   variantes: [{ valor, nombre, etiqueta }]    opcional; variantes que ofrece el panel
+//   variante(r, p, dims) -> { capas, totales }  opcional; ajusta el volumen ya generado
 //
 // generar(params) -> { capas, totales, grosor, grosorMax, grosorRecortado }
 //   capas[c][y][x] = true/false. 2D = una sola capa. Esfera/Cupula = una capa por nivel (de abajo arriba).
@@ -112,13 +117,14 @@ const Formas = (() => {
     if (!def) throw new Error('Forma desconocida: ' + (p && p.forma));
     const dims = def.dimensiones(p);
     const { w, h, d } = dims;
+    const prep = def.preparar ? def.preparar(p, dims) : undefined;
     const hueco = p.modo === 'hueco';
     let grosor = hueco ? entero(p.grosor == null ? 1 : p.grosor, 'Grosor', 1, MAX_GROSOR) : 1;
 
     // Volumen plano: en 3D, z es el nivel vertical (capa) y y la profundidad.
     const lleno = new Uint8Array(w * h * d);
     for (let z = 0; z < d; z++) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (def.llenar(x + 0.5, y + 0.5, z + 0.5, p, dims)) lleno[x + w * (y + h * z)] = 1;
+      if (def.llenar(x + 0.5, y + 0.5, z + 0.5, p, dims, prep)) lleno[x + w * (y + h * z)] = 1;
     }
 
     let grosorMax = null, grosorRecortado = false;
@@ -130,10 +136,7 @@ const Formas = (() => {
     }
 
     let { capas, totales } = aCapas(lleno, w, h, d);
-    if (def.es3D && p.esfera === 'cupula') {
-      const desde = Math.floor(d / 2);
-      capas = capas.slice(desde); totales = totales.slice(desde);
-    }
+    if (def.variante) ({ capas, totales } = def.variante({ capas, totales }, p, dims));
     return { capas, totales, grosor, grosorMax, grosorRecortado };
   }
 
@@ -146,7 +149,7 @@ const Formas = (() => {
     h: entero(p.h, 'Alto', 1, MAX_2D),
     d: 1,
   });
-  const forma2D = llenar => ({ es3D: false, dimensiones: dimensiones2D, llenar });
+  const forma2D = (llenar, preparar) => ({ es3D: false, dimensiones: dimensiones2D, llenar, preparar });
 
   registrar('circulo', forma2D((x, y, z, p, { w, h }) =>
     ((x - w / 2) / (w / 2)) ** 2 + ((y - h / 2) / (h / 2)) ** 2 <= 1));
@@ -156,16 +159,23 @@ const Formas = (() => {
   registrar('rombo', forma2D((x, y, z, p, { w, h }) =>
     Math.abs(x - w / 2) / (w / 2) + Math.abs(y - h / 2) / (h / 2) <= 1));
 
-  registrar('triangulo', forma2D((x, y, z, p, { w, h }) =>
-    dentroPoligono(x, y, [[w / 2, 0], [w, h], [0, h]])));
+  // Los poligonos se construyen una sola vez por generar(), no en cada celda.
+  const puntosTriangulo = (p, { w, h }) => [[w / 2, 0], [w, h], [0, h]];
+  registrar('triangulo', forma2D(
+    (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
+    puntosTriangulo,
+  ));
 
-  registrar('hexagono', forma2D((x, y, z, p, { w, h }) => {
+  const puntosHexagono = (p, { w, h }) => {
     const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2;
-    const pts = p.orient === 'punta'
+    return p.orient === 'punta'
       ? [[cx, cy - ry], [cx + rx, cy - ry / 2], [cx + rx, cy + ry / 2], [cx, cy + ry], [cx - rx, cy + ry / 2], [cx - rx, cy - ry / 2]]
       : [[cx + rx, cy], [cx + rx / 2, cy + ry], [cx - rx / 2, cy + ry], [cx - rx, cy], [cx - rx / 2, cy - ry], [cx + rx / 2, cy - ry]];
-    return dentroPoligono(x, y, pts);
-  }));
+  };
+  registrar('hexagono', forma2D(
+    (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
+    puntosHexagono,
+  ));
 
   registrar('esfera', {
     es3D: true,

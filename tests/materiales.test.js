@@ -79,9 +79,8 @@ test('resumen del centro de una capa vacia no menciona bordes', () => {
   assert.equal(Materiales.textoResumenCentro(g), 'Centro: 2×2 bloques');
 });
 
-test('la constante de stack coincide con la del estado', () => {
-  const Estado = require('../estado.js');
-  assert.equal(Materiales.STACK, Estado.STACK);
-  assert.equal(Materiales.SHULKER, Estado.SHULKER);
-  assert.equal(Materiales.COFRE_DOBLE, Estado.COFRE_DOBLE);
+test('las constantes de stack viven solo en materiales', () => {
+  assert.equal(Materiales.STACK, 64);
+  assert.equal(Materiales.SHULKER, 27 * 64);
+  assert.equal(Materiales.COFRE_DOBLE, 54 * 64);
 });

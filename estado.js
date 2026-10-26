@@ -6,9 +6,6 @@ const Estado = (() => {
   const KEY = 'mc-formas-v1';
   const KEY_MARCAS = KEY + ':marcas';
 
-  const STACK = 64;
-  const SHULKER = 27 * STACK;      // 1728
-  const COFRE_DOBLE = 54 * STACK;  // 3456
   const LIMITES = {
     w2d: Formas.MAX_2D, w3d: Formas.MAX_3D, h: Formas.MAX_2D,
     grosor: Formas.MAX_GROSOR, zoomMin: 2, zoomMax: 48,
@@ -21,7 +18,9 @@ const Estado = (() => {
     orient: ['plano', 'punta'],
     esfera: ['esfera', 'cupula'],
   };
-  const BOOLEANOS = ['igualar', 'rel', 'tramos', 'tramosDentro', 'distEjes'];
+  // Opciones que solo cambian la vista (no la geometria ni las marcas).
+  const VISTA = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
+  const BOOLEANOS = ['igualar', ...VISTA];
   // Parametros que definen la geometria (los demas son solo de vista).
   const CLAVES_GEO = ['forma', 'w', 'h', 'igualar', 'modo', 'grosor', 'esfera', 'orient'];
 
@@ -36,11 +35,21 @@ const Estado = (() => {
     return v !== null && v !== '' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : def;
   };
 
-  const memoria = () => (typeof module !== 'undefined' ? require('./almacen.js') : globalThis.Almacen).memoria();
+  // Numero entero dentro de [min, max]; si no es un numero, el minimo.
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, Math.round(+v) || min));
+
+  // El almacen se inyecta siempre: un fallo de cableado debe verse, no caer en memoria.
+  function almacenValido(almacen) {
+    if (!almacen || typeof almacen.leer !== 'function' || typeof almacen.escribir !== 'function') {
+      throw new Error('Estado necesita un almacen con leer() y escribir()');
+    }
+    return almacen;
+  }
 
   function leerJSON(almacen, clave) {
+    almacenValido(almacen);
     try {
-      const raw = JSON.parse((almacen || memoria()).leer(clave) || 'null');
+      const raw = JSON.parse(almacen.leer(clave) || 'null');
       return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : null;
     } catch (e) { return null; }
   }
@@ -62,7 +71,7 @@ const Estado = (() => {
   }
 
   function guardar(st, almacen) {
-    return (almacen || memoria()).escribir(KEY, JSON.stringify(st));
+    return almacenValido(almacen).escribir(KEY, JSON.stringify(st));
   }
 
   // Identifica la geometria; solo cuenta lo que de verdad la cambia.
@@ -83,7 +92,7 @@ const Estado = (() => {
       const [c, x, y] = k.split(',');
       (porCapa[c] || (porCapa[c] = [])).push(+x, +y);
     }
-    return (almacen || memoria()).escribir(KEY_MARCAS, JSON.stringify({ firma: f, porCapa }));
+    return almacenValido(almacen).escribir(KEY_MARCAS, JSON.stringify({ firma: f, porCapa }));
   }
 
   // Devuelve solo las marcas validas para la geometria actual.
@@ -103,7 +112,7 @@ const Estado = (() => {
   }
 
   return {
-    STACK, SHULKER, COFRE_DOBLE, LIMITES, ENUMS, DEFAULTS, BOOLEANOS, CLAVES_GEO,
+    LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
     cargar, guardar, firma, guardarMarcas, cargarMarcas,
   };
 })();

@@ -50,8 +50,6 @@ const EntradaRaton = (() => {
       if (nuevo === actual) nuevo += ev.deltaY < 0 ? 1 : -1;
       a.zoom(nuevo, ev);
     }, { passive: false });
-
-    return { pintando: () => !!trazo };
   }
 
   return { conectar };

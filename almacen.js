@@ -16,9 +16,6 @@ const Almacen = (() => {
           return true;
         } catch (e) { return false; }
       },
-      borrar(clave) {
-        try { if (sirve) storage.removeItem(clave); } catch (e) { /* sin almacenamiento */ }
-      },
     };
   }
 
@@ -29,8 +26,6 @@ const Almacen = (() => {
       persistente: false,
       leer: clave => (datos.has(clave) ? datos.get(clave) : null),
       escribir: (clave, valor) => { datos.set(clave, String(valor)); return true; },
-      borrar: clave => { datos.delete(clave); },
-      claves: () => [...datos.keys()],
     };
   }
 
@@ -50,6 +45,6 @@ const Almacen = (() => {
     return sinPersistencia();
   }
 
-  return { desde, memoria, local, sinPersistencia };
+  return { desde, memoria, local };
 })();
 if (typeof module !== 'undefined') module.exports = Almacen; else globalThis.Almacen = Almacen;

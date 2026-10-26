@@ -100,8 +100,6 @@ const EntradaTactil = (() => {
     }
     lienzo.addEventListener('pointerup', fin);
     lienzo.addEventListener('pointercancel', fin);
-
-    return { dedos: () => toques.size, pellizcando: () => !!pellizco };
   }
 
   return { conectar, UMBRAL_TOQUE };

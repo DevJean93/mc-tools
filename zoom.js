@@ -1,8 +1,8 @@
 // Zoom del dibujo: niveles, anclaje al puntero, ajuste a la ventana y alejado automatico.
 // No conoce el estado global: pide el zoom actual y lo fija con funciones inyectadas.
 const Zoom = (() => {
+  const Estado = typeof module !== 'undefined' ? require('./estado.js') : globalThis.Estado;
   const NIVELES = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48];
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
 
   function crear({ lienzo, contenedor, medir, geometria, obtener, definir, control, redibujar, guardar, opciones, capa, limites }) {
     // Espacio util del contenedor del dibujo (su alto maximo, no el actual).
@@ -29,7 +29,7 @@ const Zoom = (() => {
 
     // Cambia el zoom manteniendo quieta la celda bajo el punto (clientX/Y); sin punto, el centro visible.
     function fijar(nuevo, punto) {
-      nuevo = clamp(nuevo, limites.zoomMin, limites.zoomMax);
+      nuevo = Estado.clamp(nuevo, limites.zoomMin, limites.zoomMax);
       const g0 = geometria();
       if (!g0 || nuevo === obtener()) return;
       const r = lienzo.getBoundingClientRect(), rw = contenedor.getBoundingClientRect();
@@ -68,9 +68,9 @@ const Zoom = (() => {
       if (s < obtener()) { fijar(s); contenedor.scrollLeft = 0; contenedor.scrollTop = 0; }
     }
 
-    return { fijar, paso, ajustar, alejarSiNoCabe, zoomAjustado, espacioVisible, niveles: NIVELES };
+    return { fijar, paso, ajustar, alejarSiNoCabe };
   }
 
-  return { crear, NIVELES };
+  return { crear };
 })();
 if (typeof module !== 'undefined') module.exports = Zoom; else globalThis.Zoom = Zoom;

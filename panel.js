@@ -1,10 +1,10 @@
 // Enlace entre el formulario y los parametros: leer el panel a st y volcar st al panel.
 // No decide nada mas: quien llama sabe cuando regenerar.
 const Panel = (() => {
-  const TOGGLES = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
+  const Estado = typeof module !== 'undefined' ? require('./estado.js') : globalThis.Estado;
+  const TOGGLES = Estado.VISTA;
   const CAMPOS = ['w', 'h', 'grosor'];
   const SELECTS = ['forma', 'igualar', 'modo', 'esfera', 'orient'];
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
 
   function crear({ st, limites, es3D }) {
     const $ = id => document.getElementById(id);
@@ -15,7 +15,7 @@ const Panel = (() => {
     function numero(id, actual, min, max) {
       if ($(id).value === '') { vacios.add(id); return actual; }
       vacios.delete(id);
-      return clamp($(id).value, min, max);
+      return Estado.clamp($(id).value, min, max);
     }
     const ponerNum = (id, v) => { if (!vacios.has(id)) $(id).value = v; };
 
@@ -28,7 +28,7 @@ const Panel = (() => {
       st.grosor = numero('grosor', st.grosor, 1, limites.grosor);
       st.esfera = $('esfera').value;
       st.orient = $('orient').value;
-      st.zoom = clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
+      st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
     }
 

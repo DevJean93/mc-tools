@@ -126,3 +126,24 @@ test('con localStorage disponible, local() guarda y se declara persistente', () 
     delete globalThis.localStorage;
   }
 });
+
+test('clamp redondea y recorta; si no es un numero, el minimo', () => {
+  assert.equal(Estado.clamp('42', 1, 200), 42);
+  assert.equal(Estado.clamp('42.6', 1, 200), 43);
+  assert.equal(Estado.clamp(0, 1, 200), 1);
+  assert.equal(Estado.clamp(999, 1, 200), 200);
+  assert.equal(Estado.clamp('', 1, 200), 1);
+  assert.equal(Estado.clamp('x', 1, 200), 1);
+});
+
+test('las vistas son los booleanos que no son geometria', () => {
+  assert.deepEqual(Estado.VISTA, ['rel', 'tramos', 'tramosDentro', 'distEjes']);
+  assert.deepEqual(Estado.BOOLEANOS, ['igualar', ...Estado.VISTA]);
+});
+
+test('el almacen es obligatorio: sin el, error claro', () => {
+  assert.throws(() => Estado.cargar(), /almacen/i);
+  assert.throws(() => Estado.guardar(Estado.DEFAULTS), /almacen/i);
+  assert.throws(() => Estado.guardarMarcas('f', new Set()), /almacen/i);
+  assert.throws(() => Estado.cargarMarcas('f', [[[true]]]), /almacen/i);
+});

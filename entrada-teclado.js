@@ -55,7 +55,6 @@ const EntradaTeclado = (() => {
       cursor: () => cursor,
       // Tras regenerar: el cursor no puede quedar fuera de la nueva rejilla.
       restringir(w, h) { if (cursor) cursor = { x: Math.min(cursor.x, w - 1), y: Math.min(cursor.y, h - 1) }; },
-      enfocar: () => lienzo.focus({ preventScroll: true }),
     };
   }
 

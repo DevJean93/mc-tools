@@ -5,7 +5,7 @@
   const al = (id, evento, fn) => $(id).addEventListener(evento, fn);
   const cv = $('lienzo'), wrap = cv.parentElement;
   const almacen = Almacen.local();
-  const { LIMITES, CLAVES_GEO } = Estado;
+  const { LIMITES, CLAVES_GEO, clamp } = Estado;
 
   const avisos = Avisos.crear({
     caja: $('aviso'), texto: $('avisoTxt'), boton: $('avisoAccion'), error: $('error'), anuncio: $('anuncio'),
@@ -16,6 +16,7 @@
   const marcas = Marcas.crear(), historial = Historial.crear();
   let firmaActual = null, firmaPedida = null, previos = null;
   let geo = null;                   // geometria del ultimo dibujo (para las entradas)
+  let teclado = null;               // se conecta mas abajo, antes de regenerar
   let avisoAlmacenamiento = false;
   if (!almacen.persistente) {
     avisoAlmacenamiento = true;
@@ -23,7 +24,6 @@
   }
 
   const es3D = () => st.forma === 'esfera';
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
   const paramsGeo = () => Object.fromEntries(CLAVES_GEO.map(k => [k, st[k]]));
   const todas = () => capas.map((_, i) => i);
 
@@ -211,7 +211,7 @@
     anunciar: avisos.anunciar, cursorInicial, dimensionesCapa, verCursor, deshacer, rehacer,
   };
 
-  const teclado = EntradaTeclado.conectar({ lienzo: cv, acciones });
+  teclado = EntradaTeclado.conectar({ lienzo: cv, acciones });
   EntradaRaton.conectar({ lienzo: cv, contenedor: wrap, acciones });
   EntradaTactil.conectar({ lienzo: cv, contenedor: wrap, limites: LIMITES, acciones });
 
