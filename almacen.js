@@ -5,6 +5,7 @@ const Almacen = (() => {
   function desde(storage) {
     const sirve = !!storage && typeof storage.getItem === 'function' && typeof storage.setItem === 'function';
     return {
+      persistente: sirve,
       leer(clave) {
         try { return sirve ? storage.getItem(clave) : null; } catch (e) { return null; }
       },
@@ -21,10 +22,11 @@ const Almacen = (() => {
     };
   }
 
-  // Almacen en memoria: para los tests y para cuando el navegador no deja usar localStorage.
+  // Almacen en memoria: para los tests.
   function memoria(inicial = {}) {
     const datos = new Map(Object.entries(inicial));
     return {
+      persistente: false,
       leer: clave => (datos.has(clave) ? datos.get(clave) : null),
       escribir: (clave, valor) => { datos.set(clave, String(valor)); return true; },
       borrar: clave => { datos.delete(clave); },
@@ -32,15 +34,22 @@ const Almacen = (() => {
     };
   }
 
-  // El del navegador; si acceder a localStorage lanza (modo privado, file:// restringido), memoria.
+  // Almacen que no guarda nada: el navegador no deja usar localStorage (modo privado,
+  // file:// restringido...). No se usa memoria a proposito: guardar en silencio haria
+  // perder el progreso al recargar sin avisar.
+  function sinPersistencia() {
+    return { persistente: false, leer: () => null, escribir: () => false };
+  }
+
+  // El del navegador; si acceder a localStorage lanza, uno que no guarda y lo declara.
   function local() {
     try {
       const storage = globalThis.localStorage;
       if (storage) { storage.getItem('__mc-formas-prueba'); return desde(storage); }
     } catch (e) { /* bloqueado */ }
-    return memoria();
+    return sinPersistencia();
   }
 
-  return { desde, memoria, local };
+  return { desde, memoria, local, sinPersistencia };
 })();
 if (typeof module !== 'undefined') module.exports = Almacen; else globalThis.Almacen = Almacen;

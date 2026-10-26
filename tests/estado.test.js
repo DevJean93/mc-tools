@@ -99,3 +99,30 @@ test('un almacen que lanza al leer no rompe la carga', () => {
   const roto = { leer: () => { throw new Error('sin acceso'); }, escribir: () => true };
   assert.deepEqual(Estado.cargar(roto), Estado.DEFAULTS);
 });
+
+test('con el almacenamiento bloqueado no se guarda y el almacen lo declara', () => {
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('bloqueado'); } });
+  try {
+    const almacen = Almacen.local();
+    assert.equal(almacen.persistente, false, 'asi la app puede avisar al arrancar');
+    assert.equal(almacen.leer('mc-formas-v1'), null);
+    assert.equal(Estado.guardar(Estado.DEFAULTS, almacen), false);
+    assert.equal(Estado.guardarMarcas('x', new Set(), almacen), false);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
+test('con localStorage disponible, local() guarda y se declara persistente', () => {
+  const datos = new Map();
+  const storage = { getItem: k => (datos.has(k) ? datos.get(k) : null), setItem: (k, v) => datos.set(k, String(v)) };
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const almacen = Almacen.local();
+    assert.equal(almacen.persistente, true);
+    assert.equal(Estado.guardar(Estado.DEFAULTS, almacen), true);
+    assert.deepEqual(Estado.cargar(almacen), Estado.DEFAULTS);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});

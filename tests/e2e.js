@@ -33,6 +33,16 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Runtime.enable'); await send('Page.enable');
   await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: OUT }).catch(() => {});
 
+  // 0) Almacenamiento bloqueado desde el arranque: la app funciona y avisa de que no guarda.
+  const bloqueo = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('bloqueado', 'SecurityError'); } });`,
+  });
+  await cargar();
+  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('bloquea') && document.querySelector('.tot').textContent.startsWith('208')`),
+    'A4: con el almacenamiento bloqueado avisa y la app arranca');
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueo.identifier });
+  await cargar();
+
   // 1) Estado corrupto -> arranca igual
   await cargar();
   await ev(`localStorage.setItem('mc-formas-v1', '{"forma":"foo","w":"abc","zoom":9999,"grosor":-3}'); localStorage.setItem('mc-formas-v1:marcas','{basura')`);

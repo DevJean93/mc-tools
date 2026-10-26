@@ -17,6 +17,10 @@
   let firmaActual = null, firmaPedida = null, previos = null;
   let geo = null;                   // geometria del ultimo dibujo (para las entradas)
   let avisoAlmacenamiento = false;
+  if (!almacen.persistente) {
+    avisoAlmacenamiento = true;
+    avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
+  }
 
   const es3D = () => st.forma === 'esfera';
   const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
@@ -33,7 +37,9 @@
   function guardarMarcas() {
     if (!Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen) && !avisoAlmacenamiento) {
       avisoAlmacenamiento = true;
-      avisos.avisar('No se pudo guardar el progreso: el almacenamiento del navegador está lleno.');
+      avisos.avisar(almacen.persistente
+        ? 'No se pudo guardar el progreso: el almacenamiento del navegador está lleno.'
+        : 'No se pudo guardar el progreso: el navegador bloquea el almacenamiento.');
     }
   }
 
