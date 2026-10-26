@@ -95,3 +95,44 @@ test('rendimiento: esfera Ø100 hueca (g=50)', { skip: !!process.env.CI }, () =>
   gen({ forma: 'esfera', w: 100, modo: 'hueco', grosor: 50, esfera: 'esfera' });
   assert.ok(performance.now() - t0 < 300);
 });
+
+// --- contrato comun del registro ------------------------------------------------------
+test('contrato: todas las formas registradas generan, respetan su tamano y son simetricas', () => {
+  assert.ok(Formas.FORMAS.length >= 6, 'estan todas las formas de la app');
+  for (const id of Formas.FORMAS) {
+    const def = Formas.obtener(id);
+    assert.ok(def, `la forma ${id} esta registrada`);
+    const dims = def.dimensiones({ forma: id, w: 16, h: 16 });
+    const r = Formas.generar({ forma: id, w: 16, h: 16, modo: 'relleno', grosor: 1 });
+    assert.equal(r.capas.length, dims.d, `${id}: numero de capas`);
+    r.capas.forEach((g, z) => {
+      assert.equal(g.length, dims.h, `${id}: alto de la capa ${z}`);
+      g.forEach(f => assert.equal(f.length, dims.w, `${id}: ancho de la capa ${z}`));
+    });
+    assert.equal(def.es3D, r.capas.length > 1 || dims.d > 1, `${id}: es3D declara capas`);
+    const g0 = r.capas[0];
+    assert.ok(Formas.contar(g0) > 0, `${id}: al menos un bloque`);
+    assert.deepEqual(g0, g0.map(f => [...f].reverse()), `${id}: simetria horizontal`);
+    assert.deepEqual(r.totales, r.capas.map(Formas.contar), `${id}: totales por capa`);
+  }
+});
+
+test('contrato: el hueco de cada forma es subconjunto de su solido', () => {
+  for (const id of Formas.FORMAS) {
+    const solido = Formas.generar({ forma: id, w: 16, h: 16, modo: 'relleno' });
+    for (const grosor of [1, 2, 3, 5]) {
+      const hueco = Formas.generar({ forma: id, w: 16, h: 16, modo: 'hueco', grosor });
+      assert.ok(hueco.totales.some(n => n > 0), `${id}: el hueco no queda vacio`);
+      hueco.capas.forEach((g, z) => g.forEach((fila, y) => fila.forEach((v, x) => {
+        if (v) assert.ok(solido.capas[z][y][x], `${id}: celda ${x},${y},${z} del hueco fuera del solido`);
+      })));
+    }
+  }
+});
+
+test('contrato: una forma mal definida no se registra', () => {
+  assert.throws(() => Formas.registrar('sin-pintar', { dimensiones: () => ({ w: 1, h: 1, d: 1 }) }), /contrato/);
+  assert.throws(() => Formas.registrar('', { dimensiones: () => ({}), llenar: () => true }), /identificador/);
+  assert.throws(() => Formas.registrar('circulo', { dimensiones: () => ({}), llenar: () => true }), /duplicada/);
+});
+
