@@ -155,7 +155,18 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'B5: sin scroll horizontal a 375 px');
-  ok(await ev(`document.querySelector('.area').getBoundingClientRect().top < document.querySelector('.panel').getBoundingClientRect().top`), 'B5: en movil el dibujo va primero');
+  ok(await ev(`document.getElementById('panel').hidden && document.querySelector('.area').getBoundingClientRect().top < 300`), 'B5: en movil el menu arranca cerrado y el dibujo va primero');
+  await ev(`document.getElementById('verMenu').click()`); await esperar(300);
+  ok(await ev(`(() => { const r = document.getElementById('panel').getBoundingClientRect(); return r.top === 0 && r.width === 375 && document.activeElement.id === 'cerrarMenu' && document.getElementById('verMenu').getAttribute('aria-expanded') === 'true'; })()`), 'B5: el boton abre el menu a pantalla completa con foco en Cerrar');
+  await ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
+  ok(await ev(`document.getElementById('panel').hidden && document.activeElement.id === 'verMenu'`), 'B5: Esc cierra el menu y devuelve el foco');
+  await ev(`document.querySelector('.navmovil a[href="#secMat"]').click()`); await esperar(800);
+  // Materiales es la ultima seccion: si es corta, el menu queda desplazado hasta el final.
+  ok(await ev(`(() => { const p = document.getElementById('panel');
+    const llego = document.getElementById('secMat').getBoundingClientRect().top < 200 || p.scrollTop + p.clientHeight >= p.scrollHeight - 1;
+    return !p.hidden && p.scrollTop > 0 && llego && document.querySelector('.navmovil a[href="#secMat"]').getAttribute('aria-current') === 'true'; })()`), 'B5: Materiales abre el menu en su seccion');
+  await ev(`document.querySelector('.navmovil a[href="#secDibujo"]').click()`); await esperar(300);
+  ok(await ev(`document.getElementById('panel').hidden`), 'B5: Dibujo cierra el menu');
   await shot('04-movil.png');
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));

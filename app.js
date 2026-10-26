@@ -566,17 +566,70 @@
   });
   $('limpiar').addEventListener('click', () => marcarCapas(todas(), false));
 
-  // --- navegacion inferior (movil): resalta la seccion visible ------------------------------
+  // --- mostrar / ocultar el menu ---------------------------------------------------------
+  // Escritorio: columna lateral que se recuerda. Movil: hoja a pantalla completa que arranca cerrada.
+  const KEY_MENU = 'mc-formas-v1:menu';
+  const esMovil = matchMedia('(max-width: 800px)');
+  const panel = $('panel');
   const enlacesNav = [...document.querySelectorAll('.navmovil a')];
+  const visibles = new Map();   // seccion -> fraccion visible (para la barra inferior)
+
+  function prefMenu() {
+    try { return localStorage.getItem(KEY_MENU) !== '0'; } catch (e) { return true; }
+  }
+  function marcarNav() {
+    let mejor = 'secDibujo';
+    if (!panel.hidden) {
+      let max = 0;
+      for (const [id, r] of visibles) if (id !== 'secDibujo' && r > max) { max = r; mejor = id; }
+      if (!max) mejor = 'secForma';
+    }
+    for (const a of enlacesNav) {
+      if (a.hash === '#' + mejor) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    }
+  }
+  function verMenu(visible) {
+    panel.hidden = !visible;
+    document.querySelector('main').classList.toggle('sin-menu', !visible);
+    document.body.classList.toggle('menu-abierto', visible && esMovil.matches);
+    $('verMenu').setAttribute('aria-expanded', String(visible));
+    $('verMenuTxt').textContent = visible ? 'Ocultar menú' : 'Mostrar menú';
+    if (!esMovil.matches) {
+      try { localStorage.setItem(KEY_MENU, visible ? '1' : '0'); } catch (e) { /* sin almacenamiento */ }
+    }
+    marcarNav();
+  }
+  // En movil el foco va al boton Cerrar al abrir y vuelve al de la cabecera al cerrar.
+  function abrirCerrar(visible) {
+    verMenu(visible);
+    if (esMovil.matches) (visible ? $('cerrarMenu') : $('verMenu')).focus({ preventScroll: true });
+  }
+  $('verMenu').addEventListener('click', () => abrirCerrar(panel.hidden));
+  $('cerrarMenu').addEventListener('click', () => abrirCerrar(false));
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && esMovil.matches && !panel.hidden) abrirCerrar(false);
+  });
+  esMovil.addEventListener('change', () => verMenu(esMovil.matches ? false : prefMenu()));
+  verMenu(esMovil.matches ? false : prefMenu());
+
+  // --- navegacion inferior (movil) ----------------------------------------------------------
+  // Dibujo cierra el menu; Forma y Materiales lo abren en su seccion.
+  const suave = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+  for (const a of enlacesNav) {
+    a.addEventListener('click', ev => {
+      ev.preventDefault();
+      const destino = $(a.hash.slice(1)), enPanel = panel.contains(destino);
+      if (panel.hidden === enPanel) verMenu(enPanel);
+      destino.scrollIntoView({ block: 'start', behavior: suave() });
+      for (const b of enlacesNav) {
+        if (b === a) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+      }
+    });
+  }
   if ('IntersectionObserver' in window) {
-    const visibles = new Map();
     const io = new IntersectionObserver(entradas => {
       for (const e of entradas) visibles.set(e.target.id, e.intersectionRatio);
-      let mejor = null, max = 0;
-      for (const [id, r] of visibles) if (r > max) { max = r; mejor = id; }
-      for (const a of enlacesNav) {
-        if (a.hash === '#' + mejor) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
-      }
+      marcarNav();
     }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
     for (const a of enlacesNav) io.observe($(a.hash.slice(1)));
   }

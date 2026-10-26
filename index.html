@@ -23,6 +23,7 @@
   <symbol id="i-mas" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></symbol>
   <symbol id="i-menos" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></symbol>
   <symbol id="i-ajustar" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></symbol>
   <symbol id="i-rejilla" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></symbol>
   <symbol id="i-forma" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><circle cx="17" cy="7" r="4"/><path d="m7 14 4 7H3z"/><path d="m17 13 4 4-4 4-4-4z"/></symbol>
   <symbol id="i-cajas" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
@@ -32,12 +33,17 @@
 <header class="cab">
   <h1>Formas MC</h1>
   <p>Planificador de formas en bloques para Minecraft</p>
+  <button type="button" id="verMenu" class="ver-menu" aria-controls="panel" aria-expanded="true"><svg class="ico" aria-hidden="true"><use href="#i-panel"/></svg><span id="verMenuTxt">Ocultar menú</span></button>
 </header>
 <noscript><p class="error">Esta herramienta necesita JavaScript activado.</p></noscript>
 <div id="error" class="error" role="alert" hidden></div>
 
 <main>
-  <aside class="panel" aria-label="Controles">
+  <aside class="panel" id="panel" aria-label="Controles">
+    <div class="panel-cab">
+      <strong>Menú</strong>
+      <button type="button" id="cerrarMenu"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>Cerrar</button>
+    </div>
     <section id="secForma" aria-labelledby="t-forma">
       <h2 id="t-forma">Forma</h2>
       <label>Tipo
@@ -63,13 +69,11 @@
       <label id="rowOrient">Orientación
         <select id="orient"><option value="plano">Lado plano arriba</option><option value="punta">Punta arriba</option></select>
       </label>
-      <div class="fila2">
-        <label>Modo
-          <select id="modo"><option value="relleno">Sólido</option><option value="hueco">Hueco</option></select>
-        </label>
-        <label id="rowGrosor"><span>Grosor del borde <small id="maxG"></small></span>
-          <input type="number" id="grosor" min="1" max="50" inputmode="numeric"></label>
-      </div>
+      <label>Modo
+        <select id="modo"><option value="relleno">Sólido</option><option value="hueco">Hueco</option></select>
+      </label>
+      <label id="rowGrosor"><span>Grosor del borde <small id="maxG"></small></span>
+        <input type="number" id="grosor" min="1" max="50" inputmode="numeric"></label>
     </section>
 
     <section aria-labelledby="t-vista">

@@ -39,6 +39,8 @@ const Render = (() => {
   }
   const etiquetaRel = k => (k === 0 ? 'C' : String(k));
   const centro = n => [Math.floor((n - 1) / 2), Math.floor(n / 2)];
+  // Bloques que separan i de la franja central [a, b] (0 dentro de la franja).
+  const distFranja = (i, a, b) => (i < a ? a - i : i > b ? i - b : 0);
 
   const txtFila = f => (f.length ? f.map(r => r.l).join(' · ') : '—');
 
@@ -47,7 +49,7 @@ const Render = (() => {
   function medidas(ctx, g, s, op, cab) {
     const h = g.length, w = g[0].length;
     const fh = Math.max(11, Math.min(14, Math.round(s * 0.5)));
-    ctx.font = `${fh}px ${FUENTE}`;
+    ctx.font = `600 ${fh}px ${FUENTE}`;
     const filas = g.map(f => tramos(f));
     const cols = Array.from({ length: w }, (_, x) => tramos(g.map(f => f[x])));
     const anchoNum = ctx.measureText('000'.slice(0, String(Math.max(w, h)).length)).width;
@@ -94,7 +96,7 @@ const Render = (() => {
     const cab = o.cabecera || [];
     const m = medidas(ctx, g, s, op, cab);
     const { w, h, fh, filas, cols, H0, L, T, W, H } = m;
-    const font = `${fh}px ${FUENTE}`, fontB = `600 ${fh}px ${FUENTE}`;
+    const font = `600 ${fh}px ${FUENTE}`;   // todos los numeros en negrita para que destaquen
     const dpr = Math.min(o.dpr || 1, Math.sqrt(MAX_AREA / (W * H)));
 
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
@@ -194,23 +196,49 @@ const Render = (() => {
     const enEjeY = y => y >= cy0 && y <= cy1;
     if (s >= LAYOUT.celdaTexto) {
       ctx.fillStyle = P.sobreBloque; ctx.textAlign = 'center';
-      // tramos dentro del dibujo (sin pisar la fila central si se muestran las distancias)
+      // Extremos de la forma sobre la columna central: entre ellos van las distancias del eje vertical.
+      const colCentro = g.map(f => f[cx0]);
+      const ya = colCentro.indexOf(true), yb = colCentro.lastIndexOf(true);
+      // tramos dentro del dibujo (sin pisar las distancias de los ejes)
       if (op.tramosDentro) {
+        const ejeConNumero = y => op.distEjes && y > ya && y < yb;
+        const cruzaEje = r => r.s <= cx1 && r.s + r.l > cx0;
+        // Los tramos que cruzan el eje vertical llevan su total en una misma columna a la
+        // izquierda del eje, centrada entre el eje y el inicio del tramo mas corto. Los que no
+        // dejan una casilla libre antes del eje no se numeran dentro (se confundirian con el eje).
+        let maxIni = -1;
+        filas.forEach((f, y) => {
+          if (ejeConNumero(y) && !enEjeY(y)) f.forEach(r => { if (cruzaEje(r) && r.s <= cx0 - 3) maxIni = Math.max(maxIni, r.s); });
+        });
+        const colFija = maxIni < 0 ? -1 : Math.floor((maxIni + cx0 - 1) / 2);
         filas.forEach((f, y) => {
           if (op.distEjes && enEjeY(y)) return;
-          f.forEach(r => ctx.fillText(String(r.l), L + (r.s + r.l / 2) * s, T + y * s + s / 2));
+          f.forEach(r => {
+            let medio = r.s + r.l / 2;
+            if (op.distEjes && cruzaEje(r)) {
+              if (colFija >= 0 && r.s <= colFija) medio = colFija + 0.5;
+              else if (ejeConNumero(y)) return;
+            }
+            ctx.fillText(String(r.l), L + medio * s, T + y * s + s / 2);
+          });
         });
       }
-      // distancia al centro sobre los ejes centrales
+      // distancia sobre los ejes: 1 en los bloques del centro y hacia fuera, sin numerar el
+      // bloque del borde de la forma. Tambien en el interior vacio (modo hueco).
       if (op.distEjes) {
-        ctx.font = fontB;
-        for (let x = 0; x < w; x++) for (let y = cy0; y <= cy1; y++) {
-          if (g[y][x]) ctx.fillText(etiquetaRel(relativo(x, w)), L + x * s + s / 2, T + y * s + s / 2);
+        const num = (x, y, d) => {
+          ctx.fillStyle = g[y][x] ? P.sobreBloque : P.regla;
+          ctx.fillText(String(d), L + x * s + s / 2, T + y * s + s / 2);
+        };
+        for (let y = cy0; y <= cy1; y++) {
+          const a = g[y].indexOf(true), b = g[y].lastIndexOf(true);
+          for (let x = a + 1; a >= 0 && x < b; x++) num(x, y, distFranja(x, cx0, cx1) + 1);
         }
-        for (let y = 0; y < h; y++) for (let x = cx0; x <= cx1; x++) {
-          if (g[y][x] && !enEjeY(y)) ctx.fillText(etiquetaRel(relativo(y, h)), L + x * s + s / 2, T + y * s + s / 2);
+        for (let x = cx0; x <= cx1; x++) {
+          const col = g.map(f => f[x]);
+          const a = col.indexOf(true), b = col.lastIndexOf(true);
+          for (let y = a + 1; a >= 0 && y < b; y++) if (!enEjeY(y)) num(x, y, distFranja(y, cy0, cy1) + 1);
         }
-        ctx.font = font;
       }
     }
 
