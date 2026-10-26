@@ -50,6 +50,10 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`document.getElementById('forma').value === 'circulo' && document.querySelector('.tot').textContent.startsWith('208')`), 'A1: localStorage corrupto -> circulo 16 por defecto (208)');
   await ev(`localStorage.clear()`); await cargar();
   await shot('01-inicio.png');
+  ok(await ev(`(() => {
+    const ops = [...document.getElementById('forma').options];
+    return ops.length === Formas.FORMAS.length && ops.every(o => Formas.FORMAS.includes(o.value) && o.textContent === Formas.obtener(o.value).nombre);
+  })()`), 'B2: el selector de formas sale del registro (FORMAS + nombre)');
 
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
   const geo = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);
