@@ -1,16 +1,15 @@
 // Interfaz: lee el panel, genera la forma, dibuja, gestiona marcas, deshacer y exportacion.
 (() => {
-  const { STACK, SHULKER, COFRE_DOBLE, LIMITES, CLAVES_GEO } = Estado;
+  const { LIMITES, CLAVES_GEO } = Estado;
   const $ = id => document.getElementById(id);
   const cv = $('lienzo');
   const almacen = Almacen.local();
 
   const st = Estado.cargar(almacen);
   let capas = [], totales = [], grosorMax = null;
-  let hechos = new Set();          // "capa,x,y" de bloques marcados como construidos
+  const marcas = Marcas.crear();    // bloques marcados como construidos
   let firmaActual = null, firmaPedida = null, previos = null;
-  const pilaDeshacer = [], pilaRehacer = [];
-  const MAX_HISTORIAL = 50;
+  const historial = Historial.crear();
   let geo = null;                  // geometria del ultimo dibujo (para el raton)
   let cursor = null;               // celda activa del teclado
   let avisoAlmacenamiento = false;
@@ -18,9 +17,6 @@
   const TOGGLES = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
   const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
   const es3D = () => st.forma === 'esfera';
-  const clave = (c, x, y) => `${c},${x},${y}`;
-  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
-  const fmtStacks = n => `${Math.floor(n / STACK)} × ${STACK}${n % STACK ? ' + ' + (n % STACK) : ''}`;
 
   // --- avisos ----------------------------------------------------------------------
   let avisoTimer = null;
@@ -74,7 +70,7 @@
 
   function guardarEstado() { Estado.guardar(st, almacen); }
   function guardarMarcas() {
-    if (!Estado.guardarMarcas(firmaActual, hechos, almacen) && !avisoAlmacenamiento) {
+    if (!Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen) && !avisoAlmacenamiento) {
       avisoAlmacenamiento = true;
       avisar('No se pudo guardar el progreso: el almacenamiento del navegador está lleno.');
     }
@@ -112,11 +108,10 @@
 
     const nueva = Estado.firma(st);
     if (firmaActual === null) {
-      hechos = Estado.cargarMarcas(nueva, capas, almacen);   // arranque: recuperar el progreso guardado
-    } else if (nueva !== firmaActual && hechos.size && !opts.conservar) {
-      apilar(pilaDeshacer, { params: previos, hechos: [...hechos] });
-      pilaRehacer.length = 0;
-      hechos = new Set();
+      marcas.restaurar(Estado.cargarMarcas(nueva, capas, almacen));   // arranque: recuperar el progreso guardado
+    } else if (nueva !== firmaActual && marcas.total() && !opts.conservar) {
+      historial.apilar({ params: previos, hechos: marcas.instantanea() });
+      marcas.limpiar();
       avisar('La forma cambió: se limpiaron las marcas.', deshacer);
     }
     const cambioTamano = !previos || previos.forma !== st.forma || previos.w !== st.w || previos.h !== st.h;
@@ -136,54 +131,35 @@
   const regenerarDiferido = aplazar(regenerar, 150);
 
   // --- historial -------------------------------------------------------------------
-  function apilar(pila, snap) { pila.push(snap); if (pila.length > MAX_HISTORIAL) pila.shift(); }
-  const instantanea = () => ({ params: paramsGeo(), hechos: [...hechos] });
+  const instantanea = () => ({ params: paramsGeo(), hechos: marcas.instantanea() });
 
   function restaurar(snap) {
     const cambiaGeo = Estado.firma({ ...st, ...snap.params }) !== firmaActual;
     Object.assign(st, snap.params);
-    hechos = new Set(snap.hechos);
+    marcas.restaurar(snap.hechos);
     if (cambiaGeo) regenerar({ sinLeer: true, conservar: true });
     else { guardarMarcas(); refrescar(); }
   }
   function deshacer() {
-    const s = pilaDeshacer.pop(); if (!s) return;
-    apilar(pilaRehacer, instantanea()); restaurar(s); anunciar('Deshecho');
+    const s = historial.deshacer(instantanea()); if (!s) return;
+    restaurar(s); anunciar('Deshecho');
   }
   function rehacer() {
-    const s = pilaRehacer.pop(); if (!s) return;
-    apilar(pilaDeshacer, instantanea()); restaurar(s); anunciar('Rehecho');
+    const s = historial.rehacer(instantanea()); if (!s) return;
+    restaurar(s); anunciar('Rehecho');
   }
-  function antesDeMarcar() { apilar(pilaDeshacer, instantanea()); pilaRehacer.length = 0; }
+  function antesDeMarcar() { historial.apilar(instantanea()); }
   function trasMarcar() { guardarMarcas(); refrescar(); }
 
   // --- marcas ----------------------------------------------------------------------
-  function fijar(c, x, y, valor) {
-    if (!capas[c][y][x]) return false;
-    const k = clave(c, x, y);
-    if (valor === hechos.has(k)) return false;
-    if (valor) hechos.add(k); else hechos.delete(k);
-    return true;
-  }
-
   function marcarCapas(indices, valor) {
     antesDeMarcar();
-    let n = 0;
-    for (const c of indices) {
-      const g = capas[c];
-      for (let y = 0; y < g.length; y++) for (let x = 0; x < g[0].length; x++) if (fijar(c, x, y, valor)) n++;
-    }
-    if (!n) { pilaDeshacer.pop(); return; }
+    const n = marcas.marcarCapas(capas, indices, valor);
+    if (!n) { historial.descartar(); return; }
     trasMarcar();
     avisar(`${valor ? 'Marcados' : 'Desmarcados'} ${n} bloques.`, deshacer);
   }
   const todas = () => capas.map((_, i) => i);
-
-  function porCapa() {
-    const a = new Array(capas.length).fill(0);
-    for (const k of hechos) a[+k.slice(0, k.indexOf(','))]++;
-    return a;
-  }
 
   // --- vista -----------------------------------------------------------------------
   let rafPendiente = false;
@@ -195,7 +171,7 @@
 
   function dibujar() {
     geo = Render.dibujar(cv, {
-      g: capas[st.capa], capa: st.capa, hechos, s: st.zoom, op: st,
+      g: capas[st.capa], capa: st.capa, hechos: marcas.conjunto(), s: st.zoom, op: st,
       cursor: document.activeElement === cv ? cursor : null,
       dpr: window.devicePixelRatio || 1,
     });
@@ -275,59 +251,40 @@
     $('capa').max = n - 1; $('capa').value = st.capa;
     $('capaTxt').textContent = `Capa ${st.capa + 1} de ${n}` + (st.capa === 0 ? ' (base)' : '');
     for (const id of ['marcarCapa', 'desmarcarCapa']) $(id).hidden = n < 2;
-    $('deshacer').disabled = !pilaDeshacer.length;
-    $('rehacer').disabled = !pilaRehacer.length;
+    $('deshacer').disabled = !historial.puedeDeshacer();
+    $('rehacer').disabled = !historial.puedeRehacer();
     dibujar(); materiales(); resumen();
   }
 
   function resumen() {
-    const g = capas[st.capa], h = g.length, w = g[0].length;
-    const [cx0, cx1] = Render.centro(w), [cy0, cy1] = Render.centro(h);
-    let minX = Infinity, maxX = -1, minY = Infinity, maxY = -1;
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      if (!g[y][x]) continue;
-      if (y >= cy0 && y <= cy1) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
-      if (x >= cx0 && x <= cx1) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-    }
-    let txt = `Centro: ${cx1 - cx0 + 1}×${cy1 - cy0 + 1} bloques`;
-    if (maxX >= 0) {
-      txt += ` · del centro al borde: ← ${cx0 - minX} · → ${maxX - cx1}`;
-      if (maxY >= 0) txt += ` · ↑ ${cy0 - minY} · ↓ ${maxY - cy1}`;
-      txt += ' bloques (sin contar el centro)';
-    }
-    $('resumen').textContent = txt;
+    $('resumen').textContent = Materiales.textoResumenCentro(capas[st.capa], Render.centro);
   }
 
   function materiales() {
-    const total = totales.reduce((a, b) => a + b, 0);
-    const hechosCapa = porCapa();
-    const marcados = hechos.size;
-    let html = `<div class="tot">${total} <small>bloques</small></div><div class="mat">` +
-      `<span>Stacks</span><b>${fmtStacks(total)}</b>` +
-      `<span>Shulker boxes</span><b>${(total / SHULKER).toFixed(2)} → ${Math.ceil(total / SHULKER)}</b>` +
-      `<span>Cofres dobles</span><b>${(total / COFRE_DOBLE).toFixed(2)} → ${Math.ceil(total / COFRE_DOBLE)}</b>` +
-      `<span>Construidos</span><b>${marcados}</b><span>Faltan</span><b>${total - marcados}</b></div>` +
-      `<p class="formula">1 stack = ${STACK} · 1 shulker = 27 stacks = ${SHULKER} · 1 cofre doble = 54 stacks = ${COFRE_DOBLE}</p>`;
+    const r = Materiales.resumen(totales, marcas.porCapa(capas.length), st.capa);
+    let html = `<div class="tot">${r.total} <small>bloques</small></div><div class="mat">` +
+      `<span>Stacks</span><b>${r.stacks}</b>` +
+      `<span>Shulker boxes</span><b>${r.shulkers.valor.toFixed(2)} → ${r.shulkers.cajas}</b>` +
+      `<span>Cofres dobles</span><b>${r.cofres.valor.toFixed(2)} → ${r.cofres.cajas}</b>` +
+      `<span>Construidos</span><b>${r.marcados}</b><span>Faltan</span><b>${r.faltan}</b></div>` +
+      `<p class="formula">1 stack = ${Materiales.STACK} · 1 shulker = 27 stacks = ${Materiales.SHULKER} · 1 cofre doble = 54 stacks = ${Materiales.COFRE_DOBLE}</p>`;
     $('materiales').innerHTML = html;
 
     if (capas.length > 1) {
       let t = '<table><thead><tr><th scope="col">Capa</th><th scope="col">Bloques</th><th scope="col">Stacks</th><th scope="col">Hechos</th></tr></thead><tbody>';
-      totales.forEach((c, i) => {
-        const cls = [i === st.capa ? 'sel' : '', c && hechosCapa[i] === c ? 'completa' : ''].join(' ');
-        t += `<tr data-i="${i}" class="${cls}"${i === st.capa ? ' aria-current="true"' : ''}><td>${i + 1}</td><td>${c}</td><td>${fmtStacks(c)}</td><td>${pct(hechosCapa[i], c)} %</td></tr>`;
+      r.capas.forEach(c => {
+        const cls = [c.i === st.capa ? 'sel' : '', c.completa ? 'completa' : ''].join(' ');
+        t += `<tr data-i="${c.i}" class="${cls}"${c.i === st.capa ? ' aria-current="true"' : ''}><td>${c.i + 1}</td><td>${c.total}</td><td>${Materiales.fmtStacks(c.total)}</td><td>${c.pct} %</td></tr>`;
       });
       $('tablaCapas').innerHTML = t + '</tbody></table>';
     } else {
       $('tablaCapas').innerHTML = '';
     }
 
-    const enCapa = hechosCapa[st.capa], totCapa = totales[st.capa];
-    $('barraProg').style.width = pct(marcados, total) + '%';
-    $('progTxt').textContent = capas.length > 1
-      ? `Capa: ${enCapa}/${totCapa} (${pct(enCapa, totCapa)} %) · Total: ${marcados}/${total} (${pct(marcados, total)} %)`
-      : `Construidos: ${marcados}/${total} (${pct(marcados, total)} %)`;
+    $('barraProg').style.width = r.pctTotal + '%';
+    $('progTxt').textContent = r.textoProgreso;
     cv.setAttribute('aria-label',
-      `Dibujo de ${nombreForma()} ${dimensiones()}, ${textoModo()}. Capa ${st.capa + 1} de ${capas.length}: ${totCapa} bloques, ${enCapa} construidos.`);
+      `Dibujo de ${nombreForma()} ${dimensiones()}, ${textoModo()}. Capa ${st.capa + 1} de ${capas.length}: ${r.totCapa} bloques, ${r.enCapa} construidos.`);
   }
 
   function irCapa(i) {
@@ -345,7 +302,7 @@
 
   function describir(c) {
     const g = capas[st.capa];
-    const estado = !g[c.y][c.x] ? 'vacío' : hechos.has(clave(st.capa, c.x, c.y)) ? 'bloque construido' : 'bloque';
+    const estado = !g[c.y][c.x] ? 'vacío' : marcas.tiene(st.capa, c.x, c.y) ? 'bloque construido' : 'bloque';
     return `Columna ${c.x + 1}, fila ${c.y + 1} · relativo al centro (${Render.etiquetaRel(Render.relativo(c.x, geo.w))}, ` +
       `${Render.etiquetaRel(Render.relativo(c.y, geo.h))}) · ${estado}`;
   }
@@ -377,14 +334,14 @@
     if (!c || (ev.button !== 0 && ev.button !== 2)) return;
     ev.preventDefault();
     cv.focus({ preventScroll: true });
-    const valor = ev.button === 2 ? false : !hechos.has(clave(st.capa, c.x, c.y));
+    const valor = ev.button === 2 ? false : !marcas.tiene(st.capa, c.x, c.y);
     trazo = { valor, cambio: false, id: ev.pointerId };
     antesDeMarcar();
     cv.setPointerCapture(ev.pointerId);
     pintar(c);
   });
   function pintar(c) {
-    if (c && fijar(st.capa, c.x, c.y, trazo.valor)) { trazo.cambio = true; programarDibujo(); }
+    if (c && marcas.fijar(capas, st.capa, c.x, c.y, trazo.valor)) { trazo.cambio = true; programarDibujo(); }
   }
   cv.addEventListener('pointermove', ev => {
     if (ev.pointerType === 'touch' && toques.has(ev.pointerId)) {
@@ -412,13 +369,13 @@
         const { x, y } = toque.c;
         $('info').textContent = describir(toque.c);
         antesDeMarcar();
-        if (fijar(st.capa, x, y, !hechos.has(clave(st.capa, x, y)))) trasMarcar(); else pilaDeshacer.pop();
+        if (marcas.fijar(capas, st.capa, x, y, !marcas.tiene(st.capa, x, y))) trasMarcar(); else historial.descartar();
       }
       toque = null;
       return;
     }
     if (!trazo || ev.pointerId !== trazo.id) return;
-    if (trazo.cambio) trasMarcar(); else pilaDeshacer.pop();
+    if (trazo.cambio) trasMarcar(); else historial.descartar();
     trazo = null;
     refrescar();
   }
@@ -459,7 +416,7 @@
         const { x, y } = cursor;
         if (!g[y][x]) { anunciar('Celda vacía: no hay bloque que marcar.'); ev.preventDefault(); return; }
         antesDeMarcar();
-        fijar(st.capa, x, y, !hechos.has(clave(st.capa, x, y)));
+        marcas.fijar(capas, st.capa, x, y, !marcas.tiene(st.capa, x, y));
         trasMarcar();
         break;
       }
@@ -495,12 +452,12 @@
     return new Promise(resolve => {
       try {
         const aux = document.createElement('canvas');
-        const enCapa = porCapa()[c];
+        const enCapa = marcas.porCapa(capas.length)[c];
         Render.dibujar(aux, {
-          g: capas[c], capa: c, hechos, s: st.zoom, op: st, dpr: 1,
+          g: capas[c], capa: c, hechos: marcas.conjunto(), s: st.zoom, op: st, dpr: 1,
           cabecera: [
             `${nombreForma()} ${dimensiones()} · ${textoModo()}`,
-            `Capa ${c + 1} de ${capas.length} · ${totales[c]} bloques (${fmtStacks(totales[c])}) · construidos ${enCapa}`,
+            `Capa ${c + 1} de ${capas.length} · ${totales[c]} bloques (${Materiales.fmtStacks(totales[c])}) · construidos ${enCapa}`,
             `Formas MC · ${new Date().toLocaleDateString('es')}`,
           ],
         });
