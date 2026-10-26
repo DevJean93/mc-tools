@@ -249,6 +249,37 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await zoom() === 48 && sA1[0] - sA1b[0] >= 25 && sA1b[1] < sA1[1] && await prog() === 'Construidos: 1/208 (0 %)',
     `TACTIL A1: con zoom 48 el pellizco sigue desplazando (${sA1[0]},${sA1[1]} -> ${sA1b[0]},${sA1b[1]})`);
 
+  // A2: pellizco que ademas se desplaza 80 px: la celda bajo el punto medio inicial sigue
+  // bajo el punto medio final (el dibujo no se queda atras).
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0; })()`);
+  await esperar(150);
+  const wcA2 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  const celdaEn = async p => {
+    await mouse('mouseMoved', p[0], p[1], 'none', 0); await esperar(40);
+    return (await ev(`document.getElementById('info').textContent`)).split(' · ')[0];
+  };
+  const celdaA2a = await celdaEn(wcA2);
+  const dedosA2 = k => {
+    const sep = 40 + k, off = -20 * k;
+    return [
+      { x: wcA2[0] - sep + off, y: wcA2[1], id: 1 },
+      { x: wcA2[0] + sep + off, y: wcA2[1], id: 2 },
+    ];
+  };
+  const zA2 = await zoom();
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: dedosA2(0) });
+  for (const k of [1, 2, 3, 4]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: dedosA2(k) });
+    await esperar(30);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  const celdaA2b = await celdaEn([wcA2[0] - 80, wcA2[1]]);
+  const rc = t => (t.match(/^Columna (\d+), fila (\d+)$/) || []).slice(1).map(Number);
+  const [ca, ra] = rc(celdaA2a), [cb, rb] = rc(celdaA2b);
+  ok(await zoom() > zA2 && ca && Math.abs(ca - cb) <= 1 && Math.abs(ra - rb) <= 1 && await prog() === 'Construidos: 1/208 (0 %)',
+    `TACTIL A2: pellizcar y arrastrar mantiene la celda bajo los dedos (${celdaA2a} -> ${celdaA2b})`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
 })().catch(e => { console.error(e); edge.kill(); process.exit(1); });

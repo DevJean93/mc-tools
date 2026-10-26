@@ -38,12 +38,13 @@ const EntradaTactil = (() => {
     function seguirPellizco() {
       const [p, q] = dedos();
       const m = medio(p, q);
+      // Primero los dedos mueven el dibujo: el punto medio manda y la celda que estaba
+      // debajo sigue debajo al cambiar el zoom (que se ancla al nuevo punto medio).
+      desplazar(m.x - pellizco.mx, m.y - pellizco.my);
+      pellizco.mx = m.x; pellizco.my = m.y;
       // El zoom se recorta ya aqui: en los limites, el pellizco sigue moviendo el dibujo.
       const nuevo = limitar(Math.round(pellizco.z * distancia(p, q) / pellizco.d), limites.zoomMin, limites.zoomMax);
-      // Con el mismo zoom, los dedos mueven el dibujo; al cambiar, el zoom se ancla al punto medio.
       if (nuevo !== a.zoomActual()) a.zoom(nuevo, { clientX: m.x, clientY: m.y });
-      else desplazar(m.x - pellizco.mx, m.y - pellizco.my);
-      pellizco.mx = m.x; pellizco.my = m.y;
     }
 
     lienzo.addEventListener('pointerdown', ev => {
