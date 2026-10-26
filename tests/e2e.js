@@ -43,8 +43,9 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueo.identifier });
   await cargar();
 
-  // C4: un localStorage que lee pero no deja escribir no es persistente: debe avisar de que
-  // no guarda, no de que esta lleno.
+  // C4: un localStorage vacio que no deja escribir (cuota 0) no es persistente: debe avisar de
+  // que no guarda, no de que esta lleno.
+  await ev(`localStorage.clear()`);
   const soloLectura = await send('Page.addScriptToEvaluateOnNewDocument', {
     source: `Storage.prototype.setItem = function () { throw new DOMException('cuota 0', 'QuotaExceededError'); };`,
   });
@@ -52,6 +53,22 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('bloquea') && !document.getElementById('avisoTxt').textContent.includes('lleno') && document.querySelector('.tot').textContent.startsWith('208')`),
     'C4: sin escritura avisa de que el navegador bloquea el almacenamiento');
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: soloLectura.identifier });
+  await cargar();
+
+  // A1: con el almacenamiento lleno la app sigue recuperando el progreso ya guardado y avisa
+  // de que esta lleno (nunca de que esta bloqueado).
+  await ev(`localStorage.clear(); localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'triangulo', w: 21, h: 15, igualar: false }))`);
+  await cargar();
+  await ev(`document.getElementById('marcarTodo').click()`); await esperar(250);
+  const progLleno = await prog();
+  ok(progLleno.includes('159/159'), `A1: preparado el progreso a recuperar (${progLleno})`);
+  await ev(`(() => { let n = 0, trozo = 'x'.repeat(1 << 20); while (trozo.length) { try { localStorage.setItem('relleno' + n, trozo); n++; } catch (e) { trozo = trozo.slice(0, trozo.length >> 1); } } })()`);
+  await cargar();
+  ok(await ev(`document.getElementById('forma').value === 'triangulo'`) && await prog() === progLleno,
+    `A1: con el almacenamiento lleno se recupera el progreso (${await prog()})`);
+  ok(await ev(`(() => { const a = document.getElementById('avisoTxt').textContent; return !a.includes('bloquea'); })()`),
+    'A1: con el almacenamiento lleno no dice que el navegador lo bloquea');
+  await ev(`localStorage.clear()`);
   await cargar();
 
   // 1) Estado corrupto -> arranca igual
