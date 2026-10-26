@@ -70,9 +70,20 @@ const Panel = (() => {
       $('maxG').textContent = grosorMax ? `(máx. ${grosorMax})` : '';
     }
 
-    return { leer, poner, TOGGLES, CAMPOS, SELECTS };
+    // Conecta el formulario con la app: cada cambio avisa de si toca regenerar (diferido
+    // mientras se teclea) o solo repintar.
+    function conectar({ alCambiarGeo, alCambiarVista }) {
+      for (const id of CAMPOS) {
+        $(id).addEventListener('input', () => alCambiarGeo({ diferido: true }));
+        $(id).addEventListener('change', () => alCambiarGeo({ diferido: false }));
+      }
+      for (const id of SELECTS) $(id).addEventListener('input', () => alCambiarGeo({ diferido: false }));
+      for (const k of TOGGLES) $(k).addEventListener('input', () => alCambiarVista());
+    }
+
+    return { leer, poner, conectar };
   }
 
-  return { crear, TOGGLES, CAMPOS, SELECTS };
+  return { crear };
 })();
 if (typeof module !== 'undefined') module.exports = Panel; else globalThis.Panel = Panel;

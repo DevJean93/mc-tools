@@ -1,124 +1,33 @@
 // Raiz de composicion: crea los modulos, inyecta sus dependencias, conecta los eventos y arranca.
-// Aqui no hay reglas de negocio: solo cableado entre estado, vistas y entradas.
+// Aqui no hay reglas de negocio: solo cableado entre estado, documento, vistas y entradas.
 (() => {
   const $ = id => document.getElementById(id);
   const al = (id, evento, fn) => $(id).addEventListener(evento, fn);
   const cv = $('lienzo'), wrap = cv.parentElement;
   const almacen = Almacen.local();
-  const { LIMITES, CLAVES_GEO, clamp } = Estado;
+  const { LIMITES } = Estado;
 
   const avisos = Avisos.crear({
     caja: $('aviso'), texto: $('avisoTxt'), boton: $('avisoAccion'), error: $('error'), anuncio: $('anuncio'),
   });
 
   const st = Estado.cargar(almacen);
-  let capas = [], totales = [], grosorMax = null;
-  const marcas = Marcas.crear(), historial = Historial.crear();
-  let firmaActual = null, firmaPedida = null, previos = null;
-  let geo = null;                   // geometria del ultimo dibujo (para las entradas)
-  let teclado = null;               // se conecta mas abajo, antes de regenerar
-  let avisoAlmacenamiento = false;
-  if (!almacen.persistente) {
-    avisoAlmacenamiento = true;
-    avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
-  }
-
-  const definicion = () => Formas.obtener(st.forma) || {};
-  const es3D = () => !!definicion().es3D;
-  const paramsGeo = () => Object.fromEntries(CLAVES_GEO.map(k => [k, st[k]]));
-  const todas = () => capas.map((_, i) => i);
-
-  const panel = Panel.crear({ st, limites: LIMITES, es3D });
+  const panel = Panel.crear({ st, limites: LIMITES, es3D: () => doc.es3D() });
   const vista = VistaMateriales.crear({
-    materiales: $('materiales'), tabla: $('tablaCapas'), barra: $('barraProg'), progreso: $('progTxt'),
+    materiales: $('materiales'), tabla: $('tablaCapas'), barra: $('barraProg'), progreso: $('progTxt'), lienzo: cv,
+  });
+  let teclado = null;               // se conecta mas abajo, antes de regenerar
+  let geo = null;                   // geometria del ultimo dibujo (para las entradas)
+
+  const doc = Documento.crear({
+    st, almacen, avisos, panel,
+    alCambiar: () => refrescar(),
+    alCambiarTamano: () => zoom.alejarSiNoCabe(),
+    alRestringir: (w, h) => teclado.restringir(w, h),
   });
 
-  // --- persistencia -----------------------------------------------------------------
-  function guardarEstado() { Estado.guardar(st, almacen); }
-  function guardarMarcas() {
-    if (!Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen) && !avisoAlmacenamiento) {
-      avisoAlmacenamiento = true;
-      avisos.avisar(almacen.persistente
-        ? 'No se pudo guardar el progreso: el almacenamiento del navegador está lleno.'
-        : 'No se pudo guardar el progreso: el navegador bloquea el almacenamiento.');
-    }
-  }
-
-  // --- geometria --------------------------------------------------------------------
-  function generar() {
-    try {
-      const r = Formas.generar(st);
-      avisos.ocultarError();
-      return r;
-    } catch (e) {
-      avisos.mostrarError(`No se pudo generar la forma (${e.message}). Se volvió al círculo por defecto.`);
-      Object.assign(st, { forma: 'circulo', w: 16, h: 16, modo: 'relleno', grosor: 1 });
-      return Formas.generar(st);
-    }
-  }
-
-  // opts.sinLeer: usar st tal cual (deshacer); opts.conservar: no limpiar marcas.
-  function regenerar(opts = {}) {
-    if (!opts.sinLeer) panel.leer();
-    if (st.igualar && !es3D()) st.h = st.w;
-    const pedida = Estado.firma(st);
-    if (pedida === firmaPedida && capas.length && !opts.sinLeer) { panel.poner(grosorMax); guardarEstado(); return; }
-    firmaPedida = pedida;
-
-    const r = generar();
-    capas = r.capas; totales = r.totales; grosorMax = r.grosorMax;
-    if (r.grosorRecortado) {
-      avisos.avisar(`Grosor máximo para este tamaño: ${r.grosor}. Con más, la forma quedaría sólida.`);
-    }
-    st.grosor = r.grosor;
-
-    const nueva = Estado.firma(st);
-    if (firmaActual === null) {
-      marcas.restaurar(Estado.cargarMarcas(nueva, capas, almacen));   // arranque: recuperar el progreso
-    } else if (nueva !== firmaActual && marcas.total() && !opts.conservar) {
-      historial.apilar({ params: previos, hechos: marcas.instantanea() });
-      marcas.limpiar();
-      avisos.avisar('La forma cambió: se limpiaron las marcas.', deshacer);
-    }
-    const cambioTamano = !previos || previos.forma !== st.forma || previos.w !== st.w || previos.h !== st.h;
-    firmaActual = nueva;
-    previos = paramsGeo();
-    st.capa = clamp(st.capa, 0, capas.length - 1);
-    if (teclado) teclado.restringir(capas[0][0].length, capas[0].length);
-    panel.poner(grosorMax); guardarEstado(); guardarMarcas();
-    refrescar();
-    if (cambioTamano) zoom.alejarSiNoCabe();
-  }
-
   const aplazar = (fn, ms) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };
-  const regenerarDiferido = aplazar(regenerar, 150);
-
-  // --- marcas e historial -----------------------------------------------------------
-  const instantanea = () => ({ params: paramsGeo(), hechos: marcas.instantanea() });
-  const antesDeMarcar = () => historial.apilar(instantanea());
-  const descartarPaso = () => historial.descartar();
-  const trasMarcar = () => { guardarMarcas(); refrescar(); };
-
-  function restaurar(snap) {
-    const cambiaGeo = Estado.firma({ ...st, ...snap.params }) !== firmaActual;
-    Object.assign(st, snap.params);
-    marcas.restaurar(snap.hechos);
-    if (cambiaGeo) regenerar({ sinLeer: true, conservar: true });
-    else { guardarMarcas(); refrescar(); }
-  }
-  function deshacer() { const s = historial.deshacer(instantanea()); if (!s) return; restaurar(s); avisos.anunciar('Deshecho'); }
-  function rehacer() { const s = historial.rehacer(instantanea()); if (!s) return; restaurar(s); avisos.anunciar('Rehecho'); }
-
-  const fijar = (x, y, valor) => marcas.fijar(capas, st.capa, x, y, valor);
-  const hayBloque = (x, y) => !!(capas[st.capa][y] && capas[st.capa][y][x]);
-
-  function marcarCapas(indices, valor) {
-    antesDeMarcar();
-    const n = marcas.marcarCapas(capas, indices, valor);
-    if (!n) { historial.descartar(); return; }
-    trasMarcar();
-    avisos.avisar(`${valor ? 'Marcados' : 'Desmarcados'} ${n} bloques.`, deshacer);
-  }
+  const regenerarDiferido = aplazar(() => doc.regenerar(), 150);
 
   // --- dibujo -----------------------------------------------------------------------
   let rafPendiente = false;
@@ -130,7 +39,7 @@
 
   function dibujar() {
     geo = Render.dibujar(cv, {
-      g: capas[st.capa], capa: st.capa, hechos: marcas.conjunto(), s: st.zoom, op: st,
+      g: doc.capaActual(), capa: doc.capa(), hechos: doc.hechos(), s: st.zoom, op: st,
       cursor: document.activeElement === cv && teclado ? teclado.cursor() : null,
       dpr: window.devicePixelRatio || 1,
     });
@@ -142,38 +51,36 @@
 
   const zoom = Zoom.crear({
     lienzo: cv, contenedor: wrap, limites: LIMITES,
-    medir: s => Render.medir(capas[st.capa], s, st),
+    medir: s => Render.medir(doc.capaActual(), s, st),
     geometria: () => geo, obtener: () => st.zoom,
-    fijar: n => { st.zoom = n; guardarEstado(); },
+    fijar: n => { st.zoom = n; doc.guardarEstado(); },
     alDibujar: dibujar,
   });
 
+  // --- textos de la forma -----------------------------------------------------------
   function nombreForma() {
-    const def = definicion();
+    const def = doc.definicion();
     const variante = (def.variantes || []).find(v => v.valor === st.esfera);
-    return (es3D() && variante && variante.nombre) || def.nombre || $('forma').selectedOptions[0].textContent;
+    return (doc.es3D() && variante && variante.nombre) || def.nombre || $('forma').selectedOptions[0].textContent;
   }
-  const dimensiones = () => (es3D() ? `Ø${st.w}` : `${st.w}×${st.h}`);
+  const dimensiones = () => (doc.es3D() ? `Ø${st.w}` : `${st.w}×${st.h}`);
   const textoModo = () => (st.modo === 'hueco' ? `hueco, grosor ${st.grosor}` : 'sólido');
 
+  // --- vista ------------------------------------------------------------------------
   function refrescar() {
-    const n = capas.length;
+    const n = doc.capas().length, capa = doc.capa();
     $('selCapa').hidden = n < 2;
-    $('capa').max = n - 1; $('capa').value = st.capa;
-    $('capaTxt').textContent = `Capa ${st.capa + 1} de ${n}` + (st.capa === 0 ? ' (base)' : '');
+    $('capa').max = n - 1; $('capa').value = capa;
+    $('capaTxt').textContent = `Capa ${capa + 1} de ${n}` + (capa === 0 ? ' (base)' : '');
     for (const id of ['marcarCapa', 'desmarcarCapa']) $(id).hidden = n < 2;
-    $('deshacer').disabled = !historial.puedeDeshacer();
-    $('rehacer').disabled = !historial.puedeRehacer();
+    $('deshacer').disabled = !doc.puedeDeshacer();
+    $('rehacer').disabled = !doc.puedeRehacer();
     dibujar();
 
-    const r = Materiales.resumen(totales, marcas.porCapa(n), st.capa);
-    vista.pintar(r, st.capa);
-    $('resumen').textContent = Materiales.textoResumenCentro(capas[st.capa], Render.centro);
-    cv.setAttribute('aria-label',
-      `Dibujo de ${nombreForma()} ${dimensiones()}, ${textoModo()}. Capa ${st.capa + 1} de ${n}: ${r.totCapa} bloques, ${r.enCapa} construidos.`);
+    const r = Materiales.resumen(doc.totales(), doc.porCapa(n), capa);
+    vista.pintar(r, capa, { nombre: nombreForma(), dimensiones: dimensiones(), modo: textoModo() });
+    $('resumen').textContent = Materiales.textoResumenCentro(doc.capaActual(), Render.centro);
   }
-
-  function irCapa(i) { st.capa = clamp(i, 0, capas.length - 1); guardarEstado(); refrescar(); }
 
   // --- interpretacion del puntero ---------------------------------------------------
   function celda(ev) {
@@ -184,8 +91,8 @@
   }
 
   function describir(c) {
-    const g = capas[st.capa];
-    const estado = !g[c.y][c.x] ? 'vacío' : marcas.tiene(st.capa, c.x, c.y) ? 'bloque construido' : 'bloque';
+    const g = doc.capaActual();
+    const estado = !g[c.y][c.x] ? 'vacío' : doc.hecho(c.x, c.y) ? 'bloque construido' : 'bloque';
     return `Columna ${c.x + 1}, fila ${c.y + 1} · relativo al centro (${Render.etiquetaRel(Render.relativo(c.x, geo.w))}, ` +
       `${Render.etiquetaRel(Render.relativo(c.y, geo.h))}) · ${estado}`;
   }
@@ -196,8 +103,8 @@
   $('info').textContent = INFO_INICIAL;
 
   const informar = txt => { $('info').textContent = txt; };
-  const cursorInicial = () => ({ x: Render.centro(capas[st.capa][0].length)[0], y: Render.centro(capas[st.capa].length)[0] });
-  const dimensionesCapa = () => ({ w: capas[st.capa][0].length, h: capas[st.capa].length });
+  const cursorInicial = () => ({ x: Render.centro(doc.capaActual()[0].length)[0], y: Render.centro(doc.capaActual().length)[0] });
+  const dimensionesCapa = () => ({ w: doc.capaActual()[0].length, h: doc.capaActual().length });
 
   // Mantiene visible la celda activa del teclado.
   function verCursor(c) {
@@ -206,20 +113,23 @@
     if (py < wrap.scrollTop || py + geo.s > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = py - wrap.clientHeight / 2;
   }
 
-  // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni capas).
+  // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni el documento).
   // Cada entrada recibe solo los grupos que usa.
   const accionesDibujo = {
     celda, describir, informar, programarDibujo, refrescar, dibujar,
     infoInicial: INFO_INICIAL, anunciar: avisos.anunciar,
     cursorInicial, dimensionesCapa, verCursor,
   };
-  const accionesMarcas = { estaHecho: (x, y) => marcas.tiene(st.capa, x, y), hayBloque, fijar, antesDeMarcar, trasMarcar, descartarPaso };
+  const accionesMarcas = {
+    estaHecho: doc.hecho, hayBloque: doc.hayBloque, fijar: doc.fijar,
+    antesDeMarcar: doc.antesDeMarcar, trasMarcar: doc.trasMarcar, descartarPaso: doc.descartarPaso,
+  };
   const accionesZoom = {
     zoom: (n, punto) => zoom.aplicar(n, punto), zoomActual: () => st.zoom,
     pasoZoom: dir => zoom.paso(dir), ajustarZoom: () => zoom.ajustar(),
   };
-  const accionesCapas = { irCapa, capaActual: () => st.capa, capaTexto: () => $('capaTxt').textContent };
-  const accionesHistorial = { deshacer, rehacer };
+  const accionesCapas = { irCapa: doc.irCapa, capaActual: doc.capa, capaTexto: () => $('capaTxt').textContent };
+  const accionesHistorial = { deshacer: doc.deshacer, rehacer: doc.rehacer };
 
   teclado = EntradaTeclado.conectar({
     lienzo: cv,
@@ -238,36 +148,37 @@
   const exportador = Exportar.crear({
     render: Render, descargar: Exportar.descargar, avisos,
     contexto: () => ({
-      capas, totales, hechos: marcas.conjunto(), op: st, zoom: st.zoom,
+      capas: doc.capas(), totales: doc.totales(), hechos: doc.hechos(), op: st, zoom: st.zoom,
       nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(),
-      variante: es3D() && definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: es3D(),
-      w: st.w, h: st.h, porCapa: marcas.porCapa(capas.length), stacks: Materiales.fmtStacks,
+      variante: doc.es3D() && doc.definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: doc.es3D(),
+      w: st.w, h: st.h, porCapa: doc.porCapa(doc.capas().length), stacks: Materiales.fmtStacks,
     }),
   });
 
-  // --- panel y menu -----------------------------------------------------------------
-  for (const id of Panel.CAMPOS) { al(id, 'input', regenerarDiferido); al(id, 'change', () => regenerar()); }
-  for (const id of Panel.SELECTS) al(id, 'input', () => regenerar());
-  for (const k of Panel.TOGGLES) al(k, 'input', () => { panel.leer(); guardarEstado(); programarDibujo(); });
+  // --- panel y controles ------------------------------------------------------------
+  panel.conectar({
+    alCambiarGeo: ({ diferido }) => (diferido ? regenerarDiferido() : doc.regenerar()),
+    alCambiarVista: () => { panel.leer(); doc.guardarEstado(); programarDibujo(); },
+  });
   al('zoom', 'input', () => zoom.aplicar(+$('zoom').value));
   al('zoomMenos', 'click', () => zoom.paso(-1));
   al('zoomMas', 'click', () => zoom.paso(1));
   al('zoomAjustar', 'click', () => zoom.ajustar());
-  al('capa', 'input', () => irCapa($('capa').value));
-  al('prev', 'click', () => irCapa(st.capa - 1));
-  al('next', 'click', () => irCapa(st.capa + 1));
-  al('tablaCapas', 'click', ev => { const tr = ev.target.closest('tr[data-i]'); if (tr) irCapa(+tr.dataset.i); });
-  al('deshacer', 'click', deshacer);
-  al('rehacer', 'click', rehacer);
-  al('marcarCapa', 'click', () => marcarCapas([st.capa], true));
-  al('desmarcarCapa', 'click', () => marcarCapas([st.capa], false));
+  al('capa', 'input', () => doc.irCapa($('capa').value));
+  al('prev', 'click', () => doc.irCapa(doc.capa() - 1));
+  al('next', 'click', () => doc.irCapa(doc.capa() + 1));
+  al('tablaCapas', 'click', ev => { const tr = ev.target.closest('tr[data-i]'); if (tr) doc.irCapa(+tr.dataset.i); });
+  al('deshacer', 'click', doc.deshacer);
+  al('rehacer', 'click', doc.rehacer);
+  al('marcarCapa', 'click', () => doc.marcarCapas([doc.capa()], true));
+  al('desmarcarCapa', 'click', () => doc.marcarCapas([doc.capa()], false));
   al('marcarTodo', 'click', () => {
-    const total = totales.reduce((a, b) => a + b, 0);
-    if (capas.length > 1 && !confirm(`¿Marcar los ${total} bloques de las ${capas.length} capas como construidos?`)) return;
-    marcarCapas(todas(), true);
+    const total = doc.totales().reduce((a, b) => a + b, 0), n = doc.capas().length;
+    if (n > 1 && !confirm(`¿Marcar los ${total} bloques de las ${n} capas como construidos?`)) return;
+    doc.marcarCapas(doc.todas(), true);
   });
-  al('limpiar', 'click', () => marcarCapas(todas(), false));
-  al('exportar', 'click', () => exportador.capa(st.capa));
+  al('limpiar', 'click', () => doc.marcarCapas(doc.todas(), false));
+  al('exportar', 'click', () => exportador.capa(doc.capa()));
   al('exportarTodas', 'click', () => exportador.todas());
 
   Menu.crear({
@@ -277,7 +188,7 @@
   });
 
   // --- arranque ---------------------------------------------------------------------
-  panel.poner(grosorMax);
-  regenerar();
+  panel.poner(doc.grosorMax());
+  doc.regenerar();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(dibujar);
 })();

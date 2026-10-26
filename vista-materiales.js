@@ -1,8 +1,8 @@
 // Pinta en HTML el resultado de Materiales: totales, tabla por capa y barra de progreso.
 // Solo presentacion: los numeros los calcula materiales.js.
 const VistaMateriales = (() => {
-  function crear({ materiales, tabla, barra, progreso }) {
-    function pintar(r, capa) {
+  function crear({ materiales, tabla, barra, progreso, lienzo }) {
+    function pintar(r, capa, textos = {}) {
       materiales.innerHTML =
         `<div class="tot">${r.total} <small>bloques</small></div><div class="mat">` +
         `<span>Stacks</span><b>${r.stacks}</b>` +
@@ -27,6 +27,13 @@ const VistaMateriales = (() => {
 
       barra.style.width = r.pctTotal + '%';
       progreso.textContent = r.textoProgreso;
+
+      // Texto para lectores de pantalla: resume forma, capa y avance.
+      if (lienzo && textos.nombre) {
+        lienzo.setAttribute('aria-label',
+          `Dibujo de ${textos.nombre} ${textos.dimensiones}, ${textos.modo}. ` +
+          `Capa ${capa + 1} de ${r.capas.length}: ${r.totCapa} bloques, ${r.enCapa} construidos.`);
+      }
     }
 
     return { pintar };
