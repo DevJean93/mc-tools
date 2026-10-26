@@ -8,14 +8,24 @@ const Panel = (() => {
 
   function crear({ st, limites, es3D }) {
     const $ = id => document.getElementById(id);
+    const vacios = new Set();   // campos numericos que el usuario ha dejado en blanco
+
+    // Si el campo esta vacio se conserva el valor actual y no se vuelve a escribir:
+    // asi se puede borrar para teclear otro numero sin que aparezca el minimo.
+    function numero(id, actual, min, max) {
+      if ($(id).value === '') { vacios.add(id); return actual; }
+      vacios.delete(id);
+      return clamp($(id).value, min, max);
+    }
+    const ponerNum = (id, v) => { if (!vacios.has(id)) $(id).value = v; };
 
     function leer() {
       st.forma = $('forma').value;
-      st.w = clamp($('w').value, 1, es3D() ? limites.w3d : limites.w2d);
-      st.h = clamp($('h').value, 1, limites.h);
+      st.w = numero('w', st.w, 1, es3D() ? limites.w3d : limites.w2d);
+      st.h = numero('h', st.h, 1, limites.h);
       st.igualar = $('igualar').checked;
       st.modo = $('modo').value;
-      st.grosor = clamp($('grosor').value, 1, limites.grosor);
+      st.grosor = numero('grosor', st.grosor, 1, limites.grosor);
       st.esfera = $('esfera').value;
       st.orient = $('orient').value;
       st.zoom = clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
@@ -24,11 +34,12 @@ const Panel = (() => {
 
     function poner(grosorMax) {
       const maxW = es3D() ? limites.w3d : limites.w2d;
-      $('forma').value = st.forma; $('w').value = st.w; $('h').value = st.h;
+      $('forma').value = st.forma;
+      ponerNum('w', st.w); ponerNum('h', st.h); ponerNum('grosor', st.grosor);
       $('w').max = maxW;
       $('lblW').textContent = es3D() ? 'Diámetro' : 'Ancho';
       $('maxW').textContent = `(máx. ${maxW})`;
-      $('igualar').checked = st.igualar; $('modo').value = st.modo; $('grosor').value = st.grosor;
+      $('igualar').checked = st.igualar; $('modo').value = st.modo;
       $('esfera').value = st.esfera; $('orient').value = st.orient; $('zoom').value = st.zoom;
       for (const k of TOGGLES) $(k).checked = st[k];
       $('h').disabled = st.igualar;

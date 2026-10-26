@@ -280,6 +280,22 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await zoom() > zA2 && ca && Math.abs(ca - cb) <= 1 && Math.abs(ra - rb) <= 1 && await prog() === 'Construidos: 1/208 (0 %)',
     `TACTIL A2: pellizcar y arrastrar mantiene la celda bajo los dedos (${celdaA2a} -> ${celdaA2b})`);
 
+  // FORM: el campo de ancho se puede vaciar. Vacio no se rellena con el minimo ni cambia la forma.
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = '16'; w.dispatchEvent(new Event('change')); })()`);
+  await esperar(300);
+  await ev(`(() => { const w = document.getElementById('w'); w.value = ''; w.dispatchEvent(new Event('input')); })()`);
+  await esperar(350);
+  ok(await ev(`document.getElementById('w').value === '' && document.querySelector('.tot').textContent.startsWith('208')`),
+    'FORM: al borrar el ancho queda vacio y la forma no cambia');
+  await ev(`(() => { const w = document.getElementById('w'); w.value = '2'; w.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  ok(await ev(`document.getElementById('w').value === '2' && document.querySelector('.tot').textContent.startsWith('4')`),
+    'FORM: al teclear 2 se aplica 2 (no se queda en el minimo 1)');
+  await ev(`(() => { const w = document.getElementById('w'); w.value = '20'; w.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  ok(await ev(`document.getElementById('w').value === '20' && document.querySelector('.tot').textContent.startsWith('316')`),
+    'FORM: escribir 20 despues del 2 da 20');
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
 })().catch(e => { console.error(e); edge.kill(); process.exit(1); });
