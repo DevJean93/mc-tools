@@ -12,11 +12,13 @@ const Estado = (() => {
   };
 
   // Las formas validas salen del registro de geometria: una sola lista, no dos.
+  // Las variantes tambien: se leen al acceder para ver las formas registradas despues.
+  const variantes = () => [...new Set(Formas.FORMAS.flatMap(id => ((Formas.obtener(id) || {}).variantes || []).map(v => v.valor)))];
   const ENUMS = {
     forma: Formas.FORMAS,
     modo: ['relleno', 'hueco'],
     orient: ['plano', 'punta'],
-    esfera: ['esfera', 'cupula'],
+    get esfera() { return variantes(); },
   };
   // Opciones que solo cambian la vista (no la geometria ni las marcas).
   const VISTA = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
@@ -26,7 +28,7 @@ const Estado = (() => {
 
   const DEFAULTS = {
     forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1,
-    esfera: 'esfera', orient: 'plano', zoom: 26, rel: true, tramos: true,
+    esfera: variantes()[0] || '', orient: 'plano', zoom: 26, rel: true, tramos: true,
     tramosDentro: false, distEjes: true, capa: 0,
   };
 

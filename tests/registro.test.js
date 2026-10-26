@@ -28,6 +28,29 @@ test('registrar una forma nueva la hace disponible en toda la app', () => {
   assert.equal(Estado.cargar(almacen).forma, 'marco');
 });
 
+test('una forma nueva con variantes propias se valida y se carga sin tocar estado.js', () => {
+  const antes = [...Estado.ENUMS.esfera];
+  Formas.registrar('torre', {
+    nombre: 'Torre de prueba',
+    es3D: true,
+    opciones: ['esfera'],
+    variantes: [
+      { valor: 'torre', nombre: 'Torre', etiqueta: 'Torre completa' },
+      { valor: 'almena', nombre: 'Almena', etiqueta: 'Almena' },
+    ],
+    dimensiones: () => ({ w: 3, h: 3, d: 3 }),
+    llenar: () => true,
+  });
+
+  assert.ok(Estado.ENUMS.esfera.includes('torre'), 'la variante entra en la validacion');
+  assert.deepEqual(Estado.ENUMS.esfera.slice(0, antes.length), antes, 'no altera las anteriores');
+
+  const st = Estado.cargar(Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ forma: 'torre', esfera: 'almena' }) }));
+  assert.equal(st.forma, 'torre');
+  assert.equal(st.esfera, 'almena');
+  assert.equal(Estado.cargar(Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ esfera: 'no-existe' }) })).esfera, 'esfera');
+});
+
 test('una forma desconocida sigue dando un error claro', () => {
   assert.throws(() => Formas.generar({ forma: 'no-existe', w: 4, h: 4 }), /Forma desconocida/);
   const almacen = Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ forma: 'no-existe' }) });

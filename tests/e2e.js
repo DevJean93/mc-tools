@@ -80,6 +80,14 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   })`);
   await esperar(300);
   ok(mutaciones === 0, 'C2: escribir no reconstruye los selectores de forma y variante');
+  // B1: la orientacion no depende del id de la forma sino de sus opciones declaradas.
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'hexagono'; f.dispatchEvent(new Event('input')); })()`);
+  await esperar(200);
+  const orientHex = await ev(`!document.getElementById('rowOrient').hidden`);
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); })()`);
+  await esperar(200);
+  ok(orientHex && await ev(`document.getElementById('rowOrient').hidden`),
+    'B1: la orientacion aparece solo en las formas que la ofrecen');
 
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
   const geo = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);

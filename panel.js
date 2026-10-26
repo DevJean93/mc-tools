@@ -73,7 +73,8 @@ const Panel = (() => {
       $('rowH').hidden = es3D();
       $('filaDims').classList.toggle('solo', es3D());
       $('rowIgualar').hidden = es3D();
-      $('rowOrient').hidden = st.forma !== 'hexagono';
+      const opciones = (Formas.obtener(st.forma) || {}).opciones || [];
+      $('rowOrient').hidden = !opciones.includes('orient');
       $('rowGrosor').hidden = st.modo !== 'hueco';
       const maxG = grosorMax || limites.grosor;
       $('grosor').max = maxG;
