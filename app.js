@@ -1,91 +1,50 @@
-// Interfaz: lee el panel, genera la forma, dibuja, gestiona marcas, deshacer y exportacion.
+// Raiz de composicion: crea los modulos, inyecta sus dependencias, conecta los eventos y arranca.
+// Aqui no hay reglas de negocio: solo cableado entre estado, vistas y entradas.
 (() => {
-  const { LIMITES, CLAVES_GEO } = Estado;
   const $ = id => document.getElementById(id);
-  const cv = $('lienzo');
+  const al = (id, evento, fn) => $(id).addEventListener(evento, fn);
+  const cv = $('lienzo'), wrap = cv.parentElement;
   const almacen = Almacen.local();
+  const { LIMITES, CLAVES_GEO } = Estado;
+
+  const avisos = Avisos.crear({
+    caja: $('aviso'), texto: $('avisoTxt'), boton: $('avisoAccion'), error: $('error'), anuncio: $('anuncio'),
+  });
 
   const st = Estado.cargar(almacen);
   let capas = [], totales = [], grosorMax = null;
-  const marcas = Marcas.crear();    // bloques marcados como construidos
+  const marcas = Marcas.crear(), historial = Historial.crear();
   let firmaActual = null, firmaPedida = null, previos = null;
-  const historial = Historial.crear();
-  let geo = null;                  // geometria del ultimo dibujo (para el raton)
-  let cursor = null;               // celda activa del teclado
+  let geo = null;                   // geometria del ultimo dibujo (para las entradas)
   let avisoAlmacenamiento = false;
 
-  const TOGGLES = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
   const es3D = () => st.forma === 'esfera';
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, Math.round(+v) || a));
+  const paramsGeo = () => Object.fromEntries(CLAVES_GEO.map(k => [k, st[k]]));
+  const todas = () => capas.map((_, i) => i);
 
-  // --- avisos ----------------------------------------------------------------------
-  let avisoTimer = null;
-  function avisar(msg, accion) {
-    $('avisoTxt').textContent = msg;
-    const b = $('avisoAccion');
-    b.hidden = !accion;
-    b.onclick = accion ? () => { ocultarAviso(); accion(); } : null;
-    $('aviso').hidden = false;
-    clearTimeout(avisoTimer);
-    avisoTimer = setTimeout(ocultarAviso, accion ? 8000 : 5000);
-  }
-  function ocultarAviso() { $('aviso').hidden = true; }
-  function mostrarError(msg) { $('error').textContent = msg; $('error').hidden = false; }
-  function anunciar(msg) { $('anuncio').textContent = msg; }
+  const panel = Panel.crear({ st, limites: LIMITES, es3D });
+  const vista = VistaMateriales.crear({
+    materiales: $('materiales'), tabla: $('tablaCapas'), barra: $('barraProg'), progreso: $('progTxt'),
+  });
 
-  // --- UI <-> estado ------------------------------------------------------------
-  function leerUI() {
-    st.forma = $('forma').value;
-    st.w = clamp($('w').value, 1, es3D() ? LIMITES.w3d : LIMITES.w2d);
-    st.h = clamp($('h').value, 1, LIMITES.h);
-    st.igualar = $('igualar').checked;
-    st.modo = $('modo').value;
-    st.grosor = clamp($('grosor').value, 1, LIMITES.grosor);
-    st.esfera = $('esfera').value;
-    st.orient = $('orient').value;
-    st.zoom = clamp($('zoom').value, LIMITES.zoomMin, LIMITES.zoomMax);
-    for (const k of TOGGLES) st[k] = $(k).checked;
-  }
-
-  function ponerUI() {
-    const maxW = es3D() ? LIMITES.w3d : LIMITES.w2d;
-    $('forma').value = st.forma; $('w').value = st.w; $('h').value = st.h;
-    $('w').max = maxW;
-    $('lblW').textContent = es3D() ? 'Diámetro' : 'Ancho';
-    $('maxW').textContent = `(máx. ${maxW})`;
-    $('igualar').checked = st.igualar; $('modo').value = st.modo; $('grosor').value = st.grosor;
-    $('esfera').value = st.esfera; $('orient').value = st.orient; $('zoom').value = st.zoom;
-    for (const k of TOGGLES) $(k).checked = st[k];
-    $('h').disabled = st.igualar;
-    $('rowH').hidden = es3D();
-    $('filaDims').classList.toggle('solo', es3D());
-    $('rowIgualar').hidden = es3D();
-    $('rowEsfera').hidden = !es3D();
-    $('rowOrient').hidden = st.forma !== 'hexagono';
-    $('rowGrosor').hidden = st.modo !== 'hueco';
-    const maxG = grosorMax || LIMITES.grosor;
-    $('grosor').max = maxG;
-    $('maxG').textContent = grosorMax ? `(máx. ${grosorMax})` : '';
-  }
-
+  // --- persistencia -----------------------------------------------------------------
   function guardarEstado() { Estado.guardar(st, almacen); }
   function guardarMarcas() {
     if (!Estado.guardarMarcas(firmaActual, marcas.conjunto(), almacen) && !avisoAlmacenamiento) {
       avisoAlmacenamiento = true;
-      avisar('No se pudo guardar el progreso: el almacenamiento del navegador está lleno.');
+      avisos.avisar('No se pudo guardar el progreso: el almacenamiento del navegador está lleno.');
     }
   }
 
-  // --- generacion ------------------------------------------------------------------
-  const paramsGeo = () => Object.fromEntries(CLAVES_GEO.map(k => [k, st[k]]));
-
+  // --- geometria --------------------------------------------------------------------
   function generar() {
     try {
       const r = Formas.generar(st);
-      $('error').hidden = true;
+      avisos.ocultarError();
       return r;
     } catch (e) {
-      mostrarError(`No se pudo generar la forma (${e.message}). Se volvió al círculo por defecto.`);
+      avisos.mostrarError(`No se pudo generar la forma (${e.message}). Se volvió al círculo por defecto.`);
       Object.assign(st, { forma: 'circulo', w: 16, h: 16, modo: 'relleno', grosor: 1 });
       return Formas.generar(st);
     }
@@ -93,45 +52,45 @@
 
   // opts.sinLeer: usar st tal cual (deshacer); opts.conservar: no limpiar marcas.
   function regenerar(opts = {}) {
-    if (!opts.sinLeer) leerUI();
+    if (!opts.sinLeer) panel.leer();
     if (st.igualar && !es3D()) st.h = st.w;
     const pedida = Estado.firma(st);
-    if (pedida === firmaPedida && capas.length && !opts.sinLeer) { ponerUI(); guardarEstado(); return; }
+    if (pedida === firmaPedida && capas.length && !opts.sinLeer) { panel.poner(grosorMax); guardarEstado(); return; }
     firmaPedida = pedida;
 
     const r = generar();
     capas = r.capas; totales = r.totales; grosorMax = r.grosorMax;
     if (r.grosorRecortado) {
-      avisar(`Grosor máximo para este tamaño: ${r.grosor}. Con más, la forma quedaría sólida.`);
+      avisos.avisar(`Grosor máximo para este tamaño: ${r.grosor}. Con más, la forma quedaría sólida.`);
     }
     st.grosor = r.grosor;
 
     const nueva = Estado.firma(st);
     if (firmaActual === null) {
-      marcas.restaurar(Estado.cargarMarcas(nueva, capas, almacen));   // arranque: recuperar el progreso guardado
+      marcas.restaurar(Estado.cargarMarcas(nueva, capas, almacen));   // arranque: recuperar el progreso
     } else if (nueva !== firmaActual && marcas.total() && !opts.conservar) {
       historial.apilar({ params: previos, hechos: marcas.instantanea() });
       marcas.limpiar();
-      avisar('La forma cambió: se limpiaron las marcas.', deshacer);
+      avisos.avisar('La forma cambió: se limpiaron las marcas.', deshacer);
     }
     const cambioTamano = !previos || previos.forma !== st.forma || previos.w !== st.w || previos.h !== st.h;
     firmaActual = nueva;
     previos = paramsGeo();
     st.capa = clamp(st.capa, 0, capas.length - 1);
-    if (cursor) cursor = { x: Math.min(cursor.x, capas[0][0].length - 1), y: Math.min(cursor.y, capas[0].length - 1) };
-    ponerUI(); guardarEstado(); guardarMarcas();
+    if (teclado) teclado.restringir(capas[0][0].length, capas[0].length);
+    panel.poner(grosorMax); guardarEstado(); guardarMarcas();
     refrescar();
-    if (cambioTamano) alejarSiNoCabe();
+    if (cambioTamano) zoom.alejarSiNoCabe();
   }
 
-  function aplazar(fn, ms) {
-    let t;
-    return () => { clearTimeout(t); t = setTimeout(fn, ms); };
-  }
+  const aplazar = (fn, ms) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };
   const regenerarDiferido = aplazar(regenerar, 150);
 
-  // --- historial -------------------------------------------------------------------
+  // --- marcas e historial -----------------------------------------------------------
   const instantanea = () => ({ params: paramsGeo(), hechos: marcas.instantanea() });
+  const antesDeMarcar = () => historial.apilar(instantanea());
+  const descartarPaso = () => historial.descartar();
+  const trasMarcar = () => { guardarMarcas(); refrescar(); };
 
   function restaurar(snap) {
     const cambiaGeo = Estado.firma({ ...st, ...snap.params }) !== firmaActual;
@@ -140,28 +99,21 @@
     if (cambiaGeo) regenerar({ sinLeer: true, conservar: true });
     else { guardarMarcas(); refrescar(); }
   }
-  function deshacer() {
-    const s = historial.deshacer(instantanea()); if (!s) return;
-    restaurar(s); anunciar('Deshecho');
-  }
-  function rehacer() {
-    const s = historial.rehacer(instantanea()); if (!s) return;
-    restaurar(s); anunciar('Rehecho');
-  }
-  function antesDeMarcar() { historial.apilar(instantanea()); }
-  function trasMarcar() { guardarMarcas(); refrescar(); }
+  function deshacer() { const s = historial.deshacer(instantanea()); if (!s) return; restaurar(s); avisos.anunciar('Deshecho'); }
+  function rehacer() { const s = historial.rehacer(instantanea()); if (!s) return; restaurar(s); avisos.anunciar('Rehecho'); }
 
-  // --- marcas ----------------------------------------------------------------------
+  const fijar = (x, y, valor) => marcas.fijar(capas, st.capa, x, y, valor);
+  const hayBloque = (x, y) => !!(capas[st.capa][y] && capas[st.capa][y][x]);
+
   function marcarCapas(indices, valor) {
     antesDeMarcar();
     const n = marcas.marcarCapas(capas, indices, valor);
     if (!n) { historial.descartar(); return; }
     trasMarcar();
-    avisar(`${valor ? 'Marcados' : 'Desmarcados'} ${n} bloques.`, deshacer);
+    avisos.avisar(`${valor ? 'Marcados' : 'Desmarcados'} ${n} bloques.`, deshacer);
   }
-  const todas = () => capas.map((_, i) => i);
 
-  // --- vista -----------------------------------------------------------------------
+  // --- dibujo -----------------------------------------------------------------------
   let rafPendiente = false;
   function programarDibujo() {
     if (rafPendiente) return;
@@ -172,7 +124,7 @@
   function dibujar() {
     geo = Render.dibujar(cv, {
       g: capas[st.capa], capa: st.capa, hechos: marcas.conjunto(), s: st.zoom, op: st,
-      cursor: document.activeElement === cv ? cursor : null,
+      cursor: document.activeElement === cv && teclado ? teclado.cursor() : null,
       dpr: window.devicePixelRatio || 1,
     });
     $('zoomTxt').textContent = `${st.zoom} px/bloque` + (geo.ocultos ? ' · acércate para ver todos los números' : '');
@@ -180,68 +132,14 @@
     $('zoomMas').disabled = st.zoom >= LIMITES.zoomMax;
   }
 
-  // --- zoom ------------------------------------------------------------------------
-  const wrap = cv.parentElement;
-  const NIVELES = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48];
+  const zoom = Zoom.crear({
+    lienzo: cv, contenedor: wrap, limites: LIMITES, medir: Render.medir,
+    geometria: () => geo, obtener: () => st.zoom, definir: n => { st.zoom = n; },
+    control: $('zoom'), redibujar: dibujar, guardar: guardarEstado,
+    opciones: () => st, capa: () => capas[st.capa],
+  });
 
-  // Cambia el zoom manteniendo quieta la celda bajo el punto (clientX/Y); sin punto, el centro visible.
-  function fijarZoom(nuevo, punto) {
-    nuevo = clamp(nuevo, LIMITES.zoomMin, LIMITES.zoomMax);
-    if (nuevo === st.zoom) return;
-    const r = cv.getBoundingClientRect(), rw = wrap.getBoundingClientRect();
-    const px = (punto ? punto.clientX : rw.left + rw.width / 2) - r.left;
-    const py = (punto ? punto.clientY : rw.top + rw.height / 2) - r.top;
-    const fx = (px - geo.L) / geo.s, fy = (py - geo.T) / geo.s;
-    st.zoom = nuevo; $('zoom').value = nuevo;
-    dibujar();
-    wrap.scrollLeft += geo.L + fx * geo.s - px;
-    wrap.scrollTop += geo.T + fy * geo.s - py;
-    guardarEstado();
-  }
-
-  function zoomPaso(dir, punto) {
-    const n = dir > 0
-      ? NIVELES.find(v => v > st.zoom) || LIMITES.zoomMax
-      : [...NIVELES].reverse().find(v => v < st.zoom) || LIMITES.zoomMin;
-    fijarZoom(n, punto);
-  }
-
-  // Espacio util del contenedor del dibujo (su alto maximo, no el actual).
-  function espacioVisible() {
-    const cs = getComputedStyle(wrap);
-    const padH = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-    const padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + 2;
-    const maxH = parseFloat(cs.maxHeight);
-    return { w: wrap.clientWidth - padH, h: (Number.isFinite(maxH) ? maxH : window.innerHeight * 0.6) - padV };
-  }
-
-  // Mayor zoom con el que la capa actual cabe entera.
-  function zoomAjustado() {
-    const { w, h } = espacioVisible(), g = capas[st.capa];
-    for (let s = LIMITES.zoomMax; s > LIMITES.zoomMin; s--) {
-      const m = Render.medir(g, s, st);
-      if (m.W <= w && m.H <= h) return s;
-    }
-    return LIMITES.zoomMin;
-  }
-
-  function ajustar() {
-    fijarZoom(zoomAjustado());
-    wrap.scrollLeft = 0; wrap.scrollTop = 0;
-  }
-
-  // Al crecer la forma: si ya no cabe, alejar hasta que quepa (nunca acerca solo).
-  function alejarSiNoCabe() {
-    const { w, h } = espacioVisible(), m = Render.medir(capas[st.capa], st.zoom, st);
-    if (m.W <= w && m.H <= h) return;
-    const s = zoomAjustado();
-    if (s < st.zoom) { fijarZoom(s); wrap.scrollLeft = 0; wrap.scrollTop = 0; }
-  }
-
-  function nombreForma() {
-    if (es3D()) return st.esfera === 'cupula' ? 'Cúpula' : 'Esfera';
-    return $('forma').selectedOptions[0].textContent;
-  }
+  const nombreForma = () => (es3D() ? (st.esfera === 'cupula' ? 'Cúpula' : 'Esfera') : $('forma').selectedOptions[0].textContent);
   const dimensiones = () => (es3D() ? `Ø${st.w}` : `${st.w}×${st.h}`);
   const textoModo = () => (st.modo === 'hueco' ? `hueco, grosor ${st.grosor}` : 'sólido');
 
@@ -253,46 +151,18 @@
     for (const id of ['marcarCapa', 'desmarcarCapa']) $(id).hidden = n < 2;
     $('deshacer').disabled = !historial.puedeDeshacer();
     $('rehacer').disabled = !historial.puedeRehacer();
-    dibujar(); materiales(); resumen();
-  }
+    dibujar();
 
-  function resumen() {
+    const r = Materiales.resumen(totales, marcas.porCapa(n), st.capa);
+    vista.pintar(r, st.capa);
     $('resumen').textContent = Materiales.textoResumenCentro(capas[st.capa], Render.centro);
-  }
-
-  function materiales() {
-    const r = Materiales.resumen(totales, marcas.porCapa(capas.length), st.capa);
-    let html = `<div class="tot">${r.total} <small>bloques</small></div><div class="mat">` +
-      `<span>Stacks</span><b>${r.stacks}</b>` +
-      `<span>Shulker boxes</span><b>${r.shulkers.valor.toFixed(2)} → ${r.shulkers.cajas}</b>` +
-      `<span>Cofres dobles</span><b>${r.cofres.valor.toFixed(2)} → ${r.cofres.cajas}</b>` +
-      `<span>Construidos</span><b>${r.marcados}</b><span>Faltan</span><b>${r.faltan}</b></div>` +
-      `<p class="formula">1 stack = ${Materiales.STACK} · 1 shulker = 27 stacks = ${Materiales.SHULKER} · 1 cofre doble = 54 stacks = ${Materiales.COFRE_DOBLE}</p>`;
-    $('materiales').innerHTML = html;
-
-    if (capas.length > 1) {
-      let t = '<table><thead><tr><th scope="col">Capa</th><th scope="col">Bloques</th><th scope="col">Stacks</th><th scope="col">Hechos</th></tr></thead><tbody>';
-      r.capas.forEach(c => {
-        const cls = [c.i === st.capa ? 'sel' : '', c.completa ? 'completa' : ''].join(' ');
-        t += `<tr data-i="${c.i}" class="${cls}"${c.i === st.capa ? ' aria-current="true"' : ''}><td>${c.i + 1}</td><td>${c.total}</td><td>${Materiales.fmtStacks(c.total)}</td><td>${c.pct} %</td></tr>`;
-      });
-      $('tablaCapas').innerHTML = t + '</tbody></table>';
-    } else {
-      $('tablaCapas').innerHTML = '';
-    }
-
-    $('barraProg').style.width = r.pctTotal + '%';
-    $('progTxt').textContent = r.textoProgreso;
     cv.setAttribute('aria-label',
-      `Dibujo de ${nombreForma()} ${dimensiones()}, ${textoModo()}. Capa ${st.capa + 1} de ${capas.length}: ${r.totCapa} bloques, ${r.enCapa} construidos.`);
+      `Dibujo de ${nombreForma()} ${dimensiones()}, ${textoModo()}. Capa ${st.capa + 1} de ${n}: ${r.totCapa} bloques, ${r.enCapa} construidos.`);
   }
 
-  function irCapa(i) {
-    st.capa = clamp(i, 0, capas.length - 1);
-    guardarEstado(); refrescar();
-  }
+  function irCapa(i) { st.capa = clamp(i, 0, capas.length - 1); guardarEstado(); refrescar(); }
 
-  // --- raton y tactil -------------------------------------------------------------------
+  // --- interpretacion del puntero ---------------------------------------------------
   function celda(ev) {
     if (!geo) return null;
     const r = cv.getBoundingClientRect();
@@ -312,286 +182,77 @@
     : 'Pasa el ratón por el dibujo para ver la posición de cada bloque.';
   $('info').textContent = INFO_INICIAL;
 
-  let trazo = null;   // { valor, cambio, id } mientras se pinta con raton/lapiz
-  let toque = null;   // { x, y, c } inicio de un toque
-  const toques = new Map();   // dedos sobre el dibujo (para pellizcar)
-  let pellizco = null;        // { d, z } distancia y zoom al empezar
-  const dedos = () => [...toques.values()];
-  cv.addEventListener('contextmenu', ev => ev.preventDefault());
-  cv.addEventListener('pointerdown', ev => {
-    const c = celda(ev);
-    if (ev.pointerType === 'touch') {
-      toques.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-      if (toques.size === 2) {
-        const [a, b] = dedos();
-        toque = null;
-        pellizco = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: st.zoom };
-      } else {
-        toque = { x: ev.clientX, y: ev.clientY, c };
-      }
-      return;
-    }
-    if (!c || (ev.button !== 0 && ev.button !== 2)) return;
-    ev.preventDefault();
-    cv.focus({ preventScroll: true });
-    const valor = ev.button === 2 ? false : !marcas.tiene(st.capa, c.x, c.y);
-    trazo = { valor, cambio: false, id: ev.pointerId };
-    antesDeMarcar();
-    cv.setPointerCapture(ev.pointerId);
-    pintar(c);
-  });
-  function pintar(c) {
-    if (c && marcas.fijar(capas, st.capa, c.x, c.y, trazo.valor)) { trazo.cambio = true; programarDibujo(); }
-  }
-  cv.addEventListener('pointermove', ev => {
-    if (ev.pointerType === 'touch' && toques.has(ev.pointerId)) {
-      toques.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
-      if (pellizco && toques.size === 2) {
-        const [a, b] = dedos();
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        fijarZoom(Math.round(pellizco.z * d / pellizco.d), { clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 });
-        return;
-      }
-    }
-    const c = celda(ev);
-    if (ev.pointerType === 'touch') return;
-    $('info').textContent = c ? describir(c) : INFO_INICIAL;
-    if (trazo && ev.pointerId === trazo.id) pintar(c);
-  });
-  function finTrazo(ev) {
-    if (ev.pointerType === 'touch') {
-      toques.delete(ev.pointerId);
-      if (toques.size < 2) pellizco = null;
-    }
-    if (toque && ev.pointerType === 'touch') {
-      const movido = Math.hypot(ev.clientX - toque.x, ev.clientY - toque.y) > 10;
-      if (!movido && ev.type === 'pointerup' && toque.c) {
-        const { x, y } = toque.c;
-        $('info').textContent = describir(toque.c);
-        antesDeMarcar();
-        if (marcas.fijar(capas, st.capa, x, y, !marcas.tiene(st.capa, x, y))) trasMarcar(); else historial.descartar();
-      }
-      toque = null;
-      return;
-    }
-    if (!trazo || ev.pointerId !== trazo.id) return;
-    if (trazo.cambio) trasMarcar(); else historial.descartar();
-    trazo = null;
-    refrescar();
-  }
-  cv.addEventListener('pointerup', finTrazo);
-  cv.addEventListener('pointercancel', finTrazo);
+  const informar = txt => { $('info').textContent = txt; };
+  const cursorInicial = () => ({ x: Render.centro(capas[st.capa][0].length)[0], y: Render.centro(capas[st.capa].length)[0] });
+  const dimensionesCapa = () => ({ w: capas[st.capa][0].length, h: capas[st.capa].length });
 
-  // Ctrl + rueda (o pellizco en el touchpad, que llega igual): zoom proporcional hacia el puntero.
-  wrap.addEventListener('wheel', ev => {
-    if (!ev.ctrlKey) return;
-    ev.preventDefault();
-    let nuevo = Math.round(st.zoom * Math.exp(-ev.deltaY * 0.0025));
-    if (nuevo === st.zoom) nuevo += ev.deltaY < 0 ? 1 : -1;
-    fijarZoom(nuevo, ev);
-  }, { passive: false });
-
-  // --- teclado ---------------------------------------------------------------------
-  function cursorInicial() {
-    const g = capas[st.capa];
-    return { x: Render.centro(g[0].length)[0], y: Render.centro(g.length)[0] };
-  }
-  cv.addEventListener('focus', () => { if (!cursor) cursor = cursorInicial(); dibujar(); });
-  cv.addEventListener('blur', dibujar);
-  cv.addEventListener('keydown', ev => {
-    const g = capas[st.capa], w = g[0].length, h = g.length;
-    if (!cursor) cursor = cursorInicial();
-    const paso = ev.shiftKey ? 5 : 1;
-    switch (ev.key) {
-      case 'ArrowLeft': cursor.x = Math.max(0, cursor.x - paso); break;
-      case 'ArrowRight': cursor.x = Math.min(w - 1, cursor.x + paso); break;
-      case 'ArrowUp': cursor.y = Math.max(0, cursor.y - paso); break;
-      case 'ArrowDown': cursor.y = Math.min(h - 1, cursor.y + paso); break;
-      case '+': case '=': ev.preventDefault(); zoomPaso(1); return;
-      case '-': ev.preventDefault(); zoomPaso(-1); return;
-      case '0': ev.preventDefault(); ajustar(); return;
-      case 'PageUp': ev.preventDefault(); irCapa(st.capa + 1); anunciar($('capaTxt').textContent); return;
-      case 'PageDown': ev.preventDefault(); irCapa(st.capa - 1); anunciar($('capaTxt').textContent); return;
-      case ' ': case 'Enter': {
-        const { x, y } = cursor;
-        if (!g[y][x]) { anunciar('Celda vacía: no hay bloque que marcar.'); ev.preventDefault(); return; }
-        antesDeMarcar();
-        marcas.fijar(capas, st.capa, x, y, !marcas.tiene(st.capa, x, y));
-        trasMarcar();
-        break;
-      }
-      default: return;
-    }
-    ev.preventDefault();
-    const txt = describir(cursor);
-    $('info').textContent = txt; anunciar(txt);
-    dibujar();
-    // mantener visible la celda activa
-    const wrap = cv.parentElement, px = geo.L + cursor.x * geo.s, py = geo.T + cursor.y * geo.s;
+  // Mantiene visible la celda activa del teclado.
+  function verCursor(c) {
+    const px = geo.L + c.x * geo.s, py = geo.T + c.y * geo.s;
     if (px < wrap.scrollLeft || px + geo.s > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = px - wrap.clientWidth / 2;
     if (py < wrap.scrollTop || py + geo.s > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = py - wrap.clientHeight / 2;
+  }
+
+  // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni capas).
+  const acciones = {
+    celda, describir, informar, programarDibujo, refrescar, dibujar,
+    infoInicial: INFO_INICIAL,
+    estaHecho: (x, y) => marcas.tiene(st.capa, x, y),
+    hayBloque, fijar, antesDeMarcar, trasMarcar, descartarPaso,
+    zoom: (n, punto) => zoom.fijar(n, punto), zoomActual: () => st.zoom,
+    pasoZoom: dir => zoom.paso(dir), ajustarZoom: () => zoom.ajustar(),
+    irCapa, capaActual: () => st.capa, capaTexto: () => $('capaTxt').textContent,
+    anunciar: avisos.anunciar, cursorInicial, dimensionesCapa, verCursor, deshacer, rehacer,
+  };
+
+  const teclado = EntradaTeclado.conectar({ lienzo: cv, acciones });
+  EntradaRaton.conectar({ lienzo: cv, contenedor: wrap, acciones });
+  EntradaTactil.conectar({ lienzo: cv, acciones });
+
+  // --- exportacion ------------------------------------------------------------------
+  const exportador = Exportar.crear({
+    render: Render, descargar: Exportar.descargar, avisos,
+    contexto: () => ({
+      capas, totales, hechos: marcas.conjunto(), op: st, zoom: st.zoom,
+      nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(),
+      variante: es3D() ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: es3D(),
+      w: st.w, h: st.h, porCapa: marcas.porCapa(capas.length), stacks: Materiales.fmtStacks,
+    }),
   });
 
-  document.addEventListener('keydown', ev => {
-    const enCampo = ev.target instanceof Element && ev.target.matches('input[type=number], select');
-    if (!(ev.ctrlKey || ev.metaKey) || enCampo) return;
-    const k = ev.key.toLowerCase();
-    if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); deshacer(); }
-    else if (k === 'y' || (k === 'z' && ev.shiftKey)) { ev.preventDefault(); rehacer(); }
-  });
-
-  // --- exportacion -----------------------------------------------------------------
-  function nombreArchivo(c) {
-    const variante = es3D() ? st.esfera : st.forma;
-    const hueco = st.modo === 'hueco' ? `-hueco-g${st.grosor}` : '';
-    const capa = capas.length > 1 ? `-capas${capas.length}-capa${c + 1}` : '';
-    return `${variante}-${es3D() ? st.w : st.w + 'x' + st.h}${hueco}${capa}.png`;
-  }
-
-  function exportarCapa(c) {
-    return new Promise(resolve => {
-      try {
-        const aux = document.createElement('canvas');
-        const enCapa = marcas.porCapa(capas.length)[c];
-        Render.dibujar(aux, {
-          g: capas[c], capa: c, hechos: marcas.conjunto(), s: st.zoom, op: st, dpr: 1,
-          cabecera: [
-            `${nombreForma()} ${dimensiones()} · ${textoModo()}`,
-            `Capa ${c + 1} de ${capas.length} · ${totales[c]} bloques (${Materiales.fmtStacks(totales[c])}) · construidos ${enCapa}`,
-            `Formas MC · ${new Date().toLocaleDateString('es')}`,
-          ],
-        });
-        aux.toBlob(blob => {
-          if (!blob) {
-            mostrarError('No se pudo exportar la imagen (demasiado grande). Reduce el zoom y vuelve a intentarlo.');
-            return resolve(false);
-          }
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = nombreArchivo(c);
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-          resolve(true);
-        }, 'image/png');
-      } catch (e) {
-        mostrarError(`No se pudo exportar la imagen (${e.message}). Reduce el zoom y vuelve a intentarlo.`);
-        resolve(false);
-      }
-    });
-  }
-
-  $('exportar').addEventListener('click', () => exportarCapa(st.capa));
-  $('exportarTodas').addEventListener('click', async () => {
-    const n = capas.length;
-    if (n > 10 && !confirm(`Se descargarán ${n} imágenes, una por capa. El navegador puede pedir permiso para descargas múltiples. ¿Continuar?`)) return;
-    for (let c = 0; c < n; c++) {
-      if (!(await exportarCapa(c))) return;
-      await new Promise(r => setTimeout(r, 350));
-    }
-    avisar(`Exportadas ${n} capa${n > 1 ? 's' : ''}.`);
-  });
-
-  // --- eventos del panel -------------------------------------------------------------
-  for (const id of ['w', 'h', 'grosor']) {
-    $(id).addEventListener('input', regenerarDiferido);
-    $(id).addEventListener('change', () => regenerar());
-  }
-  for (const id of ['forma', 'igualar', 'modo', 'esfera', 'orient']) {
-    $(id).addEventListener('input', () => regenerar());
-  }
-  for (const id of TOGGLES) {
-    $(id).addEventListener('input', () => { leerUI(); guardarEstado(); programarDibujo(); });
-  }
-  $('zoom').addEventListener('input', () => fijarZoom(+$('zoom').value));
-  $('zoomMenos').addEventListener('click', () => zoomPaso(-1));
-  $('zoomMas').addEventListener('click', () => zoomPaso(1));
-  $('zoomAjustar').addEventListener('click', ajustar);
-  $('capa').addEventListener('input', () => irCapa($('capa').value));
-  $('prev').addEventListener('click', () => irCapa(st.capa - 1));
-  $('next').addEventListener('click', () => irCapa(st.capa + 1));
-  $('tablaCapas').addEventListener('click', ev => {
-    const tr = ev.target.closest('tr[data-i]');
-    if (tr) irCapa(+tr.dataset.i);
-  });
-  $('deshacer').addEventListener('click', deshacer);
-  $('rehacer').addEventListener('click', rehacer);
-  $('marcarCapa').addEventListener('click', () => marcarCapas([st.capa], true));
-  $('desmarcarCapa').addEventListener('click', () => marcarCapas([st.capa], false));
-  $('marcarTodo').addEventListener('click', () => {
+  // --- panel y menu -----------------------------------------------------------------
+  for (const id of Panel.CAMPOS) { al(id, 'input', regenerarDiferido); al(id, 'change', () => regenerar()); }
+  for (const id of Panel.SELECTS) al(id, 'input', () => regenerar());
+  for (const k of Panel.TOGGLES) al(k, 'input', () => { panel.leer(); guardarEstado(); programarDibujo(); });
+  al('zoom', 'input', () => zoom.fijar(+$('zoom').value));
+  al('zoomMenos', 'click', () => zoom.paso(-1));
+  al('zoomMas', 'click', () => zoom.paso(1));
+  al('zoomAjustar', 'click', () => zoom.ajustar());
+  al('capa', 'input', () => irCapa($('capa').value));
+  al('prev', 'click', () => irCapa(st.capa - 1));
+  al('next', 'click', () => irCapa(st.capa + 1));
+  al('tablaCapas', 'click', ev => { const tr = ev.target.closest('tr[data-i]'); if (tr) irCapa(+tr.dataset.i); });
+  al('deshacer', 'click', deshacer);
+  al('rehacer', 'click', rehacer);
+  al('marcarCapa', 'click', () => marcarCapas([st.capa], true));
+  al('desmarcarCapa', 'click', () => marcarCapas([st.capa], false));
+  al('marcarTodo', 'click', () => {
     const total = totales.reduce((a, b) => a + b, 0);
     if (capas.length > 1 && !confirm(`¿Marcar los ${total} bloques de las ${capas.length} capas como construidos?`)) return;
     marcarCapas(todas(), true);
   });
-  $('limpiar').addEventListener('click', () => marcarCapas(todas(), false));
+  al('limpiar', 'click', () => marcarCapas(todas(), false));
+  al('exportar', 'click', () => exportador.capa(st.capa));
+  al('exportarTodas', 'click', () => exportador.todas());
 
-  // --- mostrar / ocultar el menu ---------------------------------------------------------
-  // Escritorio: columna lateral que se recuerda. Movil: hoja a pantalla completa que arranca cerrada.
-  const KEY_MENU = 'mc-formas-v1:menu';
-  const esMovil = matchMedia('(max-width: 800px)');
-  const panel = $('panel');
-  const enlacesNav = [...document.querySelectorAll('.navmovil a')];
-  const visibles = new Map();   // seccion -> fraccion visible (para la barra inferior)
-
-  function prefMenu() {
-    return almacen.leer(KEY_MENU) !== '0';
-  }
-  function marcarNav() {
-    let mejor = 'secDibujo';
-    if (!panel.hidden) {
-      let max = 0;
-      for (const [id, r] of visibles) if (id !== 'secDibujo' && r > max) { max = r; mejor = id; }
-      if (!max) mejor = 'secForma';
-    }
-    for (const a of enlacesNav) {
-      if (a.hash === '#' + mejor) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
-    }
-  }
-  function verMenu(visible) {
-    panel.hidden = !visible;
-    document.querySelector('main').classList.toggle('sin-menu', !visible);
-    document.body.classList.toggle('menu-abierto', visible && esMovil.matches);
-    $('verMenu').setAttribute('aria-expanded', String(visible));
-    $('verMenuTxt').textContent = visible ? 'Ocultar menú' : 'Mostrar menú';
-    if (!esMovil.matches) almacen.escribir(KEY_MENU, visible ? '1' : '0');
-    marcarNav();
-  }
-  // En movil el foco va al boton Cerrar al abrir y vuelve al de la cabecera al cerrar.
-  function abrirCerrar(visible) {
-    verMenu(visible);
-    if (esMovil.matches) (visible ? $('cerrarMenu') : $('verMenu')).focus({ preventScroll: true });
-  }
-  $('verMenu').addEventListener('click', () => abrirCerrar(panel.hidden));
-  $('cerrarMenu').addEventListener('click', () => abrirCerrar(false));
-  document.addEventListener('keydown', ev => {
-    if (ev.key === 'Escape' && esMovil.matches && !panel.hidden) abrirCerrar(false);
+  Menu.crear({
+    panel: $('panel'), boton: $('verMenu'), botonTexto: $('verMenuTxt'), cerrar: $('cerrarMenu'),
+    nav: document.querySelectorAll('.navmovil a'), main: document.querySelector('main'),
+    cuerpo: document.body, almacen,
   });
-  esMovil.addEventListener('change', () => verMenu(esMovil.matches ? false : prefMenu()));
-  verMenu(esMovil.matches ? false : prefMenu());
 
-  // --- navegacion inferior (movil) ----------------------------------------------------------
-  // Dibujo cierra el menu; Forma y Materiales lo abren en su seccion.
-  const suave = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
-  for (const a of enlacesNav) {
-    a.addEventListener('click', ev => {
-      ev.preventDefault();
-      const destino = $(a.hash.slice(1)), enPanel = panel.contains(destino);
-      if (panel.hidden === enPanel) verMenu(enPanel);
-      destino.scrollIntoView({ block: 'start', behavior: suave() });
-      for (const b of enlacesNav) {
-        if (b === a) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-      }
-    });
-  }
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver(entradas => {
-      for (const e of entradas) visibles.set(e.target.id, e.intersectionRatio);
-      marcarNav();
-    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
-    for (const a of enlacesNav) io.observe($(a.hash.slice(1)));
-  }
-
-  // --- arranque ----------------------------------------------------------------------
-  ponerUI();
+  // --- arranque ---------------------------------------------------------------------
+  panel.poner(grosorMax);
   regenerar();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(dibujar);
 })();
