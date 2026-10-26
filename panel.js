@@ -34,18 +34,28 @@ const Panel = (() => {
     }
 
     // El selector de formas sale del registro: una forma registrada aparece sin tocar el HTML.
+    // Se construye una sola vez: `poner()` se llama en cada cambio y no debe rehacer el DOM.
+    let formasListas = false;
     function ponerFormas() {
       const sel = $('forma');
-      sel.innerHTML = Formas.FORMAS.map(id => `<option value="${id}">${(Formas.obtener(id) || {}).nombre || id}</option>`).join('');
+      if (!formasListas) {
+        sel.innerHTML = Formas.FORMAS.map(id => `<option value="${id}">${(Formas.obtener(id) || {}).nombre || id}</option>`).join('');
+        formasListas = true;
+      }
       sel.value = st.forma;
     }
 
     // El selector de variante sale de la definicion de la forma (la esfera trae esfera/cupula).
+    // Solo se rehace al cambiar de forma, no en cada `poner()`.
+    let variantesDe = null;
     function ponerVariantes() {
       const def = Formas.obtener(st.forma);
       const variantes = (def && def.variantes) || [];
       $('rowEsfera').hidden = !variantes.length;
-      $('esfera').innerHTML = variantes.map(v => `<option value="${v.valor}">${v.etiqueta}</option>`).join('');
+      if (variantesDe !== st.forma) {
+        variantesDe = st.forma;
+        $('esfera').innerHTML = variantes.map(v => `<option value="${v.valor}">${v.etiqueta}</option>`).join('');
+      }
       if (variantes.some(v => v.valor === st.esfera)) $('esfera').value = st.esfera;
     }
 

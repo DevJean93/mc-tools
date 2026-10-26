@@ -43,6 +43,17 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueo.identifier });
   await cargar();
 
+  // C4: un localStorage que lee pero no deja escribir no es persistente: debe avisar de que
+  // no guarda, no de que esta lleno.
+  const soloLectura = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `Storage.prototype.setItem = function () { throw new DOMException('cuota 0', 'QuotaExceededError'); };`,
+  });
+  await cargar();
+  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('bloquea') && !document.getElementById('avisoTxt').textContent.includes('lleno') && document.querySelector('.tot').textContent.startsWith('208')`),
+    'C4: sin escritura avisa de que el navegador bloquea el almacenamiento');
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: soloLectura.identifier });
+  await cargar();
+
   // 1) Estado corrupto -> arranca igual
   await cargar();
   await ev(`localStorage.setItem('mc-formas-v1', '{"forma":"foo","w":"abc","zoom":9999,"grosor":-3}'); localStorage.setItem('mc-formas-v1:marcas','{basura')`);
@@ -57,6 +68,18 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`[...document.getElementById('forma').options].map(o => o.textContent).join('|') ===
     'Círculo / Óvalo|Cuadrado / Rectángulo|Triángulo|Rombo|Hexágono|Esfera / Cúpula (3D)'`),
   'A2: el selector conserva el orden Círculo, Cuadrado, Triángulo, Rombo, Hexágono, Esfera');
+  // C2: `poner()` se llama en cada cambio; no debe rehacer las opciones de los selectores.
+  const mutaciones = await ev(`new Promise(res => {
+    let n = 0;
+    const obs = new MutationObserver(lista => { n += lista.length; });
+    obs.observe(document.getElementById('forma'), { childList: true });
+    obs.observe(document.getElementById('esfera'), { childList: true });
+    const w = document.getElementById('w');
+    w.value = '17'; w.dispatchEvent(new Event('input'));
+    setTimeout(() => { obs.disconnect(); w.value = '16'; w.dispatchEvent(new Event('input')); res(n); }, 250);
+  })`);
+  await esperar(300);
+  ok(mutaciones === 0, 'C2: escribir no reconstruye los selectores de forma y variante');
 
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
   const geo = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);
@@ -393,6 +416,30 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   const lentoY = await ev(`window.scrollY`);
   ok(lento0.cabe && lentoY - lento0.y > 50 && await ev(`document.getElementById('lienzo').parentElement.scrollTop`) === lento0.st && await prog() === lentoProg,
     `TACTIL A1: arrastre lento (0,8 px) sobre un dibujo que cabe desplaza la pagina (scrollY ${lento0.y} -> ${lentoY})`);
+
+  // C5: si la captura del puntero se pierde (dedo levantado fuera del lienzo), el dedo no
+  // queda registrado: el siguiente toque sigue marcando en vez de empezar un pellizco.
+  await ev(`(() => {
+    const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input'));
+    const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0;
+    window.scrollTo(0, 0);
+  })()`);
+  await esperar(300);
+  const progC5 = await prog();
+  const rectC5 = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.left, r.top]; })()`);
+  const pC5 = [rectC5[0] + L + 7 * 26 + 13, rectC5[1] + T + 7 * 26 + 13];
+  await ev(`(() => {
+    const c = document.getElementById('lienzo');
+    const o = { pointerId: 77, pointerType: 'touch', clientX: ${pC5[0]}, clientY: ${pC5[1]}, bubbles: true, cancelable: true };
+    c.dispatchEvent(new PointerEvent('pointerdown', o));
+    c.dispatchEvent(new PointerEvent('lostpointercapture', o));
+  })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pC5[0], y: pC5[1], id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  const hechosC5 = t => +(t.match(/Construidos: (\d+)\//) || [])[1];
+  ok(hechosC5(await prog()) === hechosC5(progC5) + 1,
+    `TACTIL C5: al perderse la captura el dedo se suelta y el siguiente toque marca (${progC5} -> ${await prog()})`);
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();

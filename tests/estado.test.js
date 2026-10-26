@@ -127,6 +127,21 @@ test('con localStorage disponible, local() guarda y se declara persistente', () 
   }
 });
 
+test('un almacen que lee pero no escribe se declara no persistente', () => {
+  const storage = {
+    getItem: () => null,
+    setItem: () => { throw new Error('cuota 0'); },
+  };
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  try {
+    const almacen = Almacen.local();
+    assert.equal(almacen.persistente, false, 'no es "lleno": el almacen no sirve para guardar');
+    assert.equal(almacen.escribir('mc-formas-v1', '{}'), false);
+  } finally {
+    delete globalThis.localStorage;
+  }
+});
+
 test('clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);

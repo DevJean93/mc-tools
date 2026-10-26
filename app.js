@@ -141,6 +141,7 @@
   });
   EntradaTactil.conectar({
     lienzo: cv, contenedor: wrap, limites: LIMITES,
+    limitar: Estado.clamp,
     acciones: { ...accionesDibujo, ...accionesMarcas, ...accionesZoom },
   });
 

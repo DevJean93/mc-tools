@@ -8,9 +8,8 @@
 const EntradaTactil = (() => {
   const UMBRAL_TOQUE = 10;   // px de movimiento que convierten un toque en arrastre
 
-  function conectar({ lienzo, contenedor, limites, acciones }) {
+  function conectar({ lienzo, contenedor, limites, limitar, acciones }) {
     const a = acciones;
-    const limitar = (v, min, max) => Math.max(min, Math.min(max, v));
     const toques = new Map();   // id -> { x, y } ultima posicion de cada dedo
     let toque = null;           // { id, x0, y0, c } dedo que puede acabar en toque corto
     let pellizco = null;        // { d, z, mx, my } distancia, zoom y punto medio de partida
@@ -102,6 +101,9 @@ const EntradaTactil = (() => {
     }
     lienzo.addEventListener('pointerup', fin);
     lienzo.addEventListener('pointercancel', fin);
+    // Si falla la captura y el dedo se levanta fuera del lienzo, el pointerup no llega:
+    // al perder la captura se suelta el dedo igual que en una cancelacion.
+    lienzo.addEventListener('lostpointercapture', fin);
   }
 
   return { conectar, UMBRAL_TOQUE };

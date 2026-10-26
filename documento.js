@@ -10,12 +10,8 @@ const Documento = (() => {
     const marcas = Marcas.crear(), historial = Historial.crear();
     let capas = [], totales = [], grosorMax = null;
     let firmaActual = null, firmaPedida = null, previos = null;
-    let avisoAlmacenamiento = false;
-
-    if (!almacen.persistente) {
-      avisoAlmacenamiento = true;
-      avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
-    }
+    let avisoAlmacenamiento = !almacen.persistente;
+    let arranque = true;
 
     const definicion = () => Formas.obtener(st.forma) || {};
     const es3D = () => !!definicion().es3D;
@@ -79,6 +75,14 @@ const Documento = (() => {
       panel.poner(grosorMax); guardarEstado(); guardarMarcas();
       alCambiar();
       if (cambioTamano) alCambiarTamano();
+      // El aviso de almacenamiento se da tras la primera generacion: asi no lo tapa el
+      // aviso de grosor recortado que puede salir en ese mismo arranque.
+      if (arranque) {
+        arranque = false;
+        if (!almacen.persistente) {
+          avisos.avisar('El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.');
+        }
+      }
     }
 
     function irCapa(i) {

@@ -37,11 +37,17 @@ const Almacen = (() => {
   }
 
   // El del navegador; si acceder a localStorage lanza, uno que no guarda y lo declara.
+  // Se prueba tambien una escritura: un almacen que lee pero no escribe (Safari privado
+  // antiguo, cuota 0) no es persistente y la app debe decir "no disponible", no "lleno".
   function local() {
     try {
       const storage = globalThis.localStorage;
-      if (storage) { storage.getItem('__mc-formas-prueba'); return desde(storage); }
-    } catch (e) { /* bloqueado */ }
+      if (!storage) return sinPersistencia();
+      storage.getItem('__mc-formas-prueba');
+      storage.setItem('__mc-formas-prueba', '1');
+      if (typeof storage.removeItem === 'function') storage.removeItem('__mc-formas-prueba');
+      return desde(storage);
+    } catch (e) { /* bloqueado o sin escritura */ }
     return sinPersistencia();
   }
 

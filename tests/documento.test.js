@@ -121,8 +121,18 @@ test('irCapa recorta al rango y guarda la capa', () => {
 test('sin almacenamiento persistente avisa una sola vez', () => {
   const almacen = { persistente: false, leer: () => null, escribir: () => false };
   const { doc, avisos } = montar(almacen);
+  assert.equal(avisos.dichos.length, 0, 'no avisa antes de generar');
   doc.regenerar();
   doc.marcarCapas(doc.todas(), true);
   const bloqueos = avisos.dichos.filter(t => t.includes('bloquea el almacenamiento'));
   assert.equal(bloqueos.length, 1);
+});
+
+test('el aviso de almacenamiento no lo tapa el de grosor recortado', () => {
+  const almacen = { persistente: false, leer: () => null, escribir: () => false };
+  const { st, doc, avisos } = montar(almacen);
+  st.w = 6; st.h = 6; st.modo = 'hueco'; st.grosor = 50;
+  doc.regenerar();
+  assert.ok(avisos.dichos.some(t => t.includes('Grosor máximo')));
+  assert.match(avisos.dichos[avisos.dichos.length - 1], /bloquea el almacenamiento/);
 });
