@@ -321,6 +321,35 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`document.getElementById('w').value === '20' && document.querySelector('.tot').textContent.startsWith('316')`),
     'FORM: escribir 20 despues del 2 da 20');
 
+  // A5: en alta densidad (3x), arrastrar dentro de un dibujo grande no empuja la pagina.
+  await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 3, mobile: true });
+  await cargar(); await esperar(400);
+  await ev(`(() => {
+    const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input'));
+    const w = document.getElementById('w'); w.value = '200'; w.dispatchEvent(new Event('change'));
+  })()`);
+  await esperar(500);
+  await ev(`(() => {
+    const z = document.getElementById('zoom'); z.value = 6; z.dispatchEvent(new Event('input'));
+    const w = document.getElementById('lienzo').parentElement;
+    w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; w.scrollTop = (w.scrollHeight - w.clientHeight) / 2;
+    document.getElementById('lienzo').scrollIntoView({ block: 'center' });
+  })()`);
+  await esperar(400);
+  const yA5 = await ev(`window.scrollY`);
+  const sA5 = await ev(leerScroll);
+  const wcA5 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: wcA5[0], y: wcA5[1], id: 1 }] });
+  for (const d of [30, 60, 90, 120]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: wcA5[0] - d, y: wcA5[1] - d, id: 1 }] });
+    await esperar(20);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  const sA5b = await ev(leerScroll);
+  ok(await ev(`window.scrollY`) === yA5 && sA5b[0] > sA5[0] && sA5b[1] > sA5[1],
+    `TACTIL A5: a 3x el arrastre mueve el dibujo y no la pagina (scrollY ${yA5} -> ${await ev(`window.scrollY`)})`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); edge.kill();
 })().catch(e => { console.error(e); edge.kill(); process.exit(1); });
