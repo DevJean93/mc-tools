@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Planificador de formas en bloques para Minecraft: círculos, rectángulos, triángulos, rombos, hexágonos, esferas y cúpulas con numeración y lista de materiales.">
+<title>Formas MC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-izq" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-der" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-deshacer" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+  <symbol id="i-rehacer" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/></symbol>
+  <symbol id="i-descargar" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></symbol>
+  <symbol id="i-menos" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></symbol>
+  <symbol id="i-ajustar" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></symbol>
+</svg>
+
+<a class="saltar" href="#lienzo">Saltar al dibujo</a>
+<header class="cab">
+  <h1>Formas MC</h1>
+  <p>Planificador de formas en bloques para Minecraft</p>
+</header>
+<noscript><p class="error">Esta herramienta necesita JavaScript activado.</p></noscript>
+<div id="error" class="error" role="alert" hidden></div>
+
+<main>
+  <aside class="panel" aria-label="Controles">
+    <section aria-labelledby="t-forma">
+      <h2 id="t-forma">Forma</h2>
+      <label>Tipo
+        <select id="forma">
+          <option value="circulo">Círculo / Óvalo</option>
+          <option value="rectangulo">Cuadrado / Rectángulo</option>
+          <option value="triangulo">Triángulo</option>
+          <option value="rombo">Rombo</option>
+          <option value="hexagono">Hexágono</option>
+          <option value="esfera">Esfera / Cúpula (3D)</option>
+        </select>
+      </label>
+      <div class="fila2" id="filaDims">
+        <label><span><span id="lblW">Ancho</span> <small id="maxW"></small></span>
+          <input type="number" id="w" min="1" max="200" inputmode="numeric"></label>
+        <label id="rowH"><span>Alto <small>(máx. 200)</small></span>
+          <input type="number" id="h" min="1" max="200" inputmode="numeric"></label>
+      </div>
+      <label class="chk" id="rowIgualar"><input type="checkbox" id="igualar"> Proporción 1:1 (alto = ancho)</label>
+      <label id="rowEsfera">Variante
+        <select id="esfera"><option value="esfera">Esfera completa</option><option value="cupula">Cúpula (mitad superior)</option></select>
+      </label>
+      <label id="rowOrient">Orientación
+        <select id="orient"><option value="plano">Lado plano arriba</option><option value="punta">Punta arriba</option></select>
+      </label>
+      <div class="fila2">
+        <label>Modo
+          <select id="modo"><option value="relleno">Sólido</option><option value="hueco">Hueco</option></select>
+        </label>
+        <label id="rowGrosor"><span>Grosor del borde <small id="maxG"></small></span>
+          <input type="number" id="grosor" min="1" max="50" inputmode="numeric"></label>
+      </div>
+    </section>
+
+    <section aria-labelledby="t-vista">
+      <h2 id="t-vista">Vista</h2>
+      <label class="chk"><input type="checkbox" id="rel"> Regla relativa al centro</label>
+      <label class="chk"><input type="checkbox" id="tramos"> Tramos por fila y columna</label>
+      <label class="chk"><input type="checkbox" id="tramosDentro"> Tramos dentro del dibujo</label>
+      <label class="chk"><input type="checkbox" id="distEjes"> Distancia al centro en los ejes</label>
+      <div class="botones">
+        <button type="button" id="exportar"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>PNG de la capa</button>
+        <button type="button" id="exportarTodas"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>Todas las capas</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="t-mat">
+      <h2 id="t-mat">Materiales</h2>
+      <div id="materiales"></div>
+      <div id="tablaCapas"></div>
+    </section>
+  </aside>
+
+  <section class="area" aria-label="Dibujo">
+    <div class="barra">
+      <div id="selCapa" class="capas">
+        <button type="button" class="icono" id="prev" aria-label="Capa anterior"><svg class="ico" aria-hidden="true"><use href="#i-izq"/></svg></button>
+        <input type="range" id="capa" min="0" max="0" value="0" aria-label="Capa">
+        <button type="button" class="icono" id="next" aria-label="Capa siguiente"><svg class="ico" aria-hidden="true"><use href="#i-der"/></svg></button>
+        <strong id="capaTxt"></strong>
+      </div>
+      <p id="resumen"></p>
+      <div class="progreso-fila">
+        <div class="progreso" aria-hidden="true"><div id="barraProg"></div></div>
+        <span id="progTxt"></span>
+      </div>
+      <div class="acciones" role="group" aria-label="Marcas de construcción">
+        <button type="button" class="icono" id="deshacer" aria-label="Deshacer (Ctrl+Z)" title="Deshacer (Ctrl+Z)"><svg class="ico" aria-hidden="true"><use href="#i-deshacer"/></svg></button>
+        <button type="button" class="icono" id="rehacer" aria-label="Rehacer (Ctrl+Y)" title="Rehacer (Ctrl+Y)"><svg class="ico" aria-hidden="true"><use href="#i-rehacer"/></svg></button>
+        <button type="button" id="marcarCapa"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Marcar capa</button>
+        <button type="button" id="desmarcarCapa"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>Desmarcar capa</button>
+        <button type="button" id="marcarTodo">Marcar todo</button>
+        <button type="button" id="limpiar">Desmarcar todo</button>
+      </div>
+    </div>
+    <div class="zoom" role="group" aria-label="Zoom">
+      <button type="button" class="icono" id="zoomMenos" aria-label="Alejar (−)" title="Alejar (−)"><svg class="ico" aria-hidden="true"><use href="#i-menos"/></svg></button>
+      <input type="range" id="zoom" min="2" max="48" aria-label="Zoom (px por bloque)">
+      <button type="button" class="icono" id="zoomMas" aria-label="Acercar (+)" title="Acercar (+)"><svg class="ico" aria-hidden="true"><use href="#i-mas"/></svg></button>
+      <button type="button" id="zoomAjustar" title="Ajustar a la ventana (0)"><svg class="ico" aria-hidden="true"><use href="#i-ajustar"/></svg>Ajustar</button>
+      <span id="zoomTxt"></span>
+    </div>
+    <div class="lienzoWrap">
+      <canvas id="lienzo" tabindex="0" aria-describedby="ayudaLienzo"></canvas>
+    </div>
+    <p id="info" class="info">Pasa el ratón por el dibujo para ver la posición de cada bloque.</p>
+    <p id="ayudaLienzo" class="ayuda">
+      <b>Ratón:</b> clic o arrastre marca como construido · clic derecho desmarca · Ctrl + rueda: zoom hacia el puntero · en pantalla táctil, pellizca para hacer zoom.
+      <b>Teclado</b> (con el dibujo enfocado): flechas para moverte (Mayús = 5), Espacio o Intro marca/desmarca, RePág/AvPág cambia de capa, + / − zoom, 0 ajusta.
+      <b>Ctrl+Z / Ctrl+Y:</b> deshacer / rehacer.
+    </p>
+    <ul class="leyenda">
+      <li><span class="m bloque" aria-hidden="true"></span>Bloque</li>
+      <li><span class="m hecho" aria-hidden="true"></span>Construido (esquina blanca)</li>
+      <li><span class="m centro" aria-hidden="true"></span>Franjas del centro; el recuadro dorado es el bloque central (1×1 o 2×2)</li>
+    </ul>
+  </section>
+</main>
+
+<div id="aviso" class="aviso" role="status" aria-live="polite" hidden>
+  <span id="avisoTxt"></span>
+  <button type="button" id="avisoAccion" hidden>Deshacer</button>
+</div>
+<div id="anuncio" class="sr-only" aria-live="polite"></div>
+<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft.</footer>
+
+<script src="shapes.js"></script>
+<script src="estado.js"></script>
+<script src="render.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
