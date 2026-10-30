@@ -51,6 +51,6 @@ solo las usan. Se eliminan `relativo` y `etiquetaRel`, que quedan sin uso.
 - [x] T01 Propuesta y plan; el validador en verde.
 - [x] T02 `NUM-10` y `NUM-13`: unitarios en rojo → `reglaRelativa`, `cifrasReglaRelativa` y
       `capaReglas` → verde.
-- [ ] T03 `NUM-14`: unitarios y E2E en rojo → `textoRelativo` y `describir` → verde.
+- [x] T03 `NUM-14`: unitarios y E2E en rojo → `textoRelativo` y `describir` → verde.
 - [ ] T04 Archivar: delta en `specs/areas/numeracion/spec.md`, README, propuesta en `Hecha` y a
       `specs/cambios/archivo/`.

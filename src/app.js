@@ -113,8 +113,8 @@
   function describir(c) {
     const g = doc.capaActual();
     const estado = !g[c.y][c.x] ? 'vacío' : doc.hecho(c.x, c.y) ? 'bloque construido' : 'bloque';
-    return `Columna ${c.x + 1}, fila ${c.y + 1} · relativo al centro (${Render.etiquetaRel(Render.relativo(c.x, geo.w))}, ` +
-      `${Render.etiquetaRel(Render.relativo(c.y, geo.h))}) · ${estado}`;
+    return `Columna ${c.x + 1}, fila ${c.y + 1} · relativo al centro (${Render.textoRelativo(c.x, geo.w, 'x')}, ` +
+      `${Render.textoRelativo(c.y, geo.h, 'y')}) · ${estado}`;
   }
 
   const INFO_INICIAL = matchMedia('(pointer: coarse)').matches

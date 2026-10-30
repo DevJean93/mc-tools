@@ -219,3 +219,25 @@ test('NUM-13: con paso mayor que 1 solo pueden ir contiguas el 1 y el 2 (cifras 
     assert.equal(c.filter(x => x.n === 1).length, 1, `n=${n} paso=${paso}: la franja una sola vez`);
   }
 });
+
+test('NUM-14: el texto de posicion usa flechas y la cuenta de la regla, sin signo', () => {
+  // Circulo de 30: franja de 2 (indices 14 y 15), 14 bloques por lado.
+  assert.equal(Render.textoRelativo(2, 30, 'x'), '← 13', 'columna 3');
+  assert.equal(Render.textoRelativo(4, 30, 'y'), '↑ 11', 'fila 5');
+  assert.equal(Render.textoRelativo(29, 30, 'x'), '→ 15');
+  assert.equal(Render.textoRelativo(25, 30, 'y'), '↓ 11');
+  assert.equal(Render.textoRelativo(0, 30, 'x'), '← 15', 'el bloque del borde cuenta');
+});
+
+test('NUM-14: en la franja central el texto es solo 1, sin flecha, y con franja de 1 tambien', () => {
+  assert.equal(Render.textoRelativo(14, 30, 'x'), '1');
+  assert.equal(Render.textoRelativo(15, 30, 'y'), '1');
+  assert.equal(Render.textoRelativo(7, 15, 'x'), '1', 'tamaño impar: sin C');
+  assert.equal(Render.textoRelativo(6, 15, 'y'), '↑ 2');
+});
+
+test('NUM-14: ninguna posicion lleva un signo menos', () => {
+  for (const n of [1, 2, 15, 16, 30]) for (let i = 0; i < n; i++) {
+    for (const eje of ['x', 'y']) assert.ok(!/[-−]/.test(Render.textoRelativo(i, n, eje)), `n=${n} i=${i}`);
+  }
+});

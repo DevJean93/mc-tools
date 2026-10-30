@@ -241,6 +241,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await mouse('mouseMoved', rg.l + L + 8 * s + 13, rg.t + T + 7 * s + 13, 'none', 0);
   ok(await ev(`document.getElementById('lienzo').style.cursor`) === '', 'MAR-14: sobre el dibujo el cursor vuelve a lo normal');
 
+  // NUM-14: la posicion respecto al centro usa la cuenta de la regla, con flechas y sin signos.
+  const infoEn = async (cx, cy) => { await mouse('mouseMoved', rg.l + L + cx * s + 13, rg.t + T + cy * s + 13, 'none', 0); return ev(`document.getElementById('info').textContent`); };
+  const infoNO = await infoEn(2, 4), infoSE = await infoEn(13, 12), infoCentro = await infoEn(7, 7);
+  ok(infoNO.includes('relativo al centro (← 6, ↑ 4)') && infoSE.includes('relativo al centro (→ 6, ↓ 5)') &&
+    infoCentro.includes('relativo al centro (1, 1)') && !/\(-|, -/.test(infoNO + infoSE + infoCentro),
+  `NUM-14: la informacion del bloque usa flechas y la cuenta de la regla (${infoNO.split(' · ')[1]} | ${infoSE.split(' · ')[1]} | ${infoCentro.split(' · ')[1]})`);
+
   // MAR-17: con el dibujo enfocado, F alterna la fila del cursor y C su columna.
   await ev(`document.getElementById('lienzo').focus()`);
   await key('f', 'KeyF', 70); await esperar(150);
