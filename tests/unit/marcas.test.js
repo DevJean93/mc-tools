@@ -9,6 +9,17 @@ const CAPAS = [
   [[true]],
 ];
 
+// Capa 0: 4x4 con una fila vacia y bloques separados. Capa 1: 2x2 con (1,1) vacio.
+const LINEAS = [
+  [
+    [true, true, false, true],
+    [true, false, true, true],
+    [false, true, true, true],
+    [false, false, false, false],
+  ],
+  [[true, true], [true, false]],
+];
+
 test('MAR-01: fijar solo actua sobre bloques y avisa si no cambia nada', () => {
   const m = Marcas.crear();
   assert.equal(m.fijar(CAPAS, 0, 0, 0, true), true);
@@ -70,4 +81,46 @@ test('MAR-01: el conjunto expuesto es el vivo (lo usa el dibujo)', () => {
   m.fijar(CAPAS, 1, 0, 0, true);
   assert.ok(m.conjunto() instanceof Set);
   assert.ok(m.conjunto().has('1,0,0'));
+});
+
+test('MAR-14: alternar una fila marca solo sus bloques y la desmarca si ya estaba entera', () => {
+  const m = Marcas.crear();
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'fila', 1), { valor: true, n: 3, bloques: 3 });
+  assert.deepEqual(m.instantanea().sort(), ['0,0,1', '0,2,1', '0,3,1']);
+  assert.equal(m.tiene(0, 0, 0), false, 'otra fila no cambia');
+
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'fila', 1), { valor: false, n: 3, bloques: 3 });
+  assert.equal(m.total(), 0);
+});
+
+test('MAR-15: alternar una columna marca solo sus bloques y la desmarca si ya estaba entera', () => {
+  const m = Marcas.crear();
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'columna', 0), { valor: true, n: 2, bloques: 2 });
+  assert.deepEqual(m.instantanea().sort(), ['0,0,0', '0,0,1']);
+  assert.equal(m.tiene(0, 3, 0), false, 'otra columna no cambia');
+
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'columna', 0), { valor: false, n: 2, bloques: 2 });
+  assert.equal(m.total(), 0);
+});
+
+test('MAR-14: en una fila con hueco se marcan las dos paredes', () => {
+  const m = Marcas.crear();
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'fila', 0), { valor: true, n: 3, bloques: 3 });
+  assert.deepEqual(m.instantanea().sort(), ['0,0,0', '0,1,0', '0,3,0']);
+  assert.equal(m.tiene(0, 2, 0), false);
+});
+
+test('MAR-14: alternar una fila no toca las demas capas', () => {
+  const m = Marcas.crear();
+  m.alternarLinea(LINEAS, 0, 'fila', 0);
+  assert.deepEqual(m.porCapa(2), [3, 0]);
+});
+
+test('MAR-18: una fila o columna sin bloques no cambia nada', () => {
+  const m = Marcas.crear();
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'fila', 3), { valor: true, n: 0, bloques: 0 });
+  assert.deepEqual(m.alternarLinea(LINEAS, 0, 'columna', 9), { valor: true, n: 0, bloques: 0 });
+  assert.deepEqual(m.alternarLinea(LINEAS, 5, 'fila', 0), { valor: true, n: 0, bloques: 0 });
+  assert.equal(m.total(), 0);
+  assert.equal(m.porCapa(2).reduce((a, b) => a + b, 0), 0);
 });

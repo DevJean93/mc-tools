@@ -79,6 +79,22 @@ cambio. El teclado también marca la celda activa.
 
 La capa actual se recorta al rango válido y se guarda entre sesiones.
 
+### MAR-14
+
+Tocar o hacer clic en la banda de una fila de la regla izquierda —aunque ese número no se vea
+con poco zoom— alterna toda la fila de la capa actual. Si todos sus bloques estaban
+construidos, los desmarca; si no, los marca todos.
+
+### MAR-15
+
+Lo mismo con la banda de una columna en la regla superior: alterna toda la columna.
+
+### MAR-18
+
+Una fila o columna sin bloques no cambia nada ni ocupa historial; se anuncia «La fila N no
+tiene bloques». Tocar la esquina entre las dos reglas o los márgenes de la derecha y de abajo
+no hace nada.
+
 ## Casos límite
 
 - Un almacén que lanza al leer equivale a no tener nada guardado.

@@ -36,6 +36,23 @@ const Marcas = (() => {
         }
         return n;
       },
+      // Alterna una fila o columna de la capa: desmarca si ya estaba entera y, si no, la marca.
+      // Devuelve { valor (si queda marcada), n (bloques que cambiaron), bloques (bloques de la linea) }.
+      alternarLinea(capas, c, eje, i) {
+        const g = capas[c];
+        if (eje !== 'fila' && eje !== 'columna') throw new Error(`Eje desconocido: ${eje}`);
+        if (!g) return { valor: true, n: 0, bloques: 0 };
+        const linea = [];
+        if (eje === 'fila') {
+          if (g[i]) for (let x = 0; x < g[0].length; x++) if (g[i][x]) linea.push([x, i]);
+        } else {
+          for (let y = 0; y < g.length; y++) if (g[y][i]) linea.push([i, y]);
+        }
+        const valor = linea.length ? !linea.every(([x, y]) => hechos.has(clave(c, x, y))) : true;
+        let n = 0;
+        for (const [x, y] of linea) if (fijar(capas, c, x, y, valor)) n++;
+        return { valor, n, bloques: linea.length };
+      },
       // Bloques marcados por capa (array de longitud n).
       porCapa(n) {
         const a = new Array(n).fill(0);
