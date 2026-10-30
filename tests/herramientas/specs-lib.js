@@ -138,7 +138,7 @@ function validarCobertura(fuentes, areas, errores) {
       const tests = pruebas.filter(([, texto]) => new RegExp(`\\b${ident}\\b`).test(texto)).map(([ruta]) => ruta);
       const manual = /\[verificación manual:\s*\S[^\]]*\]/.test(requisito.cuerpo);
       if (!tests.length && !manual) errores.push(`El requisito ${ident} (${area.ruta}) está sin test.`);
-      cobertura.push({ id: ident, area: area.codigo, tests });
+      cobertura.push({ id: ident, area: area.codigo, tests, manual });
     }
   }
 
@@ -217,7 +217,7 @@ function validarTodo(fuentes) {
 
 function formatearCobertura(resultado) {
   if (!resultado.cobertura.length) return 'Cobertura: sin áreas todavía.';
-  const filas = resultado.cobertura.map(c => `  ${c.id}  ${c.tests.length ? c.tests.join(', ') : 'sin test'}`);
+  const filas = resultado.cobertura.map(c => `  ${c.id}  ${c.tests.length ? c.tests.join(', ') : (c.manual ? 'verificación manual' : 'sin test')}`);
   return ['Cobertura de requisitos:', ...filas].join('\n');
 }
 

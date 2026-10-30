@@ -58,7 +58,7 @@ test('cada capa sabe su total, lo hecho, su porcentaje y si esta completa', () =
   assert.deepEqual(r.capas.map(c => c.i), [0, 1, 2]);
 });
 
-test('resumen del centro: tamano del centro y distancias a los bordes', () => {
+test('NUM-12: resumen del centro: tamano del centro y distancias a los bordes', () => {
   const g = [
     [false, false, false],
     [true, true, true],
@@ -68,13 +68,13 @@ test('resumen del centro: tamano del centro y distancias a los bordes', () => {
     'Centro: 1×1 bloques · del centro al borde: ← 1 · → 1 · ↑ 0 · ↓ 0 bloques (sin contar el centro)');
 });
 
-test('resumen del centro con centro par 2x2', () => {
+test('NUM-12: resumen del centro con centro par 2x2', () => {
   const g = Array.from({ length: 2 }, () => [true, true, true, true]);
   assert.equal(Materiales.textoResumenCentro(g),
     'Centro: 2×2 bloques · del centro al borde: ← 1 · → 1 · ↑ 0 · ↓ 0 bloques (sin contar el centro)');
 });
 
-test('resumen del centro de una capa vacia no menciona bordes', () => {
+test('NUM-12: resumen del centro de una capa vacia no menciona bordes', () => {
   const g = [[false, false], [false, false]];
   assert.equal(Materiales.textoResumenCentro(g), 'Centro: 2×2 bloques');
 });
