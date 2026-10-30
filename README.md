@@ -13,7 +13,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
 - **Modo:** sólido o hueco. En hueco, el **grosor del borde** se limita automáticamente al máximo que aún deja interior; si pides más, se recorta y se avisa.
 - **Numeración:**
   - Regla 1..N en los bordes (cada 2 o 5 con poco zoom).
-  - Regla relativa al centro: con tamaño **impar** el centro es un bloque (`C`); con tamaño **par** el centro es de 2×2 y no hay 0 (`-1 | 1`).
+  - Regla relativa al centro: cuenta como los ejes, sin signos: el centro vale 1 y se llega hasta el borde (`8 … 2 1 | 1 2 … 8` con centro de 2×2; `8 … 2 1 2 … 8` con centro de 1×1). La línea de información dice la posición con flechas (`← 13, ↑ 11`).
   - Tramos por fila (derecha) y por columna (abajo): bloques seguidos, p. ej. `3 · 8 · 3`.
   - Tramos dentro del dibujo y distancia al centro sobre los ejes centrales.
   - Resumen: tamaño del centro y bloques del centro a cada borde.

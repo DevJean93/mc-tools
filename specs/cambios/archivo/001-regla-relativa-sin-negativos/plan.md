@@ -52,5 +52,5 @@ solo las usan. Se eliminan `relativo` y `etiquetaRel`, que quedan sin uso.
 - [x] T02 `NUM-10` y `NUM-13`: unitarios en rojo → `reglaRelativa`, `cifrasReglaRelativa` y
       `capaReglas` → verde.
 - [x] T03 `NUM-14`: unitarios y E2E en rojo → `textoRelativo` y `describir` → verde.
-- [ ] T04 Archivar: delta en `specs/areas/numeracion/spec.md`, README, propuesta en `Hecha` y a
+- [x] T04 Archivar: delta en `specs/areas/numeracion/spec.md`, README, propuesta en `Hecha` y a
       `specs/cambios/archivo/`.

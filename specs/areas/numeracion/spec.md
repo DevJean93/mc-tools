@@ -66,10 +66,11 @@ Ejemplo: triángulo 21×15 → las tres primeras filas no llevan cifras.
 
 ### NUM-10
 
-La regla relativa al centro marca `C` en el bloque central cuando el tamaño es impar; con
-tamaño par el centro es de 2×2 y no hay 0 (`-1 | 1`).
+La regla relativa al centro cuenta como los ejes: la franja central vale 1 y se llega al
+bloque del borde, sin signo ni `C`. Cada margen lleva la misma cuenta que la fila y la columna
+centrales.
 
-[verificación manual: la regla se dibuja en el lienzo y no tiene una aserción automática; se revisa en las capturas.]
+Ejemplos: círculo de 30 → `15 … 2 1 | 1 2 … 15`; círculo de 15 (franja de 1) → `8 … 2 1 2 … 8`.
 
 ### NUM-11
 
@@ -85,10 +86,25 @@ sin contar el centro. Una capa vacía solo indica el tamaño.
 
 Ejemplo: centro 1×1 en una fila de 3 → `← 1 · → 1 · ↑ 0 · ↓ 0`.
 
+### NUM-13
+
+Con poco zoom, la regla relativa muestra solo las cifras que caben: el 1 de la franja (una
+sola vez, en su último bloque, aunque la franja sea de 2) y los múltiplos del paso de la
+regla; con todo el zoom muestra todas.
+
+Ejemplo: círculo de 16 con paso 2 → `8 6 4 2 1 2 4 6 8`.
+
+### NUM-14
+
+La línea de información de un bloque dice su posición respecto al centro con la misma cuenta
+que la regla y una flecha en lugar de signo. En la franja central dice solo `1`.
+
+Ejemplo: círculo de 30, columna 3, fila 5 → `relativo al centro (← 13, ↑ 11)`.
+
 ## Casos límite
 
-- Franja de 2 (tamaño par): centro 2×2, no hay 0 en la regla relativa.
-- Franja de 1 (tamaño impar): el eje central vale 1 y el centro es `C`.
+- Franja de 2 (tamaño par): centro 2×2 y la regla relativa muestra `1 | 1` en la franja.
+- Franja de 1 (tamaño impar): el eje central y la regla relativa valen 1 en el bloque central.
 - Círculo 30: 14 bloques por lado → el eje llega a 15, no a 14.
 - Triángulo 21×15: las filas 1 a 3 no tienen sitio para cifras internas.
 
@@ -108,9 +124,15 @@ Ejemplo: centro 1×1 en una fila de 3 → `← 1 · → 1 · ↑ 0 · ↓ 0`.
 - 2026-10-29: las cifras de los lados van en dos columnas fijas simétricas respecto a la
   franja; en los extremos se centran en su parte porque no hay eje en esa fila.
 - 2026-10-29: las filas centrales no llevan tramos: pertenecen al eje.
-- 2026-10-29: la regla relativa al centro sigue mostrando negativos (`-8 … 8`), aunque no
-  coincide con el conteo de los ejes. Hay una propuesta abierta para cambiarla
-  (`specs/cambios/001-regla-relativa-sin-negativos/`).
+- 2026-10-29: la regla relativa al centro cuenta igual que los ejes (franja = 1, hasta el
+  borde, sin signo ni `C`): tener dos cuentas parecidas que dijeran cosas distintas confundía.
+  Se mantiene la opción «Regla relativa al centro» en lugar de retirarla porque está en el
+  margen y sirve cuando los números de los ejes están ocultos o hay poco zoom (cambio 001).
+- 2026-10-29: la línea de información usa flechas (`← 13`, `↑ 11`) y no signos para decir de
+  qué lado del centro está el bloque; el `1` de la franja no lleva flecha.
+- 2026-10-29: con paso > 1 la franja de 2 muestra su `1` una sola vez (en el último bloque) para
+  que dos cifras no queden pegadas. El `1` y el `2` siguientes sí pueden ir contiguos, como en
+  la regla absoluta, porque son cifras sueltas que caben.
 - 2026-10-25: todas las cifras del lienzo van en negrita (peso 600) para que destaquen sobre
   los bloques; el margen del dibujo se mide ya con la negrita para que nada se corte.
 - 2026-10-25: las cifras dentro del dibujo solo se pintan con celdas de 16 px o más; con
