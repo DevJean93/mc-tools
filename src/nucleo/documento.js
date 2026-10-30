@@ -115,11 +115,23 @@ const Documento = (() => {
       avisos.avisar(`${valor ? 'Marcados' : 'Desmarcados'} ${n} bloques.`, deshacer);
     }
 
+    // Alterna toda una fila o columna de la capa actual. Devuelve el resultado de Marcas para
+    // que la entrada anuncie cuantos bloques cambiaron (o que la linea estaba vacia).
+    function marcarLinea(eje, i) {
+      antesDeMarcar();
+      const r = marcas.alternarLinea(capas, st.capa, eje, i);
+      if (!r.n) { historial.descartar(); return r; }
+      trasMarcar();
+      const nombre = eje === 'fila' ? 'la fila' : 'la columna';
+      avisos.avisar(`${r.valor ? 'Marcados' : 'Desmarcados'} ${r.n} bloques de ${nombre} ${i + 1}.`, deshacer);
+      return r;
+    }
+
     return {
       capas: () => capas, capaActual, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
-      deshacer, rehacer, marcarCapas, guardarEstado,
+      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado,
       hechos: marcas.conjunto, porCapa: n => marcas.porCapa(n),
       puedeDeshacer: historial.puedeDeshacer, puedeRehacer: historial.puedeRehacer,
     };

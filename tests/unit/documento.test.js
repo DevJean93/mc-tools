@@ -9,10 +9,11 @@ function montar(almacen = Almacen.memoria()) {
   const st = Estado.cargar(almacen);
   const avisos = {
     dichos: [],
+    acciones: [],       // acciones ofrecidas por los avisos (p. ej. Deshacer)
     notas: [],          // notas fijas visibles, en orden (null = se ocultó)
     nota(t) { this.notas.push(t); },
     ocultarNota() { this.notas.push(null); },
-    avisar(t) { this.dichos.push(t); },
+    avisar(t, accion) { this.dichos.push(t); this.acciones.push(accion); },
     anunciar(t) { this.dichos.push(t); },
     ocultarError() {},
     mostrarError(t) { this.dichos.push(t); },
@@ -97,6 +98,50 @@ test('MAR-04: una accion que no cambia nada no ocupa historial', () => {
   doc.fijar(c.x, c.y, false);   // ya estaba vacio: no hay cambio
   doc.descartarPaso();
   assert.equal(doc.puedeDeshacer(), false);
+});
+
+test('MAR-16: marcar una fila es un solo paso de deshacer y el aviso ofrece Deshacer', () => {
+  const { doc, avisos } = montar();
+  doc.regenerar();
+  const r = doc.marcarLinea('fila', 7);
+  assert.deepEqual(r, { valor: true, n: 16, bloques: 16 });
+  assert.equal(doc.porCapa(1)[0], 16);
+  assert.ok(avisos.dichos.some(t => t.includes('16') && t.includes('fila 8')));
+  assert.equal(typeof avisos.acciones.at(-1), 'function', 'el aviso ofrece una accion');
+
+  avisos.acciones.at(-1)();
+  assert.equal(doc.porCapa(1)[0], 0, 'un solo paso lo devuelve todo');
+  doc.rehacer();
+  assert.equal(doc.porCapa(1)[0], 16);
+});
+
+test('MAR-16: volver a alternar la misma fila la desmarca entera', () => {
+  const { doc } = montar();
+  doc.regenerar();
+  doc.marcarLinea('fila', 7);
+  const r = doc.marcarLinea('fila', 7);
+  assert.deepEqual(r, { valor: false, n: 16, bloques: 16 });
+  assert.equal(doc.porCapa(1)[0], 0);
+});
+
+test('MAR-16: marcar una columna tambien es un solo paso', () => {
+  const { doc } = montar();
+  doc.regenerar();
+  const r = doc.marcarLinea('columna', 7);
+  assert.deepEqual(r, { valor: true, n: 16, bloques: 16 });
+  assert.equal(doc.porCapa(1)[0], 16);
+  doc.deshacer();
+  assert.equal(doc.porCapa(1)[0], 0);
+});
+
+test('MAR-18: una linea sin bloques no deja historial ni aviso', () => {
+  const { doc, avisos } = montar();
+  doc.regenerar();
+  const antes = avisos.dichos.length;
+  assert.deepEqual(doc.marcarLinea('fila', 999), { valor: true, n: 0, bloques: 0 });
+  assert.deepEqual(doc.marcarLinea('columna', 999), { valor: true, n: 0, bloques: 0 });
+  assert.equal(doc.puedeDeshacer(), false);
+  assert.equal(avisos.dichos.length, antes);
 });
 
 test('FOR-04: el grosor se recorta y se avisa', () => {

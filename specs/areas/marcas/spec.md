@@ -89,6 +89,12 @@ construidos, los desmarca; si no, los marca todos.
 
 Lo mismo con la banda de una columna en la regla superior: alterna toda la columna.
 
+### MAR-16
+
+Marcar una fila o columna es un solo paso de deshacer. Sale un aviso con el número de
+bloques, la fila o columna y el botón «Deshacer». Los lectores de pantalla anuncian «Fila 3:
+7 bloques marcados».
+
 ### MAR-18
 
 Una fila o columna sin bloques no cambia nada ni ocupa historial; se anuncia «La fila N no
