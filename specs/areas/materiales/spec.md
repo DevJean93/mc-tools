@@ -66,6 +66,12 @@ sus bloques en stacks y los construidos; y el nombre de la app con la fecha.
 
 [verificación manual: la cabecera se dibuja dentro de la imagen; se revisa abriendo el PNG.]
 
+### MAT-10
+
+Los números del desglose de materiales (stacks, shulker boxes, cofres dobles, construidos y
+faltan) se muestran en negrita, como el total y las cifras del lienzo. Las etiquetas y la
+fórmula de equivalencias siguen en peso normal.
+
 ## Casos límite
 
 - 0 bloques: `0 × 64`, sin shulkers ni cofres.
@@ -89,3 +95,7 @@ sus bloques en stacks y los construidos; y el nombre de la app con la fecha.
 - 2026-10-25: la imagen se exporta con el zoom de pantalla y densidad 1; si el lienzo supera
   16 Mpx, la densidad de píxeles se reduce (también en pantalla) para que el navegador pueda
   crearlo. La descarga entra por una función inyectada, para poder probarla sin navegador.
+- 2026-10-29: los números del desglose van en negrita (peso 600) para que las cantidades,
+  que es lo que se consulta, destaquen sobre las etiquetas. La tabla por capas de las formas
+  3D se queda en peso normal: con todo en negrita se pierde la jerarquía, y la capa activa ya
+  se distingue por su fondo (cambio 004).

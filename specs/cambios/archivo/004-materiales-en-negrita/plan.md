@@ -42,5 +42,5 @@ jerarquía, y la capa seleccionada ya se distingue por su fondo.
 
 - [x] T01 Propuesta y plan; el validador en verde.
 - [x] T02 `MAT-10`: el E2E en rojo → `.mat b` en negrita → verde.
-- [ ] T03 Archivar: delta en `specs/areas/materiales/spec.md` con su decisión, propuesta en `Hecha`
+- [x] T03 Archivar: delta en `specs/areas/materiales/spec.md` con su decisión, propuesta en `Hecha`
       y a `specs/cambios/archivo/`.
