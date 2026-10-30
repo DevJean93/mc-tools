@@ -13,12 +13,24 @@ const Estado = (() => {
 
   // Las formas validas salen del registro de geometria: una sola lista, no dos.
   // Las variantes tambien: se leen al acceder para ver las formas registradas despues.
-  const variantes = () => [...new Set(Formas.FORMAS.flatMap(id => ((Formas.obtener(id) || {}).variantes || []).map(v => v.valor)))];
+  // Los parametros propios de cada forma (variante -> `esfera`, orientacion -> `orient`) los declara
+  // su definicion. `propios(id, campo)` son los valores de una forma; `todos(campo)` los de todas.
+  const propios = (id, campo) => ((Formas.obtener(id) || {})[campo] || []).map(v => v.valor);
+  const todos = campo => [...new Set(Formas.FORMAS.flatMap(id => propios(id, campo)))];
+  const variantes = () => todos('variantes');
+  const orientaciones = () => todos('orientaciones');
   const ENUMS = {
     forma: Formas.FORMAS,
     modo: ['relleno', 'hueco'],
-    orient: ['plano', 'punta'],
+    get orient() { return orientaciones(); },
     get esfera() { return variantes(); },
+  };
+  // Valor de un parametro propio de la forma activa: tiene que ser uno de los suyos (si no, el
+  // primero). Una forma que no ofrece ese parametro recuerda la preferencia valida de otra,
+  // para cuando se vuelva a ella.
+  const elegir = (crudo, deLaForma, deTodas, defecto) => {
+    if (deLaForma.length) return deLaForma.includes(crudo) ? crudo : deLaForma[0];
+    return deTodas.includes(crudo) ? crudo : defecto;
   };
   // Opciones que solo cambian la vista (no la geometria ni las marcas).
   const VISTA = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
@@ -28,7 +40,7 @@ const Estado = (() => {
 
   const DEFAULTS = {
     forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1,
-    esfera: variantes()[0] || '', orient: 'plano', zoom: 26, rel: true, tramos: true,
+    esfera: variantes()[0] || '', orient: orientaciones()[0] || '', zoom: 26, rel: true, tramos: true,
     tramosDentro: false, distEjes: true, capa: 0,
   };
 
@@ -60,9 +72,11 @@ const Estado = (() => {
   function cargar(almacen) {
     const st = { ...DEFAULTS };
     const raw = leerJSON(almacen, KEY) || {};
-    for (const [clave, valores] of Object.entries(ENUMS)) {
-      if (valores.includes(raw[clave])) st[clave] = raw[clave];
+    for (const clave of ['forma', 'modo']) {
+      if (ENUMS[clave].includes(raw[clave])) st[clave] = raw[clave];
     }
+    st.esfera = elegir(raw.esfera, propios(st.forma, 'variantes'), variantes(), DEFAULTS.esfera);
+    st.orient = elegir(raw.orient, propios(st.forma, 'orientaciones'), orientaciones(), DEFAULTS.orient);
     st.w = num(raw.w, 1, (Formas.obtener(st.forma) || {}).es3D ? LIMITES.w3d : LIMITES.w2d, st.w);
     st.h = num(raw.h, 1, LIMITES.h, st.h);
     st.grosor = num(raw.grosor, 1, LIMITES.grosor, st.grosor);

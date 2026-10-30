@@ -27,8 +27,7 @@ const Panel = (() => {
       st.igualar = $('igualar').checked;
       st.modo = $('modo').value;
       st.grosor = numero('grosor', st.grosor, 1, limites.grosor);
-      st.esfera = $('esfera').value || st.esfera;
-      st.orient = $('orient').value;
+      leerPropios();
       st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
     }
@@ -45,18 +44,36 @@ const Panel = (() => {
       sel.value = st.forma;
     }
 
-    // El selector de variante sale de la definicion de la forma (la esfera trae esfera/cupula).
-    // Solo se rehace al cambiar de forma, no en cada `poner()`.
-    let variantesDe = null;
-    function ponerVariantes() {
-      const def = Formas.obtener(st.forma);
-      const variantes = (def && def.variantes) || [];
-      $('rowEsfera').hidden = !variantes.length;
-      if (variantesDe !== st.forma) {
-        variantesDe = st.forma;
-        $('esfera').innerHTML = variantes.map(v => `<option value="${v.valor}">${v.etiqueta}</option>`).join('');
+    // Los selectores propios de cada forma (variante, orientacion) salen de su definicion y se
+    // guardan en st con la clave de siempre (`esfera`, `orient`). Cada uno solo se rehace al
+    // cambiar de forma, no en cada `poner()`.
+    const PROPIOS = [
+      { select: 'esfera', fila: 'rowEsfera', clave: 'esfera', lista: def => def.variantes },
+      { select: 'orient', fila: 'rowOrient', clave: 'orient', lista: def => def.orientaciones },
+    ];
+    const construidoPara = {};   // select -> forma para la que se hicieron sus opciones
+    const listaDe = (p, forma) => p.lista(Formas.obtener(forma) || {}) || [];
+
+    function ponerPropios() {
+      for (const p of PROPIOS) {
+        const lista = listaDe(p, st.forma);
+        $(p.fila).hidden = !lista.length;
+        if (construidoPara[p.select] !== st.forma) {
+          construidoPara[p.select] = st.forma;
+          $(p.select).innerHTML = lista.map(v => `<option value="${v.valor}">${v.etiqueta}</option>`).join('');
+        }
+        if (lista.some(v => v.valor === st[p.clave])) $(p.select).value = st[p.clave];
       }
-      if (variantes.some(v => v.valor === st.esfera)) $('esfera').value = st.esfera;
+    }
+
+    // Lo elegido solo vale si es de la forma activa: al cambiar de forma el selector aun tiene las
+    // opciones de la anterior. Una forma sin ese parametro conserva el valor (se recuerda).
+    function leerPropios() {
+      for (const p of PROPIOS) {
+        const lista = listaDe(p, st.forma), el = $(p.select);
+        if (!lista.length || !el.options.length) continue;
+        st[p.clave] = lista.some(v => v.valor === el.value) ? el.value : lista[0].valor;
+      }
     }
 
     function poner(grosorMax) {
@@ -67,14 +84,12 @@ const Panel = (() => {
       $('lblW').textContent = es3D() ? 'Diámetro' : 'Ancho';
       $('maxW').textContent = `(máx. ${maxW})`;
       $('igualar').checked = st.igualar; $('modo').value = st.modo;
-      ponerVariantes(); $('orient').value = st.orient; $('zoom').value = st.zoom;
+      ponerPropios(); $('zoom').value = st.zoom;
       for (const k of TOGGLES) $(k).checked = st[k];
       $('h').disabled = st.igualar;
       $('rowH').hidden = es3D();
       $('filaDims').classList.toggle('solo', es3D());
       $('rowIgualar').hidden = es3D();
-      const opciones = (Formas.obtener(st.forma) || {}).opciones || [];
-      $('rowOrient').hidden = !opciones.includes('orient');
       $('rowGrosor').hidden = st.modo !== 'hueco';
       const maxG = grosorMax || limites.grosor;
       $('grosor').max = maxG;

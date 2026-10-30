@@ -111,6 +111,28 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(orientHex && await ev(`document.getElementById('rowOrient').hidden`),
     'B1: la orientacion aparece solo en las formas que la ofrecen');
 
+  // B2/B3: la orientacion y las variantes salen de la definicion de cada forma.
+  const elegirForma = id => ev(`(() => { const f = document.getElementById('forma'); f.value = '${id}'; f.dispatchEvent(new Event('input')); })()`).then(() => esperar(200));
+  await elegirForma('hexagono');
+  ok(await ev(`[...document.getElementById('orient').options].map(o => o.value + ':' + o.textContent).join('|') ===
+    Formas.obtener('hexagono').orientaciones.map(o => o.valor + ':' + o.etiqueta).join('|') &&
+    document.getElementById('orient').options.length === 2`),
+  'B2: las orientaciones del selector salen de la definicion del hexagono');
+  await ev(`(() => { const o = document.getElementById('orient'); o.value = 'punta'; o.dispatchEvent(new Event('input')); })()`);
+  await esperar(200);
+  await elegirForma('circulo'); await elegirForma('hexagono');
+  ok(await ev(`document.getElementById('orient').value === 'punta'`), 'B2: al volver al hexagono se recuerda la orientacion elegida');
+  await cargar();
+  ok(await ev(`document.getElementById('forma').value === 'hexagono' && document.getElementById('orient').value === 'punta' && !document.getElementById('rowOrient').hidden`),
+    'B2: la orientacion guardada se restaura al recargar');
+  await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'esfera', w: 12, esfera: 'cupula' }))`); await cargar();
+  ok(await ev(`document.getElementById('esfera').value === 'cupula' && document.getElementById('capaTxt').textContent.includes('de 6')`),
+    'B3: una cupula guardada se restaura (6 capas)');
+  await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'esfera', w: 12, esfera: 'plano' }))`); await cargar();
+  ok(await ev(`document.getElementById('esfera').value === 'esfera' && document.getElementById('capaTxt').textContent.includes('de 12')`),
+    'B3: una variante que no es de la forma cae en la primera (esfera, 12 capas)');
+  await ev(`localStorage.clear()`); await cargar();
+
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
   const geo = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);
   const L = 80, T = 42, s = 26; // Render con rel=true: L = 34+38+8, T = 22+20

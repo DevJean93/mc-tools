@@ -67,7 +67,7 @@
   function nombreForma() {
     const def = doc.definicion();
     const variante = (def.variantes || []).find(v => v.valor === st.esfera);
-    return (doc.es3D() && variante && variante.nombre) || def.nombre || $('forma').selectedOptions[0].textContent;
+    return (variante && variante.nombre) || def.nombre || $('forma').selectedOptions[0].textContent;
   }
   const dimensiones = () => (doc.es3D() ? `Ø${st.w}` : `${st.w}×${st.h}`);
   const textoModo = () => (st.modo === 'hueco' ? `hueco, grosor ${st.grosor}` : 'sólido');
@@ -157,7 +157,7 @@
     contexto: () => ({
       capas: doc.capas(), totales: doc.totales(), hechos: doc.hechos(), op: st, zoom: st.zoom,
       nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(),
-      variante: doc.es3D() && doc.definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: doc.es3D(),
+      variante: doc.definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: doc.es3D(),
       w: st.w, h: st.h, porCapa: doc.porCapa(doc.capas().length), stacks: Materiales.fmtStacks,
     }),
   });

@@ -83,3 +83,27 @@ test('una forma 3D nueva usa el maximo 3D y genera una capa por nivel', () => {
   assert.equal(r.capas.length, 4, 'una capa por nivel');
   assert.equal(Formas.contar(r.capas[0]), 16);
 });
+
+test('las variantes y orientaciones de una forma no valen para las demas', () => {
+  Formas.registrar('faro', {
+    nombre: 'Faro de prueba',
+    es3D: false,
+    opciones: [null, 'orient'],
+    orientaciones: [
+      { valor: 'norte', etiqueta: 'Mirando al norte' },
+      { valor: 'sur', etiqueta: 'Mirando al sur' },
+    ],
+    dimensiones: p => ({ w: Math.max(1, +p.w || 1), h: Math.max(1, +p.h || 1), d: 1 }),
+    llenar: () => true,
+  });
+  const carga = o => Estado.cargar(Almacen.memoria({ 'mc-formas-v1': JSON.stringify(o) }));
+
+  assert.equal(carga({ forma: 'faro', orient: 'sur' }).orient, 'sur', 'su orientacion se acepta');
+  assert.equal(carga({ forma: 'faro', orient: 'punta' }).orient, 'norte', 'la del hexagono no vale: cae en la suya');
+  assert.equal(carga({ forma: 'hexagono', orient: 'sur' }).orient, 'plano', 'y la del faro no vale para el hexagono');
+
+  // Lo mismo con las variantes: las de una forma no se cuelan en otra.
+  assert.equal(carga({ forma: 'torre', esfera: 'cupula' }).esfera, 'torre', 'cupula no es variante de la torre');
+  assert.equal(carga({ forma: 'torre', esfera: 'almena' }).esfera, 'almena');
+  assert.equal(carga({ forma: 'esfera', esfera: 'almena' }).esfera, 'esfera', 'almena no es variante de la esfera');
+});

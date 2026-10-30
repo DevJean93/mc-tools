@@ -11,7 +11,9 @@
 //   preparar(p, dims) -> datos        opcional; se calcula una vez por generar()
 //   llenar(x, y, z, p, dims, prep) -> boolean   x, y, z son el centro de la celda
 //   opciones: claves de los parametros propios, por hueco de la firma (null = hueco vacio)
-//   variantes: [{ valor, nombre, etiqueta }]    opcional; variantes que ofrece el panel
+//   variantes: [{ valor, nombre, etiqueta }]    opcional; variantes que ofrece el panel (clave `esfera`)
+//   orientaciones: [{ valor, etiqueta }]        opcional; orientaciones que ofrece el panel (clave `orient`)
+//                                                la primera es la de por defecto
 //   variante(r, p, dims) -> { capas, totales }  opcional; ajusta el volumen ya generado
 //
 // generar(params) -> { capas, totales, grosor, grosorMax, grosorRecortado }
@@ -176,7 +178,14 @@ const Formas = (() => {
   };
   registrar('hexagono', forma2D('Hexágono',
     (x, y, z, p, dims, pts) => dentroPoligono(x, y, pts),
-    { preparar: puntosHexagono, opciones: [null, 'orient'] },
+    {
+      preparar: puntosHexagono,
+      opciones: [null, 'orient'],
+      orientaciones: [
+        { valor: 'plano', etiqueta: 'Lado plano arriba' },
+        { valor: 'punta', etiqueta: 'Punta arriba' },
+      ],
+    },
   ));
 
   registrar('esfera', {

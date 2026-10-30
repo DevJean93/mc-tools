@@ -95,6 +95,40 @@ test('la firma solo cambia con la geometria', () => {
   );
 });
 
+test('la firma de las marcas guardadas no cambia (los datos de los usuarios siguen valiendo)', () => {
+  // Valores de referencia de antes de declarar orientaciones y variantes por forma.
+  const base = { w: 16, h: 16, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' };
+  const casos = [
+    [{ forma: 'circulo', w: 16, h: 16 }, 'circulo|16|16|relleno|||'],
+    [{ forma: 'circulo', w: 20, h: 20, modo: 'hueco', grosor: 2 }, 'circulo|20|20|hueco|2||'],
+    [{ forma: 'rectangulo', w: 14, h: 10 }, 'rectangulo|14|10|relleno|||'],
+    [{ forma: 'triangulo', w: 21, h: 15 }, 'triangulo|21|15|relleno|||'],
+    [{ forma: 'rombo', w: 15, h: 11 }, 'rombo|15|11|relleno|||'],
+    [{ forma: 'hexagono', w: 20, h: 18, orient: 'punta' }, 'hexagono|20|18|relleno|||punta'],
+    [{ forma: 'hexagono', w: 20, h: 18, modo: 'hueco', grosor: 3 }, 'hexagono|20|18|hueco|3||plano'],
+    [{ forma: 'esfera', w: 16, esfera: 'cupula' }, 'esfera|16|16|relleno||cupula|'],
+    [{ forma: 'esfera', w: 11, modo: 'hueco', grosor: 1 }, 'esfera|11|11|hueco|1|esfera|'],
+  ];
+  for (const [c, esperada] of casos) assert.equal(Estado.firma({ ...base, ...c }), esperada, JSON.stringify(c));
+});
+
+test('la orientacion del hexagono sale de su definicion y se valida contra ella', () => {
+  const carga = o => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(o)));
+  assert.deepEqual(Formas.obtener('hexagono').orientaciones.map(o => o.valor), ['plano', 'punta']);
+  assert.equal(Estado.DEFAULTS.orient, 'plano', 'el valor por defecto es la primera orientacion');
+  assert.equal(carga({ forma: 'hexagono', orient: 'punta' }).orient, 'punta');
+  assert.equal(carga({ forma: 'hexagono', orient: 'raro' }).orient, 'plano', 'una orientacion invalida cae en la primera');
+  assert.equal(carga({ forma: 'circulo', orient: 'punta' }).orient, 'punta', 'sin orientaciones se recuerda la preferencia valida');
+  assert.equal(carga({ forma: 'circulo', orient: 'raro' }).orient, 'plano', 'y una invalida no se recuerda');
+});
+
+test('la variante se valida contra las de la forma activa', () => {
+  const carga = o => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(o)));
+  assert.equal(carga({ forma: 'esfera', esfera: 'cupula' }).esfera, 'cupula');
+  assert.equal(carga({ forma: 'esfera', esfera: 'raro' }).esfera, 'esfera');
+  assert.equal(carga({ forma: 'circulo', esfera: 'cupula' }).esfera, 'cupula', 'sin variantes se recuerda la preferencia');
+});
+
 test('un almacen que lanza al leer no rompe la carga', () => {
   const roto = { leer: () => { throw new Error('sin acceso'); }, escribir: () => true };
   assert.deepEqual(Estado.cargar(roto), Estado.DEFAULTS);
