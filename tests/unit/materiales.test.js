@@ -3,19 +3,19 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const Materiales = require('../../src/nucleo/materiales.js');
 
-test('208 bloques son 3 stacks y 16 sueltos', () => {
+test('MAT-01: 208 bloques son 3 stacks y 16 sueltos', () => {
   const r = Materiales.resumen([208], [0]);
   assert.equal(r.total, 208);
   assert.equal(r.stacks, '3 × 64 + 16');
   assert.equal(r.faltan, 208);
 });
 
-test('sin resto no se anade el "+ N"', () => {
+test('MAT-01: sin resto no se anade el "+ N"', () => {
   assert.equal(Materiales.resumen([128], [0]).stacks, '2 × 64');
   assert.equal(Materiales.resumen([0], [0]).stacks, '0 × 64');
 });
 
-test('shulkers y cofres se redondean hacia arriba', () => {
+test('MAT-02: shulkers y cofres se redondean hacia arriba', () => {
   const r = Materiales.resumen([1728], [0]);
   assert.deepEqual(r.shulkers, { valor: 1, cajas: 1 });
   assert.deepEqual(r.cofres, { valor: 0.5, cajas: 1 });
@@ -29,7 +29,7 @@ test('shulkers y cofres se redondean hacia arriba', () => {
   assert.equal(Materiales.resumen([0], [0]).shulkers.cajas, 0, 'sin bloques no hace falta nada');
 });
 
-test('porcentajes de una sola capa', () => {
+test('MAT-03: porcentajes de una sola capa', () => {
   const r = Materiales.resumen([208], [16], 0);
   assert.equal(r.pctTotal, 8);
   assert.equal(r.pctCapa, 8);
@@ -38,7 +38,7 @@ test('porcentajes de una sola capa', () => {
   assert.equal(r.totCapa, 208);
 });
 
-test('en 3D el progreso incluye capa y total', () => {
+test('MAT-04: en 3D el progreso incluye capa y total', () => {
   const r = Materiales.resumen([8, 26, 46], [8, 0, 46], 1);
   assert.equal(r.total, 80);
   assert.equal(r.marcados, 54);
@@ -48,7 +48,7 @@ test('en 3D el progreso incluye capa y total', () => {
   assert.equal(r.textoProgreso, 'Capa: 0/26 (0 %) · Total: 54/80 (68 %)');
 });
 
-test('cada capa sabe su total, lo hecho, su porcentaje y si esta completa', () => {
+test('MAT-05: cada capa sabe su total, lo hecho, su porcentaje y si esta completa', () => {
   const r = Materiales.resumen([8, 26, 0], [8, 1, 0], 0);
   assert.deepEqual(r.capas.map(c => [c.total, c.hechos, c.pct, c.completa]), [
     [8, 8, 100, true],
@@ -79,7 +79,7 @@ test('NUM-12: resumen del centro de una capa vacia no menciona bordes', () => {
   assert.equal(Materiales.textoResumenCentro(g), 'Centro: 2×2 bloques');
 });
 
-test('las constantes de stack viven solo en materiales', () => {
+test('MAT-06: las constantes de stack viven solo en materiales', () => {
   assert.equal(Materiales.STACK, 64);
   assert.equal(Materiales.SHULKER, 27 * 64);
   assert.equal(Materiales.COFRE_DOBLE, 54 * 64);
