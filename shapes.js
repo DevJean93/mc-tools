@@ -20,11 +20,11 @@
 //   capas[c][y][x] = true/false. 2D = una sola capa. Esfera/Cupula = una capa por nivel (de abajo arriba).
 //
 /**
- * @typedef {'circulo'|'rectangulo'|'triangulo'|'rombo'|'hexagono'|'esfera'} Forma
+ * @typedef {string} Forma   identificador de una forma registrada (ver Formas.FORMAS)
  * @typedef {{
  *   forma: Forma, w: number, h: number,
  *   modo: 'relleno'|'hueco', grosor: number,
- *   orient: 'plano'|'punta', esfera: 'esfera'|'cupula'
+ *   orient?: string, esfera?: string    // parametros propios de la forma activa (orientacion, variante)
  * }} Parametros
  */
 const Formas = (() => {
