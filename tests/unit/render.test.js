@@ -158,3 +158,64 @@ test('MAR-14: con la regla relativa (margen mas ancho) la banda sigue siendo la 
   assert.deepEqual(Render.zonaRegla(ancho, 118 + 29 * 20 + 1, 5), { eje: 'columna', i: 29 });
   assert.equal(Render.zonaRegla(ancho, 5, 5), null, 'esquina con margen ancho');
 });
+
+// --- regla relativa al centro -------------------------------------------------------------
+const cuentaRegla = n => Array.from({ length: n }, (_, i) => Render.reglaRelativa(i, n));
+
+test('NUM-10: la regla relativa cuenta como los ejes, sin signo ni C (franja de 2)', () => {
+  assert.deepEqual(cuentaRegla(16), [8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.equal(cuentaRegla(30)[0], 15, 'circulo de 30: 14 bloques por lado + 1');
+  assert.deepEqual(cuentaRegla(2), [1, 1]);
+});
+
+test('NUM-10: con franja de 1 bloque el bloque central vale 1 y a cada lado se cuenta 2…', () => {
+  assert.deepEqual(cuentaRegla(15), [8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.deepEqual(cuentaRegla(1), [1]);
+  assert.deepEqual(cuentaRegla(3), [2, 1, 2]);
+});
+
+test('NUM-10: la regla relativa coincide con los numeros de los ejes y nunca es negativa', () => {
+  for (const n of [1, 2, 7, 16, 30, 31]) {
+    const g = capa({ forma: 'rectangulo', w: n, h: n });
+    const [cx0] = Render.centro(n), fila = cx0;
+    const ejes = Render.etiquetasEjes(g).filter(t => t.y === fila).sort((a, b) => a.x - b.x).map(t => t.n);
+    assert.deepEqual(cuentaRegla(n), ejes, `rectangulo ${n}: regla = eje`);
+    assert.ok(cuentaRegla(n).every(k => k >= 1), 'sin ceros ni negativos');
+  }
+});
+
+test('NUM-10: ya no se exportan el indice con signo ni la etiqueta C', () => {
+  assert.equal(Render.relativo, undefined);
+  assert.equal(Render.etiquetaRel, undefined);
+});
+
+const visibles = (n, paso) => Render.cifrasReglaRelativa(n, paso).map(c => c.i);
+
+test('NUM-13: con todo el zoom (paso 1) se ven todas las cifras', () => {
+  assert.equal(visibles(16, 1).length, 16);
+  assert.equal(visibles(15, 1).length, 15);
+});
+
+test('NUM-13: con paso mayor se ve el 1 de la franja una sola vez y los multiplos del paso', () => {
+  const c = Render.cifrasReglaRelativa(16, 2);
+  assert.equal(c.filter(x => x.n === 1).length, 1, 'la franja de 2 se muestra una vez');
+  assert.equal(c.find(x => x.n === 1).i, Render.centro(16)[1], 'en el ultimo bloque de la franja');
+  assert.ok(c.every(x => x.n === 1 || x.n % 2 === 0), 'el resto, multiplos del paso');
+  assert.deepEqual(c.map(x => x.n), [8, 6, 4, 2, 1, 2, 4, 6, 8]);
+});
+
+test('NUM-13: con franja de 1 y paso 5 se ven el centro y los multiplos de 5', () => {
+  assert.deepEqual(Render.cifrasReglaRelativa(15, 5).map(x => x.n), [5, 1, 5]);
+});
+
+test('NUM-13: con paso mayor que 1 solo pueden ir contiguas el 1 y el 2 (cifras sueltas, como en la regla absoluta)', () => {
+  for (const n of [14, 15, 16, 30, 31, 60]) for (const paso of [2, 5, 10]) {
+    const c = Render.cifrasReglaRelativa(n, paso);
+    for (let k = 1; k < c.length; k++) {
+      if (c[k].i - c[k - 1].i === 1) {
+        assert.ok(Math.max(c[k].n, c[k - 1].n) <= 2 && Math.min(c[k].n, c[k - 1].n) === 1, `n=${n} paso=${paso}: ${c[k - 1].n} y ${c[k].n} pegadas`);
+      }
+    }
+    assert.equal(c.filter(x => x.n === 1).length, 1, `n=${n} paso=${paso}: la franja una sola vez`);
+  }
+});

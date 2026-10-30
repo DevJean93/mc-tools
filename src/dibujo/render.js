@@ -34,15 +34,37 @@ const Render = (() => {
     return r;
   }
 
-  // Indice relativo al centro: con tamano par no existe el 0 (centro de 2 bloques: -1 | 1).
-  function relativo(i, n) {
-    if (n % 2) return i - (n - 1) / 2;
-    return i < n / 2 ? -(n / 2 - i) : i - n / 2 + 1;
-  }
-  const etiquetaRel = k => (k === 0 ? 'C' : String(k));
   const centro = n => [Math.floor((n - 1) / 2), Math.floor(n / 2)];
   // Bloques que separan i de la franja central [a, b] (0 dentro de la franja).
   const distFranja = (i, a, b) => (i < a ? a - i : i > b ? i - b : 0);
+
+  // Regla relativa al centro: cuenta como los ejes, 1 en la franja central y hacia fuera hasta
+  // el bloque del borde (16 bloques -> 8 7 … 2 1 | 1 2 … 8; 15 bloques -> 8 … 2 1 2 … 8).
+  function reglaRelativa(i, n) {
+    const [a, b] = centro(n);
+    return distFranja(i, a, b) + 1;
+  }
+
+  // Cifras de la regla relativa que se ven con ese paso: [{ i, n }]. Con paso 1 todas; con mas, la
+  // franja una sola vez (en su ultimo bloque, para que dos cifras no queden pegadas) y los
+  // multiplos del paso.
+  function cifrasReglaRelativa(n, paso) {
+    const ultimo = centro(n)[1], cifras = [];
+    for (let i = 0; i < n; i++) {
+      const k = reglaRelativa(i, n);
+      if (paso === 1 || (k === 1 ? i === ultimo : k % paso === 0)) cifras.push({ i, n: k });
+    }
+    return cifras;
+  }
+
+  // Posicion respecto al centro en una frase corta: «← 13», «↑ 11» o «1» en la franja. `eje` es 'x'
+  // (flechas ← →) o 'y' (↑ ↓).
+  function textoRelativo(i, n, eje) {
+    const [a, b] = centro(n), k = reglaRelativa(i, n);
+    if (i >= a && i <= b) return String(k);
+    const flecha = eje === 'x' ? (i < a ? '←' : '→') : (i < a ? '↑' : '↓');
+    return `${flecha} ${k}`;
+  }
 
   const txtFila = f => (f.length ? f.map(r => r.l).join(' · ') : '—');
 
@@ -160,28 +182,24 @@ const Render = (() => {
     const { L, T, s, w, h, H0, paso, fuente } = m;
     ctx.font = fuente;
     const verAbs = n => n === 1 || n % paso === 0;
-    // con paso > 1 el -1 y el 1 quedan pegados: se marca solo el 1 (o la C si es impar)
-    const verRel = k => paso === 1 || k === 0 || k === 1 || Math.abs(k) % paso === 0;
     ctx.textAlign = 'center';
     for (let x = 0; x < w; x++) {
-      const px = L + x * s + s / 2;
       if (verAbs(x + 1)) {
         ctx.fillStyle = P.regla;
-        ctx.fillText(String(x + 1), px, H0 + LAYOUT.topAbs / 2);
+        ctx.fillText(String(x + 1), L + x * s + s / 2, H0 + LAYOUT.topAbs / 2);
       }
-      if (o.op.rel) {
-        const k = relativo(x, w);
-        if (verRel(k)) { ctx.fillStyle = P.oro; ctx.fillText(etiquetaRel(k), px, H0 + LAYOUT.topAbs + LAYOUT.topRel / 2); }
-      }
+    }
+    if (o.op.rel) {
+      ctx.fillStyle = P.oro;
+      for (const c of cifrasReglaRelativa(w, paso)) ctx.fillText(String(c.n), L + c.i * s + s / 2, H0 + LAYOUT.topAbs + LAYOUT.topRel / 2);
     }
     ctx.textAlign = 'right';
     for (let y = 0; y < h; y++) {
-      const py = T + y * s + s / 2;
-      if (verAbs(y + 1)) { ctx.fillStyle = P.regla; ctx.fillText(String(y + 1), LAYOUT.abs, py); }
-      if (o.op.rel) {
-        const k = relativo(y, h);
-        if (verRel(k)) { ctx.fillStyle = P.oro; ctx.fillText(etiquetaRel(k), L - LAYOUT.sep, py); }
-      }
+      if (verAbs(y + 1)) { ctx.fillStyle = P.regla; ctx.fillText(String(y + 1), LAYOUT.abs, T + y * s + s / 2); }
+    }
+    if (o.op.rel) {
+      ctx.fillStyle = P.oro;
+      for (const c of cifrasReglaRelativa(h, paso)) ctx.fillText(String(c.n), L - LAYOUT.sep, T + c.i * s + s / 2);
     }
   };
 
@@ -365,7 +383,7 @@ const Render = (() => {
   }
 
   return {
-    dibujar, medir, relativo, etiquetaRel, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
+    dibujar, medir, reglaRelativa, cifrasReglaRelativa, textoRelativo, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
     zonaRegla,
   };
 })();
