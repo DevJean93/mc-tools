@@ -352,8 +352,21 @@ const Render = (() => {
     return { L, T, s: m.s, w: m.w, h: m.h, ocultos: m.ocultos };
   }
 
+  // Banda de la regla bajo un punto del lienzo (px, py): fila en el margen izquierdo, columna
+  // en el superior. La esquina, el dibujo y los margenes derecho e inferior no son regla.
+  function zonaRegla(geo, px, py) {
+    if (!geo || px < 0 || py < 0) return null;
+    const { L, T, s, w, h } = geo;
+    const enAlto = py >= T && py < T + h * s;
+    const enAncho = px >= L && px < L + w * s;
+    if (px < L && enAlto) return { eje: 'fila', i: Math.floor((py - T) / s) };
+    if (py < T && enAncho) return { eje: 'columna', i: Math.floor((px - L) / s) };
+    return null;
+  }
+
   return {
     dibujar, medir, relativo, etiquetaRel, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
+    zonaRegla,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;

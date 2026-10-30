@@ -126,3 +126,35 @@ test('NUM-04: ejes: la forma sin bloques en la franja no numera nada', () => {
   const vacia = [[false, false], [false, false]];
   assert.deepEqual(Render.etiquetasEjes(vacia), []);
 });
+
+// Zona sensible de las reglas: geometria de un lienzo de 16x16 con celdas de 26 px.
+const GEO = { L: 80, T: 42, s: 26, w: 16, h: 16 };
+
+test('MAR-14: la banda izquierda devuelve la fila, tambien en el primer y ultimo bloque', () => {
+  assert.deepEqual(Render.zonaRegla(GEO, 10, GEO.T + 7 * GEO.s + 5), { eje: 'fila', i: 7 });
+  assert.deepEqual(Render.zonaRegla(GEO, 10, GEO.T), { eje: 'fila', i: 0 });
+  assert.deepEqual(Render.zonaRegla(GEO, GEO.L - 1, GEO.T + 16 * GEO.s - 1), { eje: 'fila', i: 15 });
+});
+
+test('MAR-15: la banda superior devuelve la columna, tambien en el primer y ultimo bloque', () => {
+  assert.deepEqual(Render.zonaRegla(GEO, GEO.L + 7 * GEO.s + 5, 10), { eje: 'columna', i: 7 });
+  assert.deepEqual(Render.zonaRegla(GEO, GEO.L, GEO.T - 1), { eje: 'columna', i: 0 });
+  assert.deepEqual(Render.zonaRegla(GEO, GEO.L + 16 * GEO.s - 1, 1), { eje: 'columna', i: 15 });
+});
+
+test('MAR-18: la esquina, el dibujo y los margenes derecho e inferior no son regla', () => {
+  assert.equal(Render.zonaRegla(GEO, 10, 10), null, 'esquina');
+  assert.equal(Render.zonaRegla(GEO, GEO.L + 100, GEO.T + 100), null, 'dibujo');
+  assert.equal(Render.zonaRegla(GEO, GEO.L + GEO.w * GEO.s, GEO.T + 10), null, 'margen derecho');
+  assert.equal(Render.zonaRegla(GEO, GEO.L + 10, GEO.T + GEO.h * GEO.s), null, 'margen inferior');
+  assert.equal(Render.zonaRegla(GEO, -1, GEO.T + 10), null, 'fuera del lienzo');
+  assert.equal(Render.zonaRegla(GEO, 10, GEO.T + GEO.h * GEO.s), null, 'banda izquierda por debajo');
+  assert.equal(Render.zonaRegla(null, 10, 10), null, 'sin geometria');
+});
+
+test('MAR-14: con la regla relativa (margen mas ancho) la banda sigue siendo la fila', () => {
+  const ancho = { L: 118, T: 62, s: 20, w: 30, h: 30 };
+  assert.deepEqual(Render.zonaRegla(ancho, 5, 62 + 29 * 20 + 1), { eje: 'fila', i: 29 });
+  assert.deepEqual(Render.zonaRegla(ancho, 118 + 29 * 20 + 1, 5), { eje: 'columna', i: 29 });
+  assert.equal(Render.zonaRegla(ancho, 5, 5), null, 'esquina con margen ancho');
+});
