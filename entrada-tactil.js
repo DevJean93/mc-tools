@@ -18,19 +18,25 @@ const EntradaTactil = (() => {
     const medio = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
 
     // Arrastra el dibujo. Lo que el contenedor ya no puede desplazar, lo desplaza la pagina.
+    // Con densidad 1 el navegador redondea el scroll a pixeles enteros, asi que un dedo muy lento
+    // (menos de 1 px por evento) no movia nada: la fraccion se acumula y se aplica al sumar 1 px.
+    const resto = { x: 0, y: 0 };
     function desplazar(dx, dy) {
+      resto.x -= dx; resto.y -= dy;                 // el contenido sigue al dedo
+      const px = Math.trunc(resto.x), py = Math.trunc(resto.y);
+      resto.x -= px; resto.y -= py;
+      if (!px && !py) return;
       const l0 = contenedor.scrollLeft, t0 = contenedor.scrollTop;
-      contenedor.scrollLeft = l0 - dx;
-      contenedor.scrollTop = t0 - dy;
+      contenedor.scrollLeft = l0 + px;
+      contenedor.scrollTop = t0 + py;
       // Solo se encadena con la pagina si el contenedor ya esta en ese borde: asi un resto
       // por redondeo (pantallas de alta densidad) no mueve la pagina mientras el contenedor
-      // aun puede desplazarse. En el borde se pasa todo el resto, sin umbral: un dedo lento
-      // avanza menos de 1 px por evento y aun asi debe mover la pagina.
-      const restoY = -dy - (contenedor.scrollTop - t0);
+      // aun puede desplazarse.
+      const restoY = py - (contenedor.scrollTop - t0);
       const enBorde = restoY < 0
         ? contenedor.scrollTop <= 0
         : contenedor.scrollTop + contenedor.clientHeight >= contenedor.scrollHeight - 1;
-      if (enBorde) window.scrollBy(0, restoY);
+      if (restoY && enBorde) window.scrollBy(0, restoY);
     }
 
     function empezarPellizco() {
@@ -57,6 +63,7 @@ const EntradaTactil = (() => {
       ev.preventDefault();
       try { lienzo.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ }
       toques.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      resto.x = 0; resto.y = 0;   // cada gesto empieza sin fraccion pendiente
 
       if (toques.size === 2) empezarPellizco();
       else if (toques.size === 1) toque = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, c: dibujo.celda(ev) };
@@ -77,6 +84,7 @@ const EntradaTactil = (() => {
     function fin(ev) {
       if (ev.pointerType !== 'touch') return;
       toques.delete(ev.pointerId);
+      resto.x = 0; resto.y = 0;
       try { lienzo.releasePointerCapture(ev.pointerId); } catch (e) { /* ya liberado */ }
 
       // Con tres dedos se ignora el gesto: al levantar uno, los dos que quedan siguen con el

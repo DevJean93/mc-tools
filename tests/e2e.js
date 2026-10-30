@@ -1,5 +1,5 @@
 // Prueba E2E con Edge headless via CDP (Node 22+). Uso: node tests/e2e.js  (capturas en %TEMP%/formas-mc-e2e)
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const OUT = path.join(require('os').tmpdir(), 'formas-mc-e2e'); fs.mkdirSync(OUT, { recursive: true });
 const URL_APP = require('url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
@@ -7,6 +7,14 @@ const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const perfil = path.join(OUT, 'perfil');
 const edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9333', '--window-size=1400,1000', `--user-data-dir=${perfil}`, 'about:blank']);
 const esperar = ms => new Promise(r => setTimeout(r, ms));
+// En Windows edge.kill() solo cierra el proceso padre: Edge relanza el navegador con otro PID y
+// sus hijos siguen vivos en el mismo puerto, y la siguiente ejecucion se conectaria a ese navegador
+// viejo (con su emulacion movil puesta). Se cierran por la carpeta de perfil, que es de esta prueba.
+const cerrar = () => {
+  const comando = `Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${perfil}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+  try { spawnSync('powershell', ['-NoProfile', '-Command', comando], { stdio: 'ignore' }); } catch (e) { /* nada que cerrar */ }
+  edge.kill();
+};
 let ws, id = 0; const pend = new Map(); const errores = [];
 const send = (method, params = {}) => new Promise((res, rej) => { const i = ++id; pend.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params })); });
 const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
@@ -31,6 +39,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errores.push(d.params.args.map(a => a.value || a.description).join(' '));
   };
   await send('Runtime.enable'); await send('Page.enable');
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: OUT }).catch(() => {});
 
   // 0) Almacenamiento bloqueado desde el arranque: la app funciona y avisa de que no guarda.
@@ -493,6 +502,34 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(hechosC5(await prog()) === hechosC5(progC5) + 1,
     `TACTIL C5: al perderse la captura el dedo se suelta y el siguiente toque marca (${progC5} -> ${await prog()})`);
 
+  // B4: con densidad 1 el navegador redondea el scroll a pixeles enteros. Un dedo muy lento
+  // (menos de 1 px por evento) debe acabar moviendo el dibujo igualmente: el resto se acumula.
+  await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
+  await cargar(); await esperar(400);
+  await ev(`(() => {
+    const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input'));
+    const w = document.getElementById('w'); w.value = '200'; w.dispatchEvent(new Event('change'));
+  })()`);
+  await esperar(500);
+  await ev(`(() => {
+    const z = document.getElementById('zoom'); z.value = 6; z.dispatchEvent(new Event('input'));
+    const w = document.getElementById('lienzo').parentElement;
+    w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2; w.scrollTop = (w.scrollHeight - w.clientHeight) / 2;
+    document.getElementById('lienzo').scrollIntoView({ block: 'center' });
+  })()`);
+  await esperar(400);
+  const yB4 = await ev(`window.scrollY`), sB4 = await ev(leerScroll);
+  const wcB4 = await ev(`(() => { const r = document.getElementById('lienzo').parentElement.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: wcB4[0], y: wcB4[1], id: 1 }] });
+  for (let i = 1; i <= 100; i++) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: wcB4[0] - i * 0.4, y: wcB4[1] - i * 0.4, id: 1 }] });
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  const sB4b = await ev(leerScroll);
+  ok(sB4b[0] - sB4[0] >= 30 && sB4b[1] - sB4[1] >= 30 && await ev(`window.scrollY`) === yB4,
+    `TACTIL B4: a 1x un arrastre de 0,4 px por evento mueve el dibujo (${sB4[0]},${sB4[1]} -> ${sB4b[0]},${sB4b[1]}) sin mover la pagina`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
-  ws.close(); edge.kill();
-})().catch(e => { console.error(e); edge.kill(); process.exit(1); });
+  ws.close(); cerrar();
+})().catch(e => { console.error(e); cerrar(); process.exit(1); });
