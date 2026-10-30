@@ -22,6 +22,7 @@ de GitHub Pages.
 | Zoom | `ZOO` | `specs/areas/zoom/spec.md` |
 | Táctil | `TAC` | `specs/areas/tactil/spec.md` |
 | Materiales | `MAT` | `specs/areas/materiales/spec.md` |
+| Interfaz | `INT` | `specs/areas/interfaz/spec.md` |
 
 ## Identificadores
 

@@ -165,9 +165,9 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await prog() === 'Construidos: 15/208 (7 %)', 'MAR-05: zoom/toggles conservan las marcas');
   await ev(`(() => { const w = document.getElementById('w'); w.value = 2; w.dispatchEvent(new Event('input')); w.value = 20; w.dispatchEvent(new Event('input')); })()`);
   await esperar(60);
-  ok(await ev(`document.querySelector('.tot').textContent.startsWith('208')`), 'B2: debounce, no regenera mientras se escribe');
+  ok(await ev(`document.querySelector('.tot').textContent.startsWith('208')`), 'INT-01: no regenera mientras se escribe');
   await esperar(300);
-  ok(await ev(`document.querySelector('.tot').textContent.startsWith('316')`), 'B2: tras 150 ms regenera (circulo 20 = 316)');
+  ok(await ev(`document.querySelector('.tot').textContent.startsWith('316')`), 'INT-01: tras 150 ms regenera (circulo 20 = 316)');
   ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('se limpiaron') && !document.getElementById('avisoAccion').hidden`), 'MAR-05: aviso de limpieza con boton Deshacer');
   await ctrl('z'); await esperar(150);
   ok(await ev(`document.getElementById('w').value === '16'`) && await prog() === 'Construidos: 15/208 (7 %)', 'MAR-04: Ctrl+Z restaura forma y marcas');
@@ -199,14 +199,27 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await shot('03-esfera.png');
 
   // 8) Accesibilidad basica
-  ok(await ev(`[...document.querySelectorAll('button')].every(b => b.textContent.trim() || b.getAttribute('aria-label'))`), 'B3: todos los botones tienen nombre accesible');
-  ok(await ev(`!!document.getElementById('lienzo').getAttribute('aria-label') && document.getElementById('lienzo').tabIndex === 0`), 'B3: canvas enfocable con aria-label');
+  ok(await ev(`[...document.querySelectorAll('button')].every(b => b.textContent.trim() || b.getAttribute('aria-label'))`), 'INT-02: todos los botones tienen nombre accesible');
+  ok(await ev(`!!document.getElementById('lienzo').getAttribute('aria-label') && document.getElementById('lienzo').tabIndex === 0`), 'INT-02: canvas enfocable con aria-label');
 
-  // 9) Export PNG
+  // 9) Export PNG. Se borran antes los PNG de la esfera de ejecuciones anteriores.
+  const borrarPngs = () => { for (const f of fs.readdirSync(OUT).filter(f => /^esfera-11.*\.png$/.test(f))) fs.unlinkSync(path.join(OUT, f)); };
+  borrarPngs();
+  const esperado = await ev(`(() => {
+    const m = document.getElementById('modo').value, g = document.getElementById('grosor').value, c = +document.getElementById('capa').value;
+    return 'esfera-11' + (m === 'hueco' ? '-hueco-g' + g : '') + '-capas11-capa' + (c + 1) + '.png';
+  })()`);
   await ev(`document.getElementById('exportar').click()`);
   await esperar(1500);
   const pngs = fs.readdirSync(OUT).filter(f => f.startsWith('esfera-11'));
-  ok(pngs.length > 0, 'B4: PNG exportado ' + pngs.join(','));
+  ok(pngs.length === 1 && pngs[0] === esperado, `MAT-07: PNG de la capa exportado como ${esperado} (${pngs.join(',')})`);
+  borrarPngs();
+  await ev(`window.confirm = () => true; document.getElementById('exportarTodas').click()`);
+  for (let i = 0; i < 40 && fs.readdirSync(OUT).filter(f => /^esfera-11.*-capas11-capa\d+\.png$/.test(f)).length < 11; i++) await esperar(250);
+  await esperar(600);
+  const todasPngs = fs.readdirSync(OUT).filter(f => /^esfera-11.*-capas11-capa\d+\.png$/.test(f));
+  ok(todasPngs.length === 11 && (await ev(`document.getElementById('avisoTxt').textContent`)).includes('Exportadas 11 capas'),
+    `MAT-08: «Todas las capas» descarga una imagen por capa (${todasPngs.length} de 11) y avisa al terminar`);
 
   // 10) Zoom con formas grandes
   const zoom = () => ev(`+document.getElementById('zoom').value`);
@@ -252,21 +265,39 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   // Zoom no borra marcas ni regenera
   ok((await prog()).startsWith('Construidos:'), 'ZOO-05: progreso intacto');
 
+  // INT-06: en escritorio el menu se oculta y se muestra, y la preferencia se recuerda al recargar.
+  await cargar();
+  const estadoMenu = () => ev(`(() => ({
+    oculto: document.getElementById('panel').hidden,
+    ancho: document.querySelector('main').classList.contains('sin-menu'),
+    aria: document.getElementById('verMenu').getAttribute('aria-expanded'),
+  }))()`);
+  const menu0 = await estadoMenu();
+  await ev(`document.getElementById('verMenu').click()`); await esperar(150);
+  const menu1 = await estadoMenu();
+  await cargar();
+  const menu2 = await estadoMenu();
+  await ev(`document.getElementById('verMenu').click()`); await esperar(150);
+  const menu3 = await estadoMenu();
+  ok(!menu0.oculto && menu0.aria === 'true' && menu1.oculto && menu1.ancho && menu1.aria === 'false' &&
+    menu2.oculto && menu2.aria === 'false' && !menu3.oculto && !menu3.ancho && menu3.aria === 'true',
+  'INT-06: en escritorio el menu se oculta, el dibujo ocupa todo el ancho y la preferencia se recuerda al recargar');
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
-  ok(await ev(`document.documentElement.scrollWidth <= 375`), 'B5: sin scroll horizontal a 375 px');
-  ok(await ev(`document.getElementById('panel').hidden && document.querySelector('.area').getBoundingClientRect().top < 300`), 'B5: en movil el menu arranca cerrado y el dibujo va primero');
+  ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');
+  ok(await ev(`document.getElementById('panel').hidden && document.querySelector('.area').getBoundingClientRect().top < 300`), 'INT-03, INT-04: en movil el menu arranca cerrado y el dibujo va primero');
   await ev(`document.getElementById('verMenu').click()`); await esperar(300);
-  ok(await ev(`(() => { const r = document.getElementById('panel').getBoundingClientRect(); return r.top === 0 && r.width === 375 && document.activeElement.id === 'cerrarMenu' && document.getElementById('verMenu').getAttribute('aria-expanded') === 'true'; })()`), 'B5: el boton abre el menu a pantalla completa con foco en Cerrar');
+  ok(await ev(`(() => { const r = document.getElementById('panel').getBoundingClientRect(); return r.top === 0 && r.width === 375 && document.activeElement.id === 'cerrarMenu' && document.getElementById('verMenu').getAttribute('aria-expanded') === 'true'; })()`), 'INT-04: el boton abre el menu a pantalla completa con foco en Cerrar');
   await ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
-  ok(await ev(`document.getElementById('panel').hidden && document.activeElement.id === 'verMenu'`), 'B5: Esc cierra el menu y devuelve el foco');
+  ok(await ev(`document.getElementById('panel').hidden && document.activeElement.id === 'verMenu'`), 'INT-04: Esc cierra el menu y devuelve el foco');
   await ev(`document.querySelector('.navmovil a[href="#secMat"]').click()`); await esperar(800);
   // Materiales es la ultima seccion: si es corta, el menu queda desplazado hasta el final.
   ok(await ev(`(() => { const p = document.getElementById('panel');
     const llego = document.getElementById('secMat').getBoundingClientRect().top < 200 || p.scrollTop + p.clientHeight >= p.scrollHeight - 1;
-    return !p.hidden && p.scrollTop > 0 && llego && document.querySelector('.navmovil a[href="#secMat"]').getAttribute('aria-current') === 'true'; })()`), 'B5: Materiales abre el menu en su seccion');
+    return !p.hidden && p.scrollTop > 0 && llego && document.querySelector('.navmovil a[href="#secMat"]').getAttribute('aria-current') === 'true'; })()`), 'INT-05: Materiales abre el menu en su seccion');
   await ev(`document.querySelector('.navmovil a[href="#secDibujo"]').click()`); await esperar(300);
-  ok(await ev(`document.getElementById('panel').hidden`), 'B5: Dibujo cierra el menu');
+  ok(await ev(`document.getElementById('panel').hidden`), 'INT-05: Dibujo cierra el menu');
   await shot('04-movil.png');
 
 

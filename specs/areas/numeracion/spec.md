@@ -111,3 +111,7 @@ Ejemplo: centro 1×1 en una fila de 3 → `← 1 · → 1 · ↑ 0 · ↓ 0`.
 - 2026-10-29: la regla relativa al centro sigue mostrando negativos (`-8 … 8`), aunque no
   coincide con el conteo de los ejes. Hay una propuesta abierta para cambiarla
   (`specs/cambios/001-regla-relativa-sin-negativos/`).
+- 2026-10-25: todas las cifras del lienzo van en negrita (peso 600) para que destaquen sobre
+  los bloques; el margen del dibujo se mide ya con la negrita para que nada se corte.
+- 2026-10-25: las cifras dentro del dibujo solo se pintan con celdas de 16 px o más; con
+  menos zoom no caben y el texto del zoom avisa «acércate para ver todos los números».

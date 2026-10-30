@@ -5,8 +5,8 @@ Código: `MAT`
 ## Propósito
 
 Traduce los bloques de la forma a materiales de Minecraft (stacks, shulkers y cofres dobles)
-y calcula el progreso por capa y total. El cálculo es puro; la tabla y la barra solo pintan
-su resultado.
+y calcula el progreso por capa y total, y exporta el dibujo de cada capa como imagen. El
+cálculo es puro; la tabla y la barra solo pintan su resultado.
 
 ## Requisitos
 
@@ -47,12 +47,32 @@ nunca se marca como completa.
 Las constantes de stack, shulker y cofre viven solo en el cálculo de materiales; el resto de
 la app las lee de ahí en vez de repetir los números.
 
+### MAT-07
+
+«PNG de la capa» descarga la capa visible como imagen PNG con un nombre que dice la forma,
+el tamaño, el modo y la capa: `<variante>-<tamaño>[-hueco-g<grosor>][-capas<n>-capa<k>].png`.
+
+Ejemplo: capa 1 de una esfera de 11 hueca con grosor 5 → `esfera-11-hueco-g5-capas11-capa1.png`.
+
+### MAT-08
+
+«Todas las capas» descarga una imagen por capa, en orden, y avisa al terminar. Con más de 10
+capas pide confirmación antes de empezar.
+
+### MAT-09
+
+Cada imagen exportada lleva una cabecera con la forma, sus dimensiones y el modo; la capa,
+sus bloques en stacks y los construidos; y el nombre de la app con la fecha.
+
+[verificación manual: la cabecera se dibuja dentro de la imagen; se revisa abriendo el PNG.]
+
 ## Casos límite
 
 - 0 bloques: `0 × 64`, sin shulkers ni cofres.
 - 3457 bloques: 2 cofres dobles (el segundo por el resto).
 - Porcentaje 67,5 % se muestra como 68 %.
 - Una capa de total 0 no está completa aunque no le falte nada.
+- Una imagen demasiado grande para el navegador no se descarga: se avisa de reducir el zoom.
 
 ## Fuera de alcance
 
@@ -66,3 +86,6 @@ la app las lee de ahí en vez de repetir los números.
   el progreso nunca supera el 100 % porque las marcas se limitan a bloques reales.
 - 2026-10-29: las cajas se redondean hacia arriba: media caja no existe y hay que llevarla
   entera.
+- 2026-10-25: la imagen se exporta con el zoom de pantalla y densidad 1; si el lienzo supera
+  16 Mpx, la densidad de píxeles se reduce (también en pantalla) para que el navegador pueda
+  crearlo. La descarga entra por una función inyectada, para poder probarla sin navegador.

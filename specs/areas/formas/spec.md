@@ -120,7 +120,8 @@ Ejemplo: borrar el ancho y teclear «20» da 20, no 1 ni 2.
   Se descartó mantener listas por id en `estado.js` porque obligaba a tocar dos archivos por
   cada forma nueva.
 - 2026-10-29: el hueco se calcula por distancia BFS en una pasada (4-vecinos en 2D,
-  6 en 3D) en lugar de erosiones repetidas: mismo resultado y mucho más rápido.
+  6 en 3D) en lugar de erosiones repetidas: mismo resultado y mucho más rápido (esfera Ø100
+  hueca de 625 ms a unos 24 ms).
 - 2026-10-29: el grosor máximo es la distancia máxima menos 1; si se pide más se recorta y
   se avisa, para que «hueco» nunca sea igual al sólido.
 - 2026-10-29: la cúpula se obtiene cortando las capas superiores de la esfera ya generada,

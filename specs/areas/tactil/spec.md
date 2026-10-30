@@ -75,5 +75,7 @@ pantallas móviles.
   píxeles enteros y un arrastre lento no movía nada.
 - 2026-10-29: primero se desplaza y luego se aplica el zoom ya recortado; así en los límites
   no se pierden movimientos del pellizco.
-- 2026-10-29: se descartó dejar el gesto al navegador (`touch-action: pan-y`) porque impedía
-  pellizcar y marcar sobre el lienzo.
+- 2026-10-29: se descartó dejar el gesto al navegador (`touch-action: pan-x pan-y`): al mover
+  el primer dedo el navegador empezaba a desplazar y emitía `pointercancel`, así que el
+  segundo dedo nunca formaba un pellizco en un móvil real (los E2E pasaban porque apoyaban
+  los dos dedos a la vez).

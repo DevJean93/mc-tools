@@ -99,7 +99,7 @@ test('MAR-04: una accion que no cambia nada no ocupa historial', () => {
   assert.equal(doc.puedeDeshacer(), false);
 });
 
-test('el grosor se recorta y se avisa', () => {
+test('FOR-04: el grosor se recorta y se avisa', () => {
   const { st, doc, avisos } = montar();
   st.w = 6; st.h = 6; st.modo = 'hueco'; st.grosor = 50;
   doc.regenerar();
