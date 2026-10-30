@@ -70,7 +70,8 @@ npm run specs   # valida las specs e imprime la cobertura ID -> tests
 - Presente de indicativo: «La cuenta de los ejes llega hasta el bloque del borde».
 - Un requisito = una frase verificable, con ejemplo concreto si ayuda
   («círculo de 30 → 15 … 1 | 1 … 15»).
-- Las decisiones van en `## Decisiones` con su fecha y el motivo; ahí se absorbe la
-  historia útil de `CONTEXTO.md`.
+- Las decisiones van en `## Decisiones` con su fecha y el motivo: es la historia útil del
+  proyecto (lo que se probó, lo que se descartó y por qué).
+- Las ideas que aún no son propuesta van en `specs/pendientes.md`.
 - Las preguntas abiertas se marcan `[NECESITA ACLARACIÓN: …]` y solo pueden existir en
   `Borrador` o `En revisión`.

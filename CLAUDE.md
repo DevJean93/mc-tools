@@ -60,5 +60,20 @@ Detalle y comandos: `specs/README.md`. Principios: `specs/constitucion.md`.
   con zoom ni opciones de vista.
 - **Dibujo:** si un cambio no debe alterarlo, comprobar píxel a píxel contra la versión
   anterior antes de dar por hecho el trabajo.
-- `CONTEXTO.md`, `plan.md` y `AUDITORIA.md` son documentos internos (ignorados por git); no
-  se publican.
+- **Toques simulados con CDP:** en `Input.dispatchTouchEvent`, los puntos de `touchEnd` son los
+  dedos que **se levantan**, no los que quedan. Pasar los que siguen apoyados levanta esos.
+- **Cifras del lienzo:** solo se pintan con celdas de 16 px o más; en una captura con poco zoom
+  no aparecen y no es un fallo.
+
+## Publicación
+
+GitHub Pages desde la rama `main`, carpeta raíz: `https://devjean93.github.io/mc-tools/`, sin
+dominio propio. `_config.yml` excluye de la web `specs/`, `.claude/`, `CLAUDE.md`, `tests/` y
+`package.json`; la app es `index.html` + `src/`. No se hace push sin que lo pida el usuario.
+
+## Dónde está cada cosa
+
+- Qué hace la app y por qué: `specs/areas/<área>/spec.md` (con sus `## Decisiones`).
+- Cambios en marcha: `specs/cambios/NNN-…/` (`propuesta.md` y `plan.md`, versionados).
+- Ideas sin propuesta: `specs/pendientes.md`.
+- Historia: `git log` (un commit por tarea).

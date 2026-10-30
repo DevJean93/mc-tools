@@ -2,8 +2,3 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
-
-# Documentos internos del proyecto (no se publican)
-AUDITORIA.md
-CONTEXTO.md
-plan.md
