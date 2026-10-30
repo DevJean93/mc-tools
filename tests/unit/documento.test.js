@@ -42,7 +42,7 @@ test('regenerar genera la forma y avisa del cambio de tamano', () => {
   assert.deepEqual(cambios, ['vista', 'tamano']);
 });
 
-test('las marcas guardadas se recuperan al arrancar', () => {
+test('MAR-05: las marcas guardadas se recuperan al arrancar', () => {
   const primero = montar();
   primero.doc.regenerar();
   const c = primerBloque(primero.doc);
@@ -56,7 +56,7 @@ test('las marcas guardadas se recuperan al arrancar', () => {
   assert.equal(segundo.doc.porCapa(1)[0], 1);
 });
 
-test('cambiar la geometria limpia las marcas y deshacer las devuelve', () => {
+test('MAR-05: cambiar la geometria limpia las marcas y deshacer las devuelve', () => {
   const { st, doc, avisos } = montar();
   doc.regenerar();
   const c = primerBloque(doc);
@@ -74,7 +74,7 @@ test('cambiar la geometria limpia las marcas y deshacer las devuelve', () => {
   assert.equal(doc.hecho(c.x, c.y), true);
 });
 
-test('marcar capa se puede deshacer y rehacer', () => {
+test('MAR-04: marcar capa se puede deshacer y rehacer', () => {
   const { doc } = montar();
   doc.regenerar();
   doc.marcarCapas(doc.todas(), true);
@@ -89,7 +89,7 @@ test('marcar capa se puede deshacer y rehacer', () => {
   assert.equal(doc.porCapa(1)[0], 208);
 });
 
-test('una accion que no cambia nada no ocupa historial', () => {
+test('MAR-04: una accion que no cambia nada no ocupa historial', () => {
   const { doc } = montar();
   doc.regenerar();
   const c = primerBloque(doc);
@@ -107,7 +107,7 @@ test('el grosor se recorta y se avisa', () => {
   assert.ok(avisos.dichos.some(t => t.includes('Grosor máximo')));
 });
 
-test('irCapa recorta al rango y guarda la capa', () => {
+test('MAR-13: irCapa recorta al rango y guarda la capa', () => {
   const { st, doc, almacen } = montar();
   st.forma = 'esfera'; st.w = 8;
   doc.regenerar();
@@ -121,7 +121,7 @@ test('irCapa recorta al rango y guarda la capa', () => {
   assert.equal(doc.capa(), 0);
 });
 
-test('sin almacenamiento persistente muestra una sola nota fija desde el arranque', () => {
+test('MAR-09: sin almacenamiento persistente muestra una sola nota fija desde el arranque', () => {
   const almacen = { persistente: false, leer: () => null, escribir: () => false };
   const { doc, avisos } = montar(almacen);
   assert.equal(avisos.notas.length, 1, 'la nota sale al crear el documento');
@@ -132,7 +132,7 @@ test('sin almacenamiento persistente muestra una sola nota fija desde el arranqu
   assert.ok(!avisos.dichos.some(t => /almacenamiento/.test(t)), 'no es un aviso temporal');
 });
 
-test('la nota de almacenamiento no la tapa el aviso de grosor recortado', () => {
+test('MAR-09: la nota de almacenamiento no la tapa el aviso de grosor recortado', () => {
   const almacen = { persistente: false, leer: () => null, escribir: () => false };
   const { st, doc, avisos } = montar(almacen);
   st.w = 6; st.h = 6; st.modo = 'hueco'; st.grosor = 50;
@@ -141,7 +141,7 @@ test('la nota de almacenamiento no la tapa el aviso de grosor recortado', () => 
   assert.match(avisos.notas[0], /bloquea el almacenamiento/, 'y la nota fija tambien');
 });
 
-test('almacenamiento lleno: la nota sale al primer fallo y se quita al volver a guardar', () => {
+test('MAR-09: almacenamiento lleno: la nota sale al primer fallo y se quita al volver a guardar', () => {
   let cabe = false;
   const datos = new Map();
   const almacen = {

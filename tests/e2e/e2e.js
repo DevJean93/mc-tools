@@ -48,12 +48,12 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   });
   await cargar();
   ok(await ev(`!document.getElementById('nota').hidden && document.getElementById('notaTxt').textContent.includes('bloquea') && document.querySelector('.tot').textContent.startsWith('208')`),
-    'A4: con el almacenamiento bloqueado hay una nota fija y la app arranca');
+    'MAR-09: con el almacenamiento bloqueado hay una nota fija y la app arranca');
   ok(await ev(`(() => { const n = document.getElementById('nota'); return n.getAttribute('role') === 'status' && n.querySelector('svg') && n.getBoundingClientRect().height > 0; })()`),
-    'B1: la nota es role=status, lleva icono y se ve');
+    'MAR-09: la nota es role=status, lleva icono y se ve');
   await shot('00-nota-almacenamiento.png');
   await esperar(5600);   // mas que lo que dura un aviso temporal
-  ok(await ev(`!document.getElementById('nota').hidden`), 'B1: la nota sigue visible pasados los 5 s de un aviso temporal');
+  ok(await ev(`!document.getElementById('nota').hidden`), 'MAR-09: la nota sigue visible pasados los 5 s de un aviso temporal');
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueo.identifier });
   await cargar();
 
@@ -65,7 +65,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   });
   await cargar();
   ok(await ev(`!document.getElementById('nota').hidden && document.getElementById('notaTxt').textContent.includes('bloquea') && !document.getElementById('notaTxt').textContent.includes('lleno') && document.querySelector('.tot').textContent.startsWith('208')`),
-    'C4: sin escritura la nota dice que el navegador bloquea el almacenamiento');
+    'MAR-08: sin escritura la nota dice que el navegador bloquea el almacenamiento');
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: soloLectura.identifier });
   await cargar();
 
@@ -75,13 +75,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await cargar();
   await ev(`document.getElementById('marcarTodo').click()`); await esperar(250);
   const progLleno = await prog();
-  ok(progLleno.includes('159/159'), `A1: preparado el progreso a recuperar (${progLleno})`);
+  ok(progLleno.includes('159/159'), `MAR-11: preparado el progreso a recuperar (${progLleno})`);
   await ev(`(() => { let n = 0, trozo = 'x'.repeat(1 << 20); while (trozo.length) { try { localStorage.setItem('relleno' + n, trozo); n++; } catch (e) { trozo = trozo.slice(0, trozo.length >> 1); } } })()`);
   await cargar();
   ok(await ev(`document.getElementById('forma').value === 'triangulo'`) && await prog() === progLleno,
-    `A1: con el almacenamiento lleno se recupera el progreso (${await prog()})`);
+    `MAR-11: con el almacenamiento lleno se recupera el progreso (${await prog()})`);
   ok(await ev(`(() => { const n = document.getElementById('notaTxt').textContent, a = document.getElementById('avisoTxt').textContent; return !n.includes('bloquea') && !a.includes('bloquea'); })()`),
-    'A1: con el almacenamiento lleno no dice que el navegador lo bloquea');
+    'MAR-11: con el almacenamiento lleno no dice que el navegador lo bloquea');
   await ev(`localStorage.clear()`);
   await cargar();
 
@@ -89,7 +89,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await cargar();
   await ev(`localStorage.setItem('mc-formas-v1', '{"forma":"foo","w":"abc","zoom":9999,"grosor":-3}'); localStorage.setItem('mc-formas-v1:marcas','{basura')`);
   await cargar();
-  ok(await ev(`document.getElementById('forma').value === 'circulo' && document.querySelector('.tot').textContent.startsWith('208')`), 'A1: localStorage corrupto -> circulo 16 por defecto (208)');
+  ok(await ev(`document.getElementById('forma').value === 'circulo' && document.querySelector('.tot').textContent.startsWith('208')`), 'MAR-10: localStorage corrupto -> circulo 16 por defecto (208)');
   await ev(`localStorage.clear()`); await cargar();
   await shot('01-inicio.png');
   ok(await ev(`(() => {
@@ -150,29 +150,29 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   for (let x = 1; x <= 15; x++) await mouse('mouseMoved', ...P(x, 7));
   await mouse('mouseReleased', ...P(15, 7));
   await esperar(150);
-  ok(await prog() === 'Construidos: 16/208 (8 %)', 'B1: arrastre marca 16 bloques -> ' + await prog());
+  ok(await prog() === 'Construidos: 16/208 (8 %)', 'MAR-12: arrastre marca 16 bloques -> ' + await prog());
   await mouse('mousePressed', ...P(0, 7), 'right', 2); await mouse('mouseReleased', ...P(0, 7), 'right', 2);
   await esperar(100);
-  ok(await prog() === 'Construidos: 15/208 (7 %)', 'B1: clic derecho desmarca -> ' + await prog());
+  ok(await prog() === 'Construidos: 15/208 (7 %)', 'MAR-12: clic derecho desmarca -> ' + await prog());
 
   // 3) Persistencia tras recargar
   await cargar();
-  ok(await prog() === 'Construidos: 15/208 (7 %)', 'A2: las marcas sobreviven a recargar -> ' + await prog());
+  ok(await prog() === 'Construidos: 15/208 (7 %)', 'MAR-05: las marcas sobreviven a recargar -> ' + await prog());
 
   // 4) Zoom/toggles no tocan marcas; cambio de geometria limpia y avisa; deshacer restaura
   await ev(`(() => { const z = document.getElementById('zoom'); z.value = 30; z.dispatchEvent(new Event('input')); const t = document.getElementById('tramos'); t.click(); t.click(); })()`);
   await esperar(100);
-  ok(await prog() === 'Construidos: 15/208 (7 %)', 'A2: zoom/toggles conservan las marcas');
+  ok(await prog() === 'Construidos: 15/208 (7 %)', 'MAR-05: zoom/toggles conservan las marcas');
   await ev(`(() => { const w = document.getElementById('w'); w.value = 2; w.dispatchEvent(new Event('input')); w.value = 20; w.dispatchEvent(new Event('input')); })()`);
   await esperar(60);
   ok(await ev(`document.querySelector('.tot').textContent.startsWith('208')`), 'B2: debounce, no regenera mientras se escribe');
   await esperar(300);
   ok(await ev(`document.querySelector('.tot').textContent.startsWith('316')`), 'B2: tras 150 ms regenera (circulo 20 = 316)');
-  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('se limpiaron') && !document.getElementById('avisoAccion').hidden`), 'A2: aviso de limpieza con boton Deshacer');
+  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('se limpiaron') && !document.getElementById('avisoAccion').hidden`), 'MAR-05: aviso de limpieza con boton Deshacer');
   await ctrl('z'); await esperar(150);
-  ok(await ev(`document.getElementById('w').value === '16'`) && await prog() === 'Construidos: 15/208 (7 %)', 'A2: Ctrl+Z restaura forma y marcas');
+  ok(await ev(`document.getElementById('w').value === '16'`) && await prog() === 'Construidos: 15/208 (7 %)', 'MAR-04: Ctrl+Z restaura forma y marcas');
   await ctrl('y'); await esperar(150);
-  ok(await ev(`document.getElementById('w').value === '20'`), 'A2: Ctrl+Y rehace');
+  ok(await ev(`document.getElementById('w').value === '20'`), 'MAR-04: Ctrl+Y rehace');
   await ctrl('z'); await esperar(150);
 
   // 5) Grosor maximo
@@ -180,13 +180,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(150);
   ok(await ev(`document.getElementById('grosor').value === '7' && document.getElementById('maxG').textContent === '(máx. 7)' && document.getElementById('avisoTxt').textContent.includes('Grosor máximo')`), 'FOR-04: grosor 40 se recorta a 7 con aviso');
   await ctrl('z'); await esperar(150);
-  ok(await ev(`document.getElementById('modo').value === 'relleno'`) && await prog() === 'Construidos: 15/208 (7 %)', 'A2: deshacer vuelve a solido con las marcas');
+  ok(await ev(`document.getElementById('modo').value === 'relleno'`) && await prog() === 'Construidos: 15/208 (7 %)', 'MAR-05: deshacer vuelve a solido con las marcas');
 
   // 6) Teclado: foco en canvas, flecha arriba y Espacio
   await ev(`document.getElementById('lienzo').focus()`);
   await key('ArrowUp', 'ArrowUp', 38); await key(' ', 'Space', 32);
   await esperar(100);
-  ok(await prog() === 'Construidos: 16/208 (8 %)' && (await ev(`document.getElementById('anuncio').textContent`)).includes('construido'), 'B1/B3: teclado marca la celda -> ' + await prog());
+  ok(await prog() === 'Construidos: 16/208 (8 %)' && (await ev(`document.getElementById('anuncio').textContent`)).includes('construido'), 'MAR-01: teclado marca la celda -> ' + await prog());
   await shot('02-teclado.png');
 
   // 7) Esfera: capas, marcar capa, tabla
@@ -195,7 +195,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`document.getElementById('capa').max === '10' && document.getElementById('rowH').hidden && document.getElementById('w').max === '100'`), 'FOR-02: esfera 11 capas, alto oculto, max 100');
   await ev(`document.getElementById('marcarCapa').click()`);
   await esperar(100);
-  ok(await ev(`document.querySelector('tr.sel').textContent.includes('100 %')`), 'B1: marcar capa -> 100 % en la tabla');
+  ok(await ev(`document.querySelector('tr.sel').textContent.includes('100 %')`), 'MAR-02: marcar capa -> 100 % en la tabla');
   await shot('03-esfera.png');
 
   // 8) Accesibilidad basica

@@ -7,17 +7,17 @@ const Formas = require('../../src/nucleo/formas.js');
 
 const conDatos = (clave, valor) => Almacen.memoria({ [clave]: valor });
 
-test('sin nada guardado devuelve los valores por defecto', () => {
+test('MAR-10: sin nada guardado devuelve los valores por defecto', () => {
   const st = Estado.cargar(Almacen.memoria());
   assert.deepEqual(st, Estado.DEFAULTS);
 });
 
-test('JSON corrupto se ignora y arranca con los valores por defecto', () => {
+test('MAR-10: JSON corrupto se ignora y arranca con los valores por defecto', () => {
   const st = Estado.cargar(conDatos('mc-formas-v1', '{basura'));
   assert.deepEqual(st, Estado.DEFAULTS);
 });
 
-test('valores fuera de rango o de otro tipo se recortan o se descartan', () => {
+test('MAR-10: valores fuera de rango o de otro tipo se recortan o se descartan', () => {
   const st = Estado.cargar(conDatos('mc-formas-v1', JSON.stringify({
     forma: 'foo', w: 999, h: -5, zoom: 9999, grosor: -3, capa: 4, rel: 'si',
   })));
@@ -30,32 +30,32 @@ test('valores fuera de rango o de otro tipo se recortan o se descartan', () => {
   assert.equal(st.rel, true, 'un booleano que no es boolean no se acepta');
 });
 
-test('en esfera el ancho se limita al maximo 3D', () => {
+test('MAR-10: en esfera el ancho se limita al maximo 3D', () => {
   const st = Estado.cargar(conDatos('mc-formas-v1', JSON.stringify({ forma: 'esfera', w: 300 })));
   assert.equal(st.forma, 'esfera');
   assert.equal(st.w, Estado.LIMITES.w3d);
 });
 
-test('el enum de formas sale del registro de geometria', () => {
+test('FOR-09: el enum de formas sale del registro de geometria', () => {
   assert.deepEqual(Estado.ENUMS.forma, Formas.FORMAS);
   assert.equal(Estado.LIMITES.w2d, Formas.MAX_2D);
   assert.equal(Estado.LIMITES.grosor, Formas.MAX_GROSOR);
 });
 
-test('guardar y cargar conservan los valores validos', () => {
+test('MAR-10: guardar y cargar conservan los valores validos', () => {
   const almacen = Almacen.memoria();
   const st = { ...Estado.DEFAULTS, forma: 'rombo', w: 42, h: 21, zoom: 12, distEjes: false };
   assert.equal(Estado.guardar(st, almacen), true);
   assert.deepEqual(Estado.cargar(almacen), st);
 });
 
-test('guardar informa del fallo si el almacen no escribe', () => {
+test('MAR-10: guardar informa del fallo si el almacen no escribe', () => {
   const roto = { leer: () => null, escribir: () => false };
   assert.equal(Estado.guardar(Estado.DEFAULTS, roto), false);
   assert.equal(Estado.guardarMarcas('x', new Set(), roto), false);
 });
 
-test('las marcas se guardan y se recuperan solo para su geometria', () => {
+test('MAR-05: las marcas se guardan y se recuperan solo para su geometria', () => {
   const almacen = Almacen.memoria();
   const capas = [[[true, true], [true, false]]];   // 2x2 con (1,1) vacio
   const hechos = new Set(['0,0,0', '0,1,0']);
@@ -64,7 +64,7 @@ test('las marcas se guardan y se recuperan solo para su geometria', () => {
   assert.equal(Estado.cargarMarcas('f2', capas, almacen).size, 0, 'otra firma -> sin marcas');
 });
 
-test('al cargar marcas se descartan las celdas que no son bloque o no existen', () => {
+test('MAR-06: al cargar marcas se descartan las celdas que no son bloque o no existen', () => {
   const almacen = Almacen.memoria({
     'mc-formas-v1:marcas': JSON.stringify({
       firma: 'f', porCapa: { 0: [0, 0, 1, 1, 9, 9], 5: [0, 0] },
@@ -74,7 +74,7 @@ test('al cargar marcas se descartan las celdas que no son bloque o no existen', 
   assert.deepEqual([...Estado.cargarMarcas('f', capas, almacen)], ['0,0,0']);
 });
 
-test('marcas corruptas o con formato raro no rompen la carga', () => {
+test('MAR-06: marcas corruptas o con formato raro no rompen la carga', () => {
   const capas = [[[true]]];
   assert.equal(Estado.cargarMarcas('f', capas, conDatos('mc-formas-v1:marcas', '{basura')).size, 0);
   assert.equal(Estado.cargarMarcas('f', capas, conDatos('mc-formas-v1:marcas', '[1,2,3]')).size, 0);
@@ -82,7 +82,7 @@ test('marcas corruptas o con formato raro no rompen la carga', () => {
   assert.equal(Estado.cargarMarcas('f', capas, conDatos('mc-formas-v1:marcas', sinPorCapa)).size, 0);
 });
 
-test('la firma solo cambia con la geometria', () => {
+test('MAR-07: la firma solo cambia con la geometria', () => {
   const base = { forma: 'circulo', w: 16, h: 16, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' };
   assert.equal(Estado.firma(base), Estado.firma({ ...base, zoom: 40, rel: false }));
   assert.notEqual(Estado.firma(base), Estado.firma({ ...base, w: 20 }));
@@ -95,7 +95,7 @@ test('la firma solo cambia con la geometria', () => {
   );
 });
 
-test('la firma de las marcas guardadas no cambia (los datos de los usuarios siguen valiendo)', () => {
+test('MAR-07: la firma de las marcas guardadas no cambia (los datos de los usuarios siguen valiendo)', () => {
   // Valores de referencia de antes de declarar orientaciones y variantes por forma.
   const base = { w: 16, h: 16, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' };
   const casos = [
@@ -112,7 +112,7 @@ test('la firma de las marcas guardadas no cambia (los datos de los usuarios sigu
   for (const [c, esperada] of casos) assert.equal(Estado.firma({ ...base, ...c }), esperada, JSON.stringify(c));
 });
 
-test('la orientacion del hexagono sale de su definicion y se valida contra ella', () => {
+test('FOR-10: la orientacion del hexagono sale de su definicion y se valida contra ella', () => {
   const carga = o => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(o)));
   assert.deepEqual(Formas.obtener('hexagono').orientaciones.map(o => o.valor), ['plano', 'punta']);
   assert.equal(Estado.DEFAULTS.orient, 'plano', 'el valor por defecto es la primera orientacion');
@@ -122,19 +122,19 @@ test('la orientacion del hexagono sale de su definicion y se valida contra ella'
   assert.equal(carga({ forma: 'circulo', orient: 'raro' }).orient, 'plano', 'y una invalida no se recuerda');
 });
 
-test('la variante se valida contra las de la forma activa', () => {
+test('FOR-10: la variante se valida contra las de la forma activa', () => {
   const carga = o => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(o)));
   assert.equal(carga({ forma: 'esfera', esfera: 'cupula' }).esfera, 'cupula');
   assert.equal(carga({ forma: 'esfera', esfera: 'raro' }).esfera, 'esfera');
   assert.equal(carga({ forma: 'circulo', esfera: 'cupula' }).esfera, 'cupula', 'sin variantes se recuerda la preferencia');
 });
 
-test('un almacen que lanza al leer no rompe la carga', () => {
+test('MAR-08: un almacen que lanza al leer no rompe la carga', () => {
   const roto = { leer: () => { throw new Error('sin acceso'); }, escribir: () => true };
   assert.deepEqual(Estado.cargar(roto), Estado.DEFAULTS);
 });
 
-test('con el almacenamiento bloqueado no se guarda y el almacen lo declara', () => {
+test('MAR-08: con el almacenamiento bloqueado no se guarda y el almacen lo declara', () => {
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw new Error('bloqueado'); } });
   try {
     const almacen = Almacen.local();
@@ -147,7 +147,7 @@ test('con el almacenamiento bloqueado no se guarda y el almacen lo declara', () 
   }
 });
 
-test('con localStorage disponible, local() guarda y se declara persistente', () => {
+test('MAR-08: con localStorage disponible, local() guarda y se declara persistente', () => {
   const datos = new Map();
   const storage = { getItem: k => (datos.has(k) ? datos.get(k) : null), setItem: (k, v) => datos.set(k, String(v)) };
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
@@ -161,7 +161,7 @@ test('con localStorage disponible, local() guarda y se declara persistente', () 
   }
 });
 
-test('un almacen que lee pero no escribe se declara no persistente', () => {
+test('MAR-08: un almacen que lee pero no escribe se declara no persistente', () => {
   const storage = {
     getItem: () => null,
     setItem: () => { throw new Error('cuota 0'); },
@@ -176,7 +176,7 @@ test('un almacen que lee pero no escribe se declara no persistente', () => {
   }
 });
 
-test('clamp redondea y recorta; si no es un numero, el minimo', () => {
+test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);
   assert.equal(Estado.clamp(0, 1, 200), 1);
@@ -185,12 +185,12 @@ test('clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('x', 1, 200), 1);
 });
 
-test('las vistas son los booleanos que no son geometria', () => {
+test('MAR-07: las vistas son los booleanos que no son geometria', () => {
   assert.deepEqual(Estado.VISTA, ['rel', 'tramos', 'tramosDentro', 'distEjes']);
   assert.deepEqual(Estado.BOOLEANOS, ['igualar', ...Estado.VISTA]);
 });
 
-test('el almacen es obligatorio: sin el, error claro', () => {
+test('MAR-08: el almacen es obligatorio: sin el, error claro', () => {
   assert.throws(() => Estado.cargar(), /almacen/i);
   assert.throws(() => Estado.guardar(Estado.DEFAULTS), /almacen/i);
   assert.throws(() => Estado.guardarMarcas('f', new Set()), /almacen/i);

@@ -9,7 +9,7 @@ const CAPAS = [
   [[true]],
 ];
 
-test('fijar solo actua sobre bloques y avisa si no cambia nada', () => {
+test('MAR-01: fijar solo actua sobre bloques y avisa si no cambia nada', () => {
   const m = Marcas.crear();
   assert.equal(m.fijar(CAPAS, 0, 0, 0, true), true);
   assert.equal(m.fijar(CAPAS, 0, 0, 0, true), false, 'ya estaba marcado');
@@ -19,7 +19,7 @@ test('fijar solo actua sobre bloques y avisa si no cambia nada', () => {
   assert.equal(m.total(), 0);
 });
 
-test('alternar devuelve null en vacio y el valor nuevo en bloque', () => {
+test('MAR-01: alternar devuelve null en vacio y el valor nuevo en bloque', () => {
   const m = Marcas.crear();
   assert.equal(m.alternar(CAPAS, 0, 1, 1), null);
   assert.deepEqual(m.alternar(CAPAS, 0, 0, 0), { valor: true, cambio: true });
@@ -28,7 +28,7 @@ test('alternar devuelve null en vacio y el valor nuevo en bloque', () => {
   assert.equal(m.tiene(0, 0, 0), false);
 });
 
-test('marcarCapas cuenta solo los bloques que cambian', () => {
+test('MAR-02: marcarCapas cuenta solo los bloques que cambian', () => {
   const m = Marcas.crear();
   assert.equal(m.marcarCapas(CAPAS, [0], true), 3);
   assert.equal(m.marcarCapas(CAPAS, [0], true), 0, 'repetir no cambia nada');
@@ -38,13 +38,13 @@ test('marcarCapas cuenta solo los bloques que cambian', () => {
   assert.equal(m.marcarCapas(CAPAS, [7], true), 0, 'capa inexistente');
 });
 
-test('porCapa reparte los marcados por indice de capa', () => {
+test('MAR-02: porCapa reparte los marcados por indice de capa', () => {
   const m = Marcas.crear(['0,0,0', '0,1,0', '1,0,0']);
   assert.deepEqual(m.porCapa(3), [2, 1, 0]);
   assert.equal(m.total(), 3);
 });
 
-test('instantanea y restaurar respetan el contenido', () => {
+test('MAR-03: instantanea y restaurar respetan el contenido', () => {
   const m = Marcas.crear(['0,0,0']);
   const snap = m.instantanea();
   assert.deepEqual(snap, ['0,0,0']);
@@ -56,7 +56,7 @@ test('instantanea y restaurar respetan el contenido', () => {
   assert.equal(m.total(), 0);
 });
 
-test('la instantanea es una copia: cambiarla no toca las marcas', () => {
+test('MAR-03: la instantanea es una copia: cambiarla no toca las marcas', () => {
   const m = Marcas.crear();
   m.fijar(CAPAS, 0, 0, 0, true);
   const snap = m.instantanea();
@@ -65,7 +65,7 @@ test('la instantanea es una copia: cambiarla no toca las marcas', () => {
   assert.equal(m.conjunto().has('falso'), false);
 });
 
-test('el conjunto expuesto es el vivo (lo usa el dibujo)', () => {
+test('MAR-01: el conjunto expuesto es el vivo (lo usa el dibujo)', () => {
   const m = Marcas.crear();
   m.fijar(CAPAS, 1, 0, 0, true);
   assert.ok(m.conjunto() instanceof Set);

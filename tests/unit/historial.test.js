@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const Historial = require('../../src/nucleo/historial.js');
 
-test('empieza vacio y no devuelve nada que deshacer', () => {
+test('MAR-04: empieza vacio y no devuelve nada que deshacer', () => {
   const h = Historial.crear();
   assert.equal(h.puedeDeshacer(), false);
   assert.equal(h.puedeRehacer(), false);
@@ -11,7 +11,7 @@ test('empieza vacio y no devuelve nada que deshacer', () => {
   assert.equal(h.rehacer('actual'), null);
 });
 
-test('deshacer devuelve la instantanea anterior y rehacer la recupera', () => {
+test('MAR-04: deshacer devuelve la instantanea anterior y rehacer la recupera', () => {
   const h = Historial.crear();
   h.apilar('a');
   h.apilar('b');
@@ -23,7 +23,7 @@ test('deshacer devuelve la instantanea anterior y rehacer la recupera', () => {
   assert.equal(h.rehacer('c'), null);
 });
 
-test('una accion nueva descarta lo que habia para rehacer', () => {
+test('MAR-04: una accion nueva descarta lo que habia para rehacer', () => {
   const h = Historial.crear();
   h.apilar('a');
   h.deshacer('b');
@@ -32,7 +32,7 @@ test('una accion nueva descarta lo que habia para rehacer', () => {
   assert.equal(h.puedeRehacer(), false);
 });
 
-test('descartar quita la ultima instantanea (accion sin cambios)', () => {
+test('MAR-04: descartar quita la ultima instantanea (accion sin cambios)', () => {
   const h = Historial.crear();
   h.apilar('a');
   h.descartar();
@@ -43,7 +43,7 @@ test('descartar quita la ultima instantanea (accion sin cambios)', () => {
   assert.equal(h.pendientes().deshacer, 0);
 });
 
-test('respeta el limite de 50 y tira lo mas antiguo', () => {
+test('MAR-04: respeta el limite de 50 y tira lo mas antiguo', () => {
   const h = Historial.crear();
   for (let i = 0; i < 80; i++) h.apilar(i);
   assert.equal(h.pendientes().deshacer, Historial.MAX);
@@ -53,13 +53,13 @@ test('respeta el limite de 50 y tira lo mas antiguo', () => {
   assert.equal(h.deshacer('x'), null);
 });
 
-test('el limite es configurable', () => {
+test('MAR-04: el limite es configurable', () => {
   const h = Historial.crear(3);
   for (let i = 0; i < 5; i++) h.apilar(i);
   assert.equal(h.pendientes().deshacer, 3);
 });
 
-test('las instantaneas son opacas: arrays y objetos se guardan tal cual', () => {
+test('MAR-04: las instantaneas son opacas: arrays y objetos se guardan tal cual', () => {
   const h = Historial.crear();
   const snap = { params: { w: 16 }, hechos: ['0,1,2'] };
   h.apilar(snap);

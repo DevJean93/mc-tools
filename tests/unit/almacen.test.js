@@ -27,7 +27,7 @@ function con(storage, fn) {
   }
 }
 
-test('con escritura posible es persistente y no deja la clave de prueba', () => {
+test('MAR-08: con escritura posible es persistente y no deja la clave de prueba', () => {
   const s = falso({ datos: { a: '1' } });
   const almacen = con(s, () => Almacen.local());
   assert.equal(almacen.persistente, true);
@@ -36,7 +36,7 @@ test('con escritura posible es persistente y no deja la clave de prueba', () => 
   assert.deepEqual([...s._m.keys()].sort(), ['a', 'b'], 'la prueba de escritura se limpia');
 });
 
-test('almacenamiento lleno: se sigue leyendo el progreso y se declara persistente', () => {
+test('MAR-08: almacenamiento lleno: se sigue leyendo el progreso y se declara persistente', () => {
   const guardado = JSON.stringify({ forma: 'triangulo', w: 21, h: 15, igualar: false });
   const s = falso({ datos: { 'mc-formas-v1': guardado, relleno: 'x'.repeat(100) }, alEscribir: cuota });
   const almacen = con(s, () => Almacen.local());
@@ -49,28 +49,28 @@ test('almacenamiento lleno: se sigue leyendo el progreso y se declara persistent
   assert.equal(st.w, 21);
 });
 
-test('cuota en un almacen vacio (cuota 0) no es persistente pero lee', () => {
+test('MAR-08: cuota en un almacen vacio (cuota 0) no es persistente pero lee', () => {
   const almacen = con(falso({ alEscribir: cuota }), () => Almacen.local());
   assert.equal(almacen.persistente, false);
   assert.equal(almacen.leer('nada'), null);
   assert.equal(almacen.escribir('x', '1'), false);
 });
 
-test('un error de escritura que no es de cuota no es persistente, y sigue leyendo', () => {
+test('MAR-08: un error de escritura que no es de cuota no es persistente, y sigue leyendo', () => {
   const s = falso({ datos: { a: '1' }, alEscribir: () => new DOMException('sin permiso', 'SecurityError') });
   const almacen = con(s, () => Almacen.local());
   assert.equal(almacen.persistente, false);
   assert.equal(almacen.leer('a'), '1');
 });
 
-test('si leer lanza, no hay nada que recuperar: no guarda y lo declara', () => {
+test('MAR-08: si leer lanza, no hay nada que recuperar: no guarda y lo declara', () => {
   const almacen = con(falso({ alLeer: () => new DOMException('bloqueado', 'SecurityError') }), () => Almacen.local());
   assert.equal(almacen.persistente, false);
   assert.equal(almacen.leer('a'), null);
   assert.equal(almacen.escribir('a', '1'), false);
 });
 
-test('si acceder a localStorage lanza o no existe, tampoco guarda', () => {
+test('MAR-08: si acceder a localStorage lanza o no existe, tampoco guarda', () => {
   const bloqueado = con(new DOMException('bloqueado', 'SecurityError'), () => Almacen.local());
   assert.equal(bloqueado.persistente, false);
   assert.equal(bloqueado.leer('a'), null);
@@ -80,7 +80,7 @@ test('si acceder a localStorage lanza o no existe, tampoco guarda', () => {
   assert.equal(sin.escribir('a', '1'), false);
 });
 
-test('desde() sin opciones es persistente; con persistente:false no', () => {
+test('MAR-08: desde() sin opciones es persistente; con persistente:false no', () => {
   assert.equal(Almacen.desde(falso()).persistente, true);
   assert.equal(Almacen.desde(falso(), { persistente: false }).persistente, false);
   assert.equal(Almacen.desde(null).persistente, false);
