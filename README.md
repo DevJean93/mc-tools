@@ -16,6 +16,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
   - Regla relativa al centro: cuenta como los ejes, sin signos: el centro vale 1 y se llega hasta el borde (`8 … 2 1 | 1 2 … 8` con centro de 2×2; `8 … 2 1 2 … 8` con centro de 1×1). La línea de información dice la posición con flechas (`← 13, ↑ 11`).
   - Tramos por fila (derecha) y por columna (abajo): bloques seguidos, p. ej. `3 · 8 · 3`.
   - Tramos dentro del dibujo y distancia al centro sobre los ejes centrales.
+  - Con mucho zoom, al desplazar el dibujo las reglas izquierda y superior se quedan fijas en el borde visible.
   - Resumen: tamaño del centro y bloques del centro a cada borde.
 - **Marcar lo construido:** clic o arrastre marca, clic derecho desmarca; botones para marcar/desmarcar la capa o todo. El clic en el número de una fila o columna de la regla marca o desmarca la línea entera (un solo paso de deshacer; `F` y `C` lo hacen con el cursor del teclado). Con el dibujo enfocado: flechas (Mayús = 5 celdas), Espacio/Intro, RePág/AvPág para cambiar de capa. `Ctrl+Z` / `Ctrl+Y` deshacen y rehacen. El progreso se guarda en el navegador y se recupera al volver.
 - **Zoom:** de 2 a 48 px por bloque con los botones −/+, el deslizador, `Ctrl` + rueda (hacia el puntero), pellizcando en pantallas táctiles o con `+`/`-` en el teclado. **Ajustar** (o `0`) encaja la capa entera en la ventana, y si la forma crece y deja de caber, el zoom se reduce solo. Con poco zoom se ocultan los números que no caben y la regla numera cada 2, 5, 10… bloques.

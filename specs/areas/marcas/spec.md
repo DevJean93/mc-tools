@@ -83,11 +83,15 @@ La capa actual se recorta al rango válido y se guarda entre sesiones.
 
 Tocar o hacer clic en la banda de una fila de la regla izquierda —aunque ese número no se vea
 con poco zoom— alterna toda la fila de la capa actual. Si todos sus bloques estaban
-construidos, los desmarca; si no, los marca todos.
+construidos, los desmarca; si no, los marca todos. Con el dibujo desplazado vale lo mismo con la
+regla izquierda **fija**: la banda es la que se ve y la fila es la de ese punto del dibujo. Un
+toque en la regla fija nunca marca el bloque que queda debajo.
 
 ### MAR-15
 
-Lo mismo con la banda de una columna en la regla superior: alterna toda la columna.
+Lo mismo con la banda de una columna en la regla superior, también con la regla superior fija
+cuando el dibujo está desplazado: alterna toda la columna. La esquina entre las dos reglas no
+hace nada.
 
 ### MAR-16
 
@@ -145,3 +149,5 @@ no hace nada.
   esquina entre las dos reglas no marca nada: evita gestos accidentales.
 - 2026-10-29: el desplazamiento y el pellizco siguen siendo del área TAC; marcar una línea con
   el dedo es de MAR, porque cambia las marcas y no la vista.
+- 2026-10-29: con las reglas fijas, una fila o columna que queda oculta bajo la otra regla no se
+  puede tocar, y el cursor del teclado se desplaza para no quedar tapado (cambio 005).

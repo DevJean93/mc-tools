@@ -101,6 +101,14 @@ que la regla y una flecha en lugar de signo. En la franja central dice solo `1`.
 
 Ejemplo: círculo de 30, columna 3, fila 5 → `relativo al centro (← 13, ↑ 11)`.
 
+### NUM-15
+
+Al desplazar el dibujo, las reglas izquierda y superior se quedan fijas en el borde visible del
+contenedor y muestran los números de las filas y columnas que se ven: la superior mientras se
+haya desplazado hacia abajo y la izquierda mientras se haya desplazado hacia la derecha. Incluyen
+la regla relativa si está activa. Sin desplazamiento no hay reglas añadidas y el dibujo es
+exactamente igual que siempre.
+
 ## Casos límite
 
 - Franja de 2 (tamaño par): centro 2×2 y la regla relativa muestra `1 | 1` en la franja.
@@ -137,3 +145,12 @@ Ejemplo: círculo de 30, columna 3, fila 5 → `relativo al centro (← 13, ↑ 
   los bloques; el margen del dibujo se mide ya con la negrita para que nada se corte.
 - 2026-10-25: las cifras dentro del dibujo solo se pintan con celdas de 16 px o más; con
   menos zoom no caben y el texto del zoom avisa «acércate para ver todos los números».
+- 2026-10-29: las reglas fijas son dos lienzos superpuestos dentro de un ancla `position: sticky`
+  de tamaño cero, no un repintado del dibujo entero. Chromium pega el ancla al borde del
+  *contenido* y no al del contenedor, así que el origen visible es exactamente lo desplazado
+  (`scrollLeft`, `scrollTop`) y los lienzos se extienden sobre el relleno (8 px) para que no
+  asomen bloques por encima o a la izquierda. Se descubrió al medir en el navegador: la primera
+  versión restaba el relleno y quedaba desalineada 8 px (cambio 005).
+- 2026-10-29: las reglas fijas no reciben eventos y son `aria-hidden`; el puntero llega al lienzo
+  principal y la geometría (`zonaRegla`, `zonaCelda`) ya sabe qué parte tapan. Solo aparecen con
+  desplazamiento, para que sin él el dibujo sea idéntico píxel a píxel.

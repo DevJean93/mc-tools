@@ -83,5 +83,5 @@ que el dibujo normal, desplazado lo que se haya movido el contenido (`dx`, `dy`)
       `capaReglas` con las dos reglas por separado (el dibujo no cambia).
 - [x] T03 Superposición: ancla y lienzos, `origenVisible()` y repintado; E2E en rojo → verde.
 - [x] T04 Clic y toque en la regla fija, esquina y teclado: E2E en rojo → verde.
-- [ ] T05 Validación visual con la skill de UI; ajustes de estilo.
-- [ ] T06 Archivar: delta en NUM y MAR, README, propuesta en `Hecha` y a `specs/cambios/archivo/`.
+- [x] T05 Validación visual con la skill de UI; ajustes de estilo.
+- [x] T06 Archivar: delta en NUM y MAR, README, propuesta en `Hecha` y a `specs/cambios/archivo/`.
