@@ -1,0 +1,9 @@
+exclude:
+  - specs
+  - .claude
+  - CLAUDE.md
+  - CONTEXTO.md
+  - plan.md
+  - AUDITORIA.md
+  - tests
+  - package.json
