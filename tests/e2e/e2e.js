@@ -248,7 +248,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   for (const d of [30, 40, 50, 60]) { await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: tp(d) }); await esperar(30); }
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(150);
-  ok(await zoom() >= zp * 2.5, `ZOOM: pellizcar con dos dedos acerca (${zp} -> ${await zoom()})`);
+  ok(await zoom() >= zp * 2.5, `TAC-03: pellizcar con dos dedos acerca (${zp} -> ${await zoom()})`);
   // Zoom no borra marcas ni regenera
   ok((await prog()).startsWith('Construidos:'), 'ZOO-05: progreso intacto');
 
@@ -302,8 +302,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(200);
   ok(zTrasUno === zt && await zoom() > zt * 1.5,
-    `TACTIL: dedos escalonados -> pellizco (${zt} -> ${await zoom()})`);
-  ok(await prog() === progTactil, 'TACTIL: el pellizco no marca bloques');
+    `TAC-03: dedos escalonados -> pellizco (${zt} -> ${await zoom()})`);
+  ok(await prog() === progTactil, 'TAC-08: el pellizco no marca bloques');
   // Un toque corto sigue marcando (el pellizco no deja el gesto bloqueado).
   await ev(`(() => { const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0; const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); })()`);
   await esperar(150);
@@ -312,7 +312,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: pTap[0], y: pTap[1], id: 1 }] });
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(200);
-  ok(await prog() === 'Construidos: 1/208 (0 %)', 'TACTIL: un toque corto marca la celda -> ' + await prog());
+  ok(await prog() === 'Construidos: 1/208 (0 %)', 'TAC-01: un toque corto marca la celda -> ' + await prog());
   // Arrastrar con un dedo desplaza el dibujo (no marca).
   await ev(`(() => { const z = document.getElementById('zoom'); z.value = 48; z.dispatchEvent(new Event('input')); })()`);
   await esperar(200);
@@ -328,7 +328,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(150);
   const s1 = await ev(leerScroll);
   ok(s1[0] > s0[0] && s1[1] > s0[1] && await prog() === 'Construidos: 1/208 (0 %)',
-    `TACTIL: arrastrar con un dedo desplaza el dibujo (${s0[0]},${s0[1]} -> ${s1[0]},${s1[1]})`);
+    `TAC-01: arrastrar con un dedo desplaza el dibujo (${s0[0]},${s0[1]} -> ${s1[0]},${s1[1]})`);
 
   // A1: en el zoom maximo (48) el pellizco ya no puede acercar mas, pero debe seguir desplazando.
   await ev(`(() => { const z = document.getElementById('zoom'); z.value = 48; z.dispatchEvent(new Event('input')); const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 200; w.scrollTop = 200; })()`);
@@ -348,7 +348,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   const sA1b = await ev(leerScroll);
   // Sin recortar el zoom, los dos primeros movimientos se perderian y solo se desplazaria la mitad.
   ok(await zoom() === 48 && sA1[0] - sA1b[0] >= 25 && sA1b[1] < sA1[1] && await prog() === 'Construidos: 1/208 (0 %)',
-    `TACTIL A1: con zoom 48 el pellizco sigue desplazando (${sA1[0]},${sA1[1]} -> ${sA1b[0]},${sA1b[1]})`);
+    `TAC-04: con zoom 48 el pellizco sigue desplazando (${sA1[0]},${sA1[1]} -> ${sA1b[0]},${sA1b[1]})`);
 
   // A2: pellizco que ademas se desplaza 80 px: la celda bajo el punto medio inicial sigue
   // bajo el punto medio final (el dibujo no se queda atras).
@@ -379,7 +379,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   const rc = t => (t.match(/^Columna (\d+), fila (\d+)$/) || []).slice(1).map(Number);
   const [ca, ra] = rc(celdaA2a), [cb, rb] = rc(celdaA2b);
   ok(await zoom() > zA2 && ca && Math.abs(ca - cb) <= 1 && Math.abs(ra - rb) <= 1 && await prog() === 'Construidos: 1/208 (0 %)',
-    `TACTIL A2: pellizcar y arrastrar mantiene la celda bajo los dedos (${celdaA2a} -> ${celdaA2b})`);
+    `TAC-05: pellizcar y arrastrar mantiene la celda bajo los dedos (${celdaA2a} -> ${celdaA2b})`);
 
   // A3: con tres dedos se ignora el gesto; al levantar uno, los dos que quedan reanudan el pellizco.
   await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); const w = document.getElementById('lienzo').parentElement; w.scrollLeft = 0; w.scrollTop = 0; })()`);
@@ -404,7 +404,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(200);
   ok(await zoom() > zA3 * 1.4 && await prog() === progA3,
-    `TACTIL A3: al levantar el tercer dedo el pellizco continua (${zA3} -> ${await zoom()})`);
+    `TAC-07: al levantar el tercer dedo el pellizco continua (${zA3} -> ${await zoom()})`);
 
   // FORM: el campo de ancho se puede vaciar. Vacio no se rellena con el minimo ni cambia la forma.
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = '16'; w.dispatchEvent(new Event('change')); })()`);
@@ -449,7 +449,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(200);
   const sA5b = await ev(leerScroll);
   ok(await ev(`window.scrollY`) === yA5 && sA5b[0] > sA5[0] && sA5b[1] > sA5[1],
-    `TACTIL A5: a 3x el arrastre mueve el dibujo y no la pagina (scrollY ${yA5} -> ${await ev(`window.scrollY`)})`);
+    `TAC-09: a 3x el arrastre mueve el dibujo y no la pagina (scrollY ${yA5} -> ${await ev(`window.scrollY`)})`);
 
   // A1 lento: un dibujo que cabe entero no puede desplazarse dentro del contenedor, asi que
   // cada movimiento (aunque sea de 0,8 px) debe pasar a la pagina.
@@ -476,7 +476,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(200);
   const lentoY = await ev(`window.scrollY`);
   ok(lento0.cabe && lentoY - lento0.y > 50 && await ev(`document.getElementById('lienzo').parentElement.scrollTop`) === lento0.st && await prog() === lentoProg,
-    `TACTIL A1: arrastre lento (0,8 px) sobre un dibujo que cabe desplaza la pagina (scrollY ${lento0.y} -> ${lentoY})`);
+    `TAC-02: arrastre lento (0,8 px) sobre un dibujo que cabe desplaza la pagina (scrollY ${lento0.y} -> ${lentoY})`);
 
   // C5: si la captura del puntero se pierde (dedo levantado fuera del lienzo), el dedo no
   // queda registrado: el siguiente toque sigue marcando en vez de empezar un pellizco.
@@ -500,7 +500,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(200);
   const hechosC5 = t => +(t.match(/Construidos: (\d+)\//) || [])[1];
   ok(hechosC5(await prog()) === hechosC5(progC5) + 1,
-    `TACTIL C5: al perderse la captura el dedo se suelta y el siguiente toque marca (${progC5} -> ${await prog()})`);
+    `TAC-06: al perderse la captura el dedo se suelta y el siguiente toque marca (${progC5} -> ${await prog()})`);
 
   // B4: con densidad 1 el navegador redondea el scroll a pixeles enteros. Un dedo muy lento
   // (menos de 1 px por evento) debe acabar moviendo el dibujo igualmente: el resto se acumula.
@@ -528,7 +528,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(200);
   const sB4b = await ev(leerScroll);
   ok(sB4b[0] - sB4[0] >= 30 && sB4b[1] - sB4[1] >= 30 && await ev(`window.scrollY`) === yB4,
-    `TACTIL B4: a 1x un arrastre de 0,4 px por evento mueve el dibujo (${sB4[0]},${sB4[1]} -> ${sB4b[0]},${sB4b[1]}) sin mover la pagina`);
+    `TAC-02: a 1x un arrastre de 0,4 px por evento mueve el dibujo (${sB4[0]},${sB4[1]} -> ${sB4b[0]},${sB4b[1]}) sin mover la pagina`);
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
