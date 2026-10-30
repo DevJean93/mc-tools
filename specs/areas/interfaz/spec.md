@@ -51,7 +51,17 @@ recargar.
 
 La ayuda táctil y la de ratón explican el gesto de marcar una fila o columna entera («toca el
 número de una fila o columna para marcarla entera»), y la de teclado dice que `F` alterna la
-fila y `C` la columna.
+fila y `C` la columna. La ayuda táctil sugiere además acercar el zoom si la fila es fina
+(«si la fila es fina, acércate antes de tocarla»).
+
+### INT-08
+
+Los avisos temporales aparecen centrados abajo y usan el ancho disponible: en móvil, todo el
+ancho de la pantalla menos 16 px a cada lado; en escritorio, como mucho unos 60 caracteres por
+línea.
+
+Ejemplo: en un móvil de 375 px, «Marcados 16 bloques de la fila 8.» con su botón «Deshacer»
+ocupa como mucho dos líneas.
 
 ## Casos límite
 
@@ -92,3 +102,9 @@ fila y `C` la columna.
 - 2026-10-29: la ayuda del lienzo explica el gesto de marcar filas y columnas en las dos
   variantes (táctil y ratón) y añade `F`/`C` a la línea de teclado; va en el mismo párrafo de
   ayuda para no añadir otro bloque de texto sobre el dibujo.
+- 2026-10-29: el aviso temporal se ancla a los dos lados con margen automático en vez de
+  `left: 50%` + `translateX(-50%)`: así el navegador solo le dejaba la mitad derecha de la
+  pantalla y en móvil el aviso de una fila salía en 5 líneas (cambio 003).
+- 2026-10-29: con el zoom inicial del móvil una fila de la regla mide 15 px, menos que los
+  24 px que pide WCAG 2.2 para un objetivo. Marcar bloque a bloque es el control equivalente y
+  la ayuda táctil sugiere acercarse; no se agranda la banda porque pisaría la fila de al lado.

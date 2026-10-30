@@ -49,5 +49,5 @@ derecha de la pantalla. Se ancla a los dos lados (`left: 0; right: 0`) con `marg
 - [x] T01 Propuesta y plan; el validador en verde (`specs` falla hasta que `INT-08` tenga test).
 - [x] T02 `INT-08`: tests E2E en rojo (escritorio y móvil) → cambio de `.aviso` → verde.
 - [x] T03 `INT-07`: el E2E pide «acércate» en rojo → frase en la ayuda táctil → verde.
-- [ ] T04 Archivar: delta en `specs/areas/interfaz/spec.md` (con su decisión), propuesta en
+- [x] T04 Archivar: delta en `specs/areas/interfaz/spec.md` (con su decisión), propuesta en
       `Hecha` y a `specs/cambios/archivo/`.
