@@ -429,6 +429,61 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   const soloH = await reglasFijas();
   ok(soloH.supOculta && !soloH.izqOculta && soloH.izq.arr + soloH.izq.alto <= soloH.ch && soloH.sh === base.sh,
     `NUM-15: desplazado solo en horizontal solo hay regla izquierda y no se sale del contenedor (${JSON.stringify(soloH.izq)})`);
+  // MAR-14, MAR-15: con las reglas fijas, el clic en su numero alterna la fila o columna del punto
+  // del dibujo que corresponde, nunca un bloque suelto, y la esquina entre ellas no hace nada.
+  await irA(500, 400);
+  const puntoFijo = (ax, ay) => ev(`(() => {   // ax, ay: coordenadas respecto al ancla (borde visible del contenido)
+    const w = document.querySelector('.lienzoWrap'), r = w.getBoundingClientRect(), cs = getComputedStyle(w);
+    return [r.left + w.clientLeft + parseFloat(cs.paddingLeft) + ${ax}, r.top + w.clientTop + parseFloat(cs.paddingTop) + ${ay}];
+  })()`);
+  const clicEn = async (x, y) => { await mouse('mousePressed', x, y); await mouse('mouseReleased', x, y); await esperar(150); };
+  const bloquesDe = (eje, i) => ev(`(() => { const g = Formas.generar({ forma: 'circulo', w: 60, h: 60, modo: 'relleno', grosor: 1 }).capas[0];
+    return ${JSON.stringify(eje)} === 'fila' ? g[${i}].filter(Boolean).length : g.filter(f => f[${i}]).length; })()`);
+  const hechosN = async () => +(await prog()).match(/(\d+)\//)[1];
+  // Fila: banda izquierda fija (ax dentro de [0, 80)) a 100 px por debajo de la regla superior fija.
+  const filaVista = Math.floor((400 + 100) / 24);
+  await clicEn(...await puntoFijo(40, 42 + 100));
+  const nFila = await hechosN(), esperadoFila = await bloquesDe('fila', filaVista);
+  ok(nFila === esperadoFila && nFila > 1, `MAR-14: clic en la regla izquierda fija marca la fila ${filaVista + 1} entera (${nFila} de ${esperadoFila}), no un bloque`);
+  await clicEn(...await puntoFijo(40, 42 + 100));
+  ok(await hechosN() === 0, 'MAR-14: otro clic en la regla izquierda fija la desmarca');
+  // Columna: banda superior fija a 100 px a la derecha de la regla izquierda fija.
+  const colVista = Math.floor((500 + 100) / 24);
+  await clicEn(...await puntoFijo(80 + 100, 20));
+  const nCol = await hechosN(), esperadoCol = await bloquesDe('columna', colVista);
+  ok(nCol === esperadoCol && nCol > 1, `MAR-15: clic en la regla superior fija marca la columna ${colVista + 1} entera (${nCol} de ${esperadoCol}), no un bloque`);
+  await clicEn(...await puntoFijo(80 + 100, 20));
+  ok(await hechosN() === 0, 'MAR-15: otro clic en la regla superior fija la desmarca');
+  // Esquina entre las dos reglas fijas.
+  await clicEn(...await puntoFijo(30, 20));
+  ok(await hechosN() === 0, 'MAR-14, MAR-15: la esquina entre las dos reglas fijas no hace nada');
+  // Un bloque visible, fuera de las reglas, sigue marcando solo ese bloque.
+  await clicEn(...await puntoFijo(80 + 200, 42 + 200));
+  ok(await hechosN() === 1, 'MAR-14: un clic en un bloque visible sigue marcando solo ese bloque');
+  await clicEn(...await puntoFijo(80 + 200, 42 + 200));
+  ok(await hechosN() === 0, 'MAR-14: y otro clic lo desmarca');
+  // Cursor de mano e informacion sobre la regla fija.
+  const [hx, hy] = await puntoFijo(40, 42 + 100);
+  await mouse('mouseMoved', hx, hy, 'none', 0);
+  ok(await ev(`document.getElementById('lienzo').style.cursor`) === 'pointer' &&
+    (await ev(`document.getElementById('info').textContent`)).includes('toda la fila o columna'),
+  'MAR-14: sobre la regla fija el cursor es de mano y la informacion explica el clic');
+  await mouse('mouseMoved', ...await puntoFijo(80 + 200, 42 + 200), 'none', 0);
+  ok(await ev(`document.getElementById('lienzo').style.cursor`) === '', 'MAR-14: sobre un bloque visible el cursor vuelve a lo normal');
+
+  // El cursor del teclado no se queda bajo una regla fija: sube hasta salir de la zona visible.
+  await ev(`document.getElementById('lienzo').focus()`);
+  for (let i = 0; i < 14; i++) await key('ArrowUp', 'ArrowUp', 38);
+  await esperar(150);
+  const bajoRegla = await ev(`(() => {
+    const w = document.querySelector('.lienzoWrap'), m = document.getElementById('info').textContent.match(/Columna ([0-9]+), fila ([0-9]+)/);
+    if (!m) return { sinInfo: true, texto: document.getElementById('info').textContent, activo: document.activeElement.id };
+    const py = 42 + (+m[2] - 1) * 24, px = 80 + (+m[1] - 1) * 24;   // zoom 24, regla relativa: L = 80, T = 42
+    return { fila: +m[2], bajoSup: w.scrollTop > 0 && py < w.scrollTop + 42, bajoIzq: w.scrollLeft > 0 && px < w.scrollLeft + 80, st: w.scrollTop };
+  })()`);
+  ok(!bajoRegla.sinInfo && !bajoRegla.bajoSup && !bajoRegla.bajoIzq,
+    `MAR-14: el cursor del teclado (fila ${bajoRegla.fila}) no queda tapado por las reglas fijas (scrollTop ${bajoRegla.st}${bajoRegla.sinInfo ? ', info: ' + bajoRegla.texto + ', activo: ' + bajoRegla.activo : ''})`);
+
   await irA(0, 0);
   const vuelta = await reglasFijas();
   ok(vuelta.supOculta && vuelta.izqOculta, 'NUM-15: al volver al origen las reglas fijas desaparecen');
