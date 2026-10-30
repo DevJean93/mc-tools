@@ -111,12 +111,14 @@ no hace nada.
 - Marcas de otra firma se ignoran por completo.
 - Capa guardada fuera de rango: se limita al generar.
 - Un trazo de arrastre completo ocupa un solo paso de historial.
+- Con poco zoom la banda de una fila o columna mide menos de 24 px y su número no se ve; la
+  zona sensible sigue siendo toda la banda.
 
 ## Fuera de alcance
 
 - Generar la geometría (área FOR).
 - La tabla de materiales y el porcentaje (área MAT).
-- Los gestos táctiles (área TAC).
+- El desplazamiento y el pellizco táctiles (área TAC).
 
 ## Decisiones
 
@@ -130,3 +132,16 @@ no hace nada.
 - 2026-10-29: no se finge un almacén en memoria cuando el navegador bloquea: se avisa con una
   nota fija y la app sigue funcionando.
 - 2026-10-29: el historial guarda instantáneas opacas y un trazo de arrastre es un solo paso.
+- 2026-10-29: marcar filas y columnas se hace desde la regla, no con un botón ni un modo: en
+  móvil no hay sitio para más botones y la regla ya está a la vista. La zona sensible es toda
+  la banda de la fila o columna —no solo el número— porque con poco zoom el número se oculta.
+- 2026-10-29: el toque en el margen solo cuenta como marca si el dedo se movió 10 px o menos;
+  así el mismo borde sirve para empezar a desplazar el dibujo.
+- 2026-10-29: una fila o columna se alterna como una unidad (si estaba entera, se desmarca) y
+  ocupa un solo paso de historial, para que `Ctrl+Z` devuelva el estado anterior de golpe.
+- 2026-10-29: `F` y `C` son la alternativa de teclado porque la banda mide menos de 24 px con
+  poco zoom y no todo el mundo puede tocar con precisión.
+- 2026-10-29: los márgenes derecho e inferior pertenecen a los tramos y no a la regla, y la
+  esquina entre las dos reglas no marca nada: evita gestos accidentales.
+- 2026-10-29: el desplazamiento y el pellizco siguen siendo del área TAC; marcar una línea con
+  el dedo es de MAR, porque cambia las marcas y no la vista.

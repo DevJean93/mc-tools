@@ -89,3 +89,6 @@ fila y `C` la columna.
 - 2026-10-29: el estado del almacenamiento es una nota fija y no un aviso temporal: la guía
   de la skill de UI dice que los avisos tipo toast deben desaparecer solos, y ese estado sigue
   siendo cierto mientras dure (ver MAR).
+- 2026-10-29: la ayuda del lienzo explica el gesto de marcar filas y columnas en las dos
+  variantes (táctil y ratón) y añade `F`/`C` a la línea de teclado; va en el mismo párrafo de
+  ayuda para no añadir otro bloque de texto sobre el dibujo.

@@ -31,7 +31,7 @@ El dibujo no cambia: solo se añade una zona sensible en los márgenes.
 - [x] Spec y test primero; IDs en los tests.
 - [x] `mc-formas-v1*` y la firma de marcas sin cambios.
 - [x] Accesibilidad y móvil: alternativa de teclado, anuncios y ayuda.
-- [ ] `check`, `test` y `e2e` en verde; capturas revisadas.
+- [x] `check`, `test`, `specs` y `e2e` en verde; capturas revisadas.
 - [x] Lo mínimo que cumple la spec.
 
 ## Riesgos
@@ -59,27 +59,27 @@ El dibujo no cambia: solo se añade una zona sensible en los márgenes.
 
 ## Tareas
 
-- [ ] T01 — Propuesta 002 y este plan; validador en verde. Archivos: `specs/cambios/002-…/`.
+- [x] T01 — Propuesta 002 y este plan; validador en verde. Archivos: `specs/cambios/002-…/`.
   Hecho cuando: `npm run specs` pasa. Commit: `SDD: propuesta 002 para marcar filas y columnas`.
-- [ ] T02 — `MAR-14/15/18`: tests de `alternarLinea` (fila, columna, desmarcar, hueco, otras
+- [x] T02 — `MAR-14/15/18`: tests de `alternarLinea` (fila, columna, desmarcar, hueco, otras
   capas, línea vacía) y la implementación. Archivos: `tests/unit/marcas.test.js`,
   `src/nucleo/marcas.js`. Hecho cuando: `npm test` en verde. Commit: `MAR-14/15: alternar una
   fila o columna entera`.
-- [ ] T03 — `MAR-16/18`: tests de `marcarLinea` (un paso de deshacer, aviso con Deshacer,
+- [x] T03 — `MAR-16/18`: tests de `marcarLinea` (un paso de deshacer, aviso con Deshacer,
   línea vacía sin historial) y la implementación. Archivos: `tests/unit/documento.test.js`,
   `src/nucleo/documento.js`. Hecho cuando: `npm test` en verde. Commit: `MAR-16: marcar una
   línea es un solo paso de deshacer`.
-- [ ] T04 — `MAR-14/15/18`: tests de `zonaRegla` (bandas, bordes, esquina, márgenes derecho e
+- [x] T04 — `MAR-14/15/18`: tests de `zonaRegla` (bandas, bordes, esquina, márgenes derecho e
   inferior, regla relativa) y la implementación. Archivos: `tests/unit/render.test.js`,
   `src/dibujo/render.js`. Hecho cuando: `npm test` en verde. Commit: `MAR-14/15: zona
   sensible de las reglas`.
-- [ ] T05 — Entradas y cableado (ratón, táctil, teclado y `app.js`) con E2E de escritorio,
+- [x] T05 — Entradas y cableado (ratón, táctil, teclado y `app.js`) con E2E de escritorio,
   móvil y teclado. Archivos: `src/entrada/*.js`, `src/app.js`, `tests/e2e/e2e.js`. Hecho
   cuando: `npm run e2e` en verde. Commit: `MAR-14/15/17: marcar filas y columnas con ratón,
   toque y teclado`.
-- [ ] T06 — `INT-07`: frases de ayuda y E2E que las comprueba. Archivos: `index.html`,
+- [x] T06 — `INT-07`: frases de ayuda y E2E que las comprueba. Archivos: `index.html`,
   `tests/e2e/e2e.js`. Hecho cuando: `npm run e2e` en verde. Commit: `INT-07: ayuda del gesto
   de marcar filas y columnas`.
-- [ ] T07 — `/sdd-archivar 002`: delta a las áreas MAR e INT, propuesta en `archivo/`, línea
+- [x] T07 — `/sdd-archivar 002`: delta a las áreas MAR e INT, propuesta en `archivo/`, línea
   en `README.md`. Hecho cuando: `npm run specs` y `npm test` en verde. Commit: `SDD: archiva
   la propuesta 002`.

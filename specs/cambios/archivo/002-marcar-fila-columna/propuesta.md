@@ -2,7 +2,7 @@
 
 ## Estado
 
-Aprobada
+Hecha
 
 ## Motivo
 
@@ -64,3 +64,13 @@ construida tocando su número en la regla, y lo mismo con el ratón en escritori
 ## Preguntas abiertas
 
 Ninguna.
+
+## Resultado
+
+Implementada el 2026-10-29. `Marcas.alternarLinea` calcula la línea, `Documento.marcarLinea`
+la apila como un paso y `Render.zonaRegla` decide qué banda de la regla se tocó. El ratón, el
+toque y las teclas `F`/`C` comparten esa acción y anuncian el resultado. El dibujo no cambió
+(comparación píxel a píxel en los casos de referencia).
+
+Verificado con 125 tests unitarios y 84 comprobaciones E2E en Edge (escritorio, móvil 390×844
+con toque real y teclado); `npm run specs` queda sin requisitos huérfanos ni sin test.
