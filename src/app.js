@@ -38,6 +38,37 @@
     requestAnimationFrame(() => { rafPendiente = false; dibujar(); });
   }
 
+  // --- reglas fijas al desplazar ---------------------------------------------------
+  // El ancla sticky se pega al borde del contenido, asi que el origen visible es exactamente lo
+  // desplazado: las reglas fijas ocupan [x0, x0+L) y [y0, y0+T) en coordenadas del dibujo.
+  // Sin desplazamiento vale 0.
+  const origenVisible = () => ({ x0: wrap.scrollLeft, y0: wrap.scrollTop });
+
+  const reglaSup = $('reglaSup'), reglaIzq = $('reglaIzq');
+  function pintarReglasFijas() {
+    if (!geo) return;
+    const { x0, y0 } = origenVisible();
+    reglaSup.hidden = !(y0 > 0);
+    reglaIzq.hidden = !(x0 > 0);
+    if (reglaSup.hidden && reglaIzq.hidden) return;
+    // Los lienzos no pueden salirse del dibujo: no deben anadir desplazamiento al contenedor.
+    const cs = getComputedStyle(wrap), relleno = { x: parseFloat(cs.paddingLeft), y: parseFloat(cs.paddingTop) };
+    Render.dibujarReglasFijas({ sup: reglaSup, izq: reglaIzq }, {
+      geo, op: st, origen: { x0, y0 }, relleno, dpr: window.devicePixelRatio || 1,
+      ancho: Math.min(wrap.clientWidth, cv.offsetWidth + 2 * relleno.x),
+      alto: Math.min(wrap.clientHeight, cv.offsetHeight + 2 * relleno.y),
+    });
+  }
+  let rafReglas = false;
+  function programarReglasFijas() {
+    if (rafReglas) return;
+    rafReglas = true;
+    requestAnimationFrame(() => { rafReglas = false; pintarReglasFijas(); });
+  }
+  wrap.addEventListener('scroll', programarReglasFijas, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(programarReglasFijas).observe(wrap);
+  else window.addEventListener('resize', programarReglasFijas);
+
   function dibujar() {
     geo = Render.dibujar(cv, {
       g: doc.capaActual(), capa: doc.capa(), hechos: doc.hechos(), s: st.zoom, op: st,
@@ -48,6 +79,7 @@
     $('zoomTxt').textContent = `${st.zoom} px/bloque` + (geo.ocultos ? ' · acércate para ver todos los números' : '');
     $('zoomMenos').disabled = st.zoom <= LIMITES.zoomMin;
     $('zoomMas').disabled = st.zoom >= LIMITES.zoomMax;
+    pintarReglasFijas();
   }
 
   const zoom = Zoom.crear({
@@ -89,18 +121,20 @@
   }
 
   // --- interpretacion del puntero ---------------------------------------------------
-  function celda(ev) {
-    if (!geo) return null;
+  // Punto del puntero en coordenadas del dibujo.
+  function enDibujo(ev) {
     const r = cv.getBoundingClientRect();
-    const x = Math.floor((ev.clientX - r.left - geo.L) / geo.s), y = Math.floor((ev.clientY - r.top - geo.T) / geo.s);
-    return x >= 0 && y >= 0 && x < geo.w && y < geo.h ? { x, y } : null;
+    return [ev.clientX - r.left, ev.clientY - r.top];
+  }
+
+  // Celda bajo el puntero; null sobre las reglas, tambien las fijas (que tapan parte del dibujo).
+  function celda(ev) {
+    return Render.zonaCelda(geo, ...enDibujo(ev), origenVisible());
   }
 
   // Banda de la regla bajo el puntero, si la hay.
   function regla(ev) {
-    if (!geo) return null;
-    const r = cv.getBoundingClientRect();
-    return Render.zonaRegla(geo, ev.clientX - r.left, ev.clientY - r.top);
+    return Render.zonaRegla(geo, ...enDibujo(ev), origenVisible());
   }
 
   // Anuncio para lectores de pantalla del resultado de alternar una linea.
@@ -128,9 +162,12 @@
 
   // Mantiene visible la celda activa del teclado.
   function verCursor(c) {
+    const { x0, y0 } = origenVisible();
     const px = geo.L + c.x * geo.s, py = geo.T + c.y * geo.s;
-    if (px < wrap.scrollLeft || px + geo.s > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = px - wrap.clientWidth / 2;
-    if (py < wrap.scrollTop || py + geo.s > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = py - wrap.clientHeight / 2;
+    // Las reglas fijas tapan una franja del borde: la celda no puede quedar debajo.
+    const tapaX = x0 > 0 ? geo.L : 0, tapaY = y0 > 0 ? geo.T : 0;
+    if (px < wrap.scrollLeft + tapaX || px + geo.s > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = px - tapaX - (wrap.clientWidth - tapaX) / 2;
+    if (py < wrap.scrollTop + tapaY || py + geo.s > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = py - tapaY - (wrap.clientHeight - tapaY) / 2;
   }
 
   // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni el documento).

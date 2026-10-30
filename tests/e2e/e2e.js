@@ -367,6 +367,74 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     menu2.oculto && menu2.aria === 'false' && !menu3.oculto && !menu3.ancho && menu3.aria === 'true',
   'INT-06: en escritorio el menu se oculta, el dibujo ocupa todo el ancho y la preferencia se recuerda al recargar');
 
+  // NUM-15: reglas fijas al desplazar. Circulo de 60 con zoom 24: no cabe y se desplaza.
+  await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'circulo', w: 60, h: 60, igualar: true, zoom: 24, rel: true }))`);
+  await cargar();
+  // Al cargar, la app aleja el zoom hasta que la forma cabe: se acerca despues, como haria el usuario.
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 24; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  const irA = (sl, st) => ev(`(() => { const w = document.querySelector('.lienzoWrap'); w.scrollLeft = ${sl}; w.scrollTop = ${st}; })()`).then(() => esperar(200));
+  // Estado de las reglas fijas: cajas respecto al contenedor, tamano del scroll y pixeles que difieren de
+  // la regla real (la regla fija debe ser identica a la del dibujo en la misma posicion).
+  const reglasFijas = () => ev(`(() => {
+    const w = document.querySelector('.lienzoWrap'), cv = document.getElementById('lienzo');
+    const ancla = document.querySelector('.reglasFijas'), sup = document.getElementById('reglaSup'), izq = document.getElementById('reglaIzq');
+    if (!ancla || !sup || !izq) return { ausente: true };
+    const rw = w.getBoundingClientRect(), rc = cv.getBoundingClientRect(), ra = ancla.getBoundingClientRect();
+    const caja = c => { const r = c.getBoundingClientRect(); return { izq: Math.round(r.left - rw.left - w.clientLeft), arr: Math.round(r.top - rw.top - w.clientTop), ancho: Math.round(r.width), alto: Math.round(r.height) }; };
+    const cs = getComputedStyle(w), rx = parseFloat(cs.paddingLeft), ry = parseFloat(cs.paddingTop);
+    // Posicion REAL del origen: donde cae el ancla sobre el dibujo (no la formula de la app).
+    const x0 = Math.round(ra.left - rc.left), y0 = Math.round(ra.top - rc.top);
+    const dpr = window.devicePixelRatio || 1, real = cv.getContext('2d');
+    const L = Math.round(80 * dpr), T = Math.round(42 * dpr), rxp = Math.round(rx * dpr), ryp = Math.round(ry * dpr);
+    // Compara una zona de la regla fija con la zona del dibujo que le corresponde (en pixeles).
+    const difiere = (c, cu, cvv, cx, cy, ancho, alto) => {
+      if (c.hidden || ancho <= 0 || alto <= 0) return -1;
+      const a = c.getContext('2d').getImageData(cu, cvv, ancho, alto).data, b = real.getImageData(cx, cy, ancho, alto).data;
+      let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++;
+      return n;
+    };
+    // Superior: el lienzo (u, v) es el ancla (u - rx, v - ry); la banda del dibujo (x >= L, y < T) cae en u = x - x0 + rx, v = y + ry.
+    const uSup = rxp + L, wSup = Math.min(sup.width - uSup, real.canvas.width - Math.round(x0 * dpr) - L);
+    const vIzq = ryp + T, hIzq = Math.min(izq.height - vIzq, real.canvas.height - Math.round(y0 * dpr) - T);
+    return {
+      supOculta: sup.hidden, izqOculta: izq.hidden, sup: caja(sup), izq: caja(izq), sw: w.scrollWidth, sh: w.scrollHeight,
+      cw: w.clientWidth, ch: w.clientHeight, x0, y0, st: w.scrollTop, sl: w.scrollLeft, aria: ancla.getAttribute('aria-hidden'),
+      eventos: getComputedStyle(sup).pointerEvents + '/' + getComputedStyle(izq).pointerEvents,
+      difSup: difiere(sup, uSup, ryp, L + Math.round(x0 * dpr), 0, wSup, T),
+      difIzq: difiere(izq, rxp, vIzq, 0, T + Math.round(y0 * dpr), L, hIzq),
+    };
+  })()`);
+
+  await irA(0, 0);
+  const base = await reglasFijas();
+  ok(!base.ausente && base.supOculta && base.izqOculta, 'NUM-15: sin desplazar no hay reglas fijas');
+  await irA(500, 400);
+  const fija = await reglasFijas();
+  ok(!fija.ausente && !fija.supOculta && !fija.izqOculta &&
+    fija.sup.izq === 0 && fija.sup.arr === 0 && fija.sup.ancho === fija.cw &&
+    fija.izq.izq === 0 && fija.izq.arr === 0 && fija.izq.alto === fija.ch,
+  `NUM-15: desplazado en los dos ejes, las reglas quedan fijas en el borde visible (${JSON.stringify({ sup: fija.sup, izq: fija.izq, cw: fija.cw, ch: fija.ch })})`);
+  ok(!fija.ausente && fija.x0 === fija.sl && fija.y0 === fija.st,
+    `NUM-15: el origen visible del dibujo es exactamente lo desplazado (x0=${fija.x0} sl=${fija.sl}, y0=${fija.y0} st=${fija.st})`);
+  ok(!fija.ausente && fija.sw === base.sw && fija.sh === base.sh, `NUM-15: las reglas fijas no anaden desplazamiento (${fija.sw}x${fija.sh} = ${base.sw}x${base.sh})`);
+  ok(fija.difSup === 0 && fija.difIzq === 0,
+    `NUM-15: los numeros de la regla fija son los de las columnas y filas visibles (pixeles distintos: sup ${fija.difSup}, izq ${fija.difIzq})`);
+  ok(fija.aria === 'true' && fija.eventos === 'none/none', 'NUM-15: las reglas fijas son decorativas (aria-hidden) y no reciben eventos');
+  await irA(0, 300);
+  const soloV = await reglasFijas();
+  ok(!soloV.supOculta && soloV.izqOculta && soloV.sup.izq + soloV.sup.ancho <= soloV.cw && soloV.sw === base.sw,
+    `NUM-15: desplazado solo en vertical solo hay regla superior y no se sale del contenedor (${JSON.stringify(soloV.sup)})`);
+  await irA(300, 0);
+  const soloH = await reglasFijas();
+  ok(soloH.supOculta && !soloH.izqOculta && soloH.izq.arr + soloH.izq.alto <= soloH.ch && soloH.sh === base.sh,
+    `NUM-15: desplazado solo en horizontal solo hay regla izquierda y no se sale del contenedor (${JSON.stringify(soloH.izq)})`);
+  await irA(0, 0);
+  const vuelta = await reglasFijas();
+  ok(vuelta.supOculta && vuelta.izqOculta, 'NUM-15: al volver al origen las reglas fijas desaparecen');
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');

@@ -407,18 +407,22 @@ const Render = (() => {
 
   /**
    * Pinta las reglas fijas: dos lienzos de superposicion que muestran la regla superior y la
-   * izquierda en el borde visible. `geo` es lo que devolvio `dibujar`; `origen` lo desplazado;
-   * `ancho` y `alto` el espacio visible; los lienzos que no hacen falta se dejan para ocultar.
+   * izquierda pegadas al borde visible. El ancla sticky se pega al borde del *contenido* (el
+   * relleno queda fuera), asi que los lienzos se extienden `relleno` px hacia fuera para tapar esa
+   * tira y que no asomen bloques por encima o a la izquierda. `geo` es lo que devolvio `dibujar`;
+   * `origen` lo desplazado; `ancho` y `alto` el tamano visible de cada lienzo.
    * @param {{ sup: HTMLCanvasElement, izq: HTMLCanvasElement }} cvs
-   * @param {{ geo: object, op: object, origen: {x0:number,y0:number}, ancho: number, alto: number, dpr: number }} o
+   * @param {{ geo: object, op: object, origen: {x0:number,y0:number}, relleno: {x:number,y:number},
+   *           ancho: number, alto: number, dpr: number }} o
    */
   function dibujarReglasFijas(cvs, o) {
-    const P = paleta(), { geo, op, origen: { x0, y0 }, ancho, alto, dpr } = o;
+    const P = paleta(), { geo, op, origen: { x0, y0 }, relleno: rel, ancho, alto, dpr } = o;
     const m = { L: geo.L, T: geo.T, s: geo.s, w: geo.w, h: geo.h, H0: 0, paso: geo.paso, fuente: geo.fuente };
 
     const preparar = (cv, w, h) => {
       cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
       cv.style.width = w + 'px'; cv.style.height = h + 'px';
+      cv.style.left = -rel.x + 'px'; cv.style.top = -rel.y + 'px';
       const ctx = cv.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = P.lienzo; ctx.fillRect(0, 0, w, h);
@@ -427,18 +431,18 @@ const Render = (() => {
     };
 
     if (y0 > 0) {   // regla superior: solo se desplaza en horizontal; no pisa la izquierda
-      const ctx = preparar(cvs.sup, ancho, geo.T);
+      const ctx = preparar(cvs.sup, ancho, geo.T + rel.y);
       ctx.save();
-      ctx.beginPath(); ctx.rect(geo.L, 0, Math.max(0, ancho - geo.L), geo.T); ctx.clip();
-      ctx.translate(-x0, 0);
+      ctx.beginPath(); ctx.rect(rel.x + geo.L, 0, Math.max(0, ancho - rel.x - geo.L), geo.T + rel.y); ctx.clip();
+      ctx.translate(rel.x - x0, rel.y);
       pintarReglaSuperior(ctx, m, op, P);
       ctx.restore();
     }
     if (x0 > 0) {   // regla izquierda: solo se desplaza en vertical; no pisa la superior
-      const ctx = preparar(cvs.izq, geo.L, alto);
+      const ctx = preparar(cvs.izq, geo.L + rel.x, alto);
       ctx.save();
-      ctx.beginPath(); ctx.rect(0, geo.T, geo.L, Math.max(0, alto - geo.T)); ctx.clip();
-      ctx.translate(0, -y0);
+      ctx.beginPath(); ctx.rect(0, rel.y + geo.T, geo.L + rel.x, Math.max(0, alto - rel.y - geo.T)); ctx.clip();
+      ctx.translate(rel.x, rel.y - y0);
       pintarReglaIzquierda(ctx, m, op, P);
       ctx.restore();
     }
