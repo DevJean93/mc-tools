@@ -102,7 +102,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .tot small { font-family: var(--fuente); font-size: 13px; }
 .mat { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 14px; }
 .mat span { color: var(--fg-mut); }
-.mat b { text-align: right; font-family: var(--mono); font-weight: 400; }
+.mat b { text-align: right; font-family: var(--mono); font-weight: 600; }
 .formula { margin: 4px 0 0; color: var(--fg-mut); font-size: 12px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; font-family: var(--mono); }
 td, th { padding: 4px 6px; border-bottom: 1px solid var(--muted); text-align: right; }

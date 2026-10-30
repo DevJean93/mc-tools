@@ -264,6 +264,15 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`document.getElementById('marcarCapa').click()`);
   await esperar(100);
   ok(await ev(`document.querySelector('tr.sel').textContent.includes('100 %')`), 'MAR-02: marcar capa -> 100 % en la tabla');
+  // MAT-10: los numeros del desglose en negrita; etiquetas y tabla por capas en peso normal.
+  const pesos = await ev(`(() => {
+    const peso = el => +getComputedStyle(el).fontWeight;
+    const nums = [...document.querySelectorAll('#materiales .mat b')], etiquetas = [...document.querySelectorAll('#materiales .mat span')];
+    return { n: nums.length, numeros: nums.map(peso), etiquetas: etiquetas.map(peso),
+      tabla: [...document.querySelectorAll('#tablaCapas td')].map(peso).slice(0, 8) };
+  })()`);
+  ok(pesos.n === 5 && pesos.numeros.every(w => w >= 600) && pesos.etiquetas.every(w => w <= 500) && pesos.tabla.length > 0 && pesos.tabla.every(w => w <= 500),
+    `MAT-10: los numeros del desglose en negrita y las etiquetas y la tabla en peso normal (${JSON.stringify(pesos)})`);
   await shot('03-esfera.png');
 
   // 8) Accesibilidad basica
