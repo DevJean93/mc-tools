@@ -1,9 +1,9 @@
 // Estado: validacion, valores por defecto y marcas, con un almacen en memoria (sin DOM).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Estado = require('../estado.js');
-const Almacen = require('../almacen.js');
-const Formas = require('../shapes.js');
+const Estado = require('../../src/nucleo/estado.js');
+const Almacen = require('../../src/nucleo/almacen.js');
+const Formas = require('../../src/nucleo/formas.js');
 
 const conDatos = (clave, valor) => Almacen.memoria({ [clave]: valor });
 

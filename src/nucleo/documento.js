@@ -2,7 +2,7 @@
 // No toca el DOM: lee y pinta el panel por sus metodos y avisa a la app con `alCambiar`.
 const Documento = (() => {
   const Estado = typeof module !== 'undefined' ? require('./estado.js') : globalThis.Estado;
-  const Formas = typeof module !== 'undefined' ? require('./shapes.js') : globalThis.Formas;
+  const Formas = typeof module !== 'undefined' ? require('./formas.js') : globalThis.Formas;
   const Marcas = typeof module !== 'undefined' ? require('./marcas.js') : globalThis.Marcas;
   const Historial = typeof module !== 'undefined' ? require('./historial.js') : globalThis.Historial;
 

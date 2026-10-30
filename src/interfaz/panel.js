@@ -1,8 +1,8 @@
 // Enlace entre el formulario y los parametros: leer el panel a st y volcar st al panel.
 // No decide nada mas: quien llama sabe cuando regenerar.
 const Panel = (() => {
-  const Estado = typeof module !== 'undefined' ? require('./estado.js') : globalThis.Estado;
-  const Formas = typeof module !== 'undefined' ? require('./shapes.js') : globalThis.Formas;
+  const Estado = typeof module !== 'undefined' ? require('../nucleo/estado.js') : globalThis.Estado;
+  const Formas = typeof module !== 'undefined' ? require('../nucleo/formas.js') : globalThis.Formas;
   const TOGGLES = Estado.VISTA;
   const CAMPOS = ['w', 'h', 'grosor'];
   const SELECTS = ['forma', 'igualar', 'modo', 'esfera', 'orient'];

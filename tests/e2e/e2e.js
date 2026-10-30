@@ -2,7 +2,7 @@
 const { spawn, spawnSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const OUT = path.join(require('os').tmpdir(), 'formas-mc-e2e'); fs.mkdirSync(OUT, { recursive: true });
-const URL_APP = require('url').pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+const URL_APP = require('url').pathToFileURL(path.join(__dirname, '..', '..', 'index.html')).href;
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const perfil = path.join(OUT, 'perfil');
 const edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9333', '--window-size=1400,1000', `--user-data-dir=${perfil}`, 'about:blank']);

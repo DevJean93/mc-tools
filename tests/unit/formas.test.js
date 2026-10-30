@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Formas = require('../shapes.js');
+const Formas = require('../../src/nucleo/formas.js');
 
 const { contar } = Formas;
 const total = r => r.capas.reduce((a, g) => a + contar(g), 0);

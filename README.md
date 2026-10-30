@@ -46,24 +46,24 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 | Archivo | Rol |
 |---|---|
 | `index.html` | Estructura del panel y del área de dibujo. |
-| `styles.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
-| `almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
-| `shapes.js` | Geometría pura y registro de formas, sin DOM; se prueba con Node. |
-| `estado.js` | Valores por defecto, validación, persistencia y firma de geometría. |
-| `historial.js` | Deshacer/rehacer con límite de pasos. |
-| `marcas.js` | Bloques marcados como construidos. |
-| `materiales.js` | Stacks, shulkers, cofres, porcentajes y resumen del centro. |
-| `render.js` | Dibujo de una capa en canvas por capas encadenables (pantalla y exportación). |
-| `avisos.js` | Avisos flotantes, errores y anuncios accesibles. |
-| `vista-materiales.js` | Tabla de capas, totales y barra de progreso. |
-| `panel.js` | Enlace entre el formulario y los parámetros. |
-| `zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
-| `exportar.js` | Exportación PNG de una capa o de todas. |
-| `menu.js` | Menú plegable, hoja móvil y barra inferior. |
-| `entrada-raton.js` | Ratón y lápiz. |
-| `entrada-tactil.js` | Toques: marcar, desplazar y pellizcar. |
-| `entrada-teclado.js` | Cursor de celdas y atajos de teclado. |
-| `app.js` | Raíz de composición: crea los módulos, inyecta dependencias y conecta eventos. |
+| `src/estilos.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
+| `src/nucleo/almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
+| `src/nucleo/formas.js` | Geometría pura y registro de formas, sin DOM; se prueba con Node. |
+| `src/nucleo/estado.js` | Valores por defecto, validación, persistencia y firma de geometría. |
+| `src/nucleo/historial.js` | Deshacer/rehacer con límite de pasos. |
+| `src/nucleo/marcas.js` | Bloques marcados como construidos. |
+| `src/nucleo/materiales.js` | Stacks, shulkers, cofres, porcentajes y resumen del centro. |
+| `src/dibujo/render.js` | Dibujo de una capa en canvas por capas encadenables (pantalla y exportación). |
+| `src/interfaz/avisos.js` | Avisos flotantes, errores y anuncios accesibles. |
+| `src/interfaz/vista-materiales.js` | Tabla de capas, totales y barra de progreso. |
+| `src/interfaz/panel.js` | Enlace entre el formulario y los parámetros. |
+| `src/dibujo/zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
+| `src/interfaz/exportar.js` | Exportación PNG de una capa o de todas. |
+| `src/interfaz/menu.js` | Menú plegable, hoja móvil y barra inferior. |
+| `src/entrada/raton.js` | Ratón y lápiz. |
+| `src/entrada/tactil.js` | Toques: marcar, desplazar y pellizcar. |
+| `src/entrada/teclado.js` | Cursor de celdas y atajos de teclado. |
+| `src/app.js` | Raíz de composición: crea los módulos, inyecta dependencias y conecta eventos. |
 
 Los scripts son clásicos (sin módulos ES ni `fetch`) para que funcione con `file://`.
 

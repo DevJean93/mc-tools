@@ -1,9 +1,9 @@
 // Registro de formas: una forma nueva entra sin tocar shapes.js ni estado.js.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Formas = require('../shapes.js');
-const Estado = require('../estado.js');
-const Almacen = require('../almacen.js');
+const Formas = require('../../src/nucleo/formas.js');
+const Estado = require('../../src/nucleo/estado.js');
+const Almacen = require('../../src/nucleo/almacen.js');
 
 test('registrar una forma nueva la hace disponible en toda la app', () => {
   const antes = [...Formas.FORMAS];

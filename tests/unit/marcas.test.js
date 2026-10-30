@@ -1,7 +1,7 @@
 // Marcas: solo bloques reales, por capa, con instantanea/restauracion (sin DOM).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Marcas = require('../marcas.js');
+const Marcas = require('../../src/nucleo/marcas.js');
 
 // Capa 0: 2x2 con (1,1) vacio. Capa 1: 1x1 llena.
 const CAPAS = [

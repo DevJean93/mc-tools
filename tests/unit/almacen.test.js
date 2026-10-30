@@ -1,8 +1,8 @@
 // Almacen: el localStorage del navegador con un Storage falso (sin DOM).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Almacen = require('../almacen.js');
-const Estado = require('../estado.js');
+const Almacen = require('../../src/nucleo/almacen.js');
+const Estado = require('../../src/nucleo/estado.js');
 
 const cuota = () => Object.assign(new Error('sin espacio'), { name: 'QuotaExceededError', code: 22 });
 

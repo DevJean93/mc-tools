@@ -1,7 +1,7 @@
 // Materiales: conversion de bloques a stacks/shulkers/cofres y textos de progreso (sin DOM).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Materiales = require('../materiales.js');
+const Materiales = require('../../src/nucleo/materiales.js');
 
 test('208 bloques son 3 stacks y 16 sueltos', () => {
   const r = Materiales.resumen([208], [0]);

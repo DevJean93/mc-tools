@@ -1,7 +1,7 @@
 // Historial: pilas de deshacer/rehacer con limite (sin DOM).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const Historial = require('../historial.js');
+const Historial = require('../../src/nucleo/historial.js');
 
 test('empieza vacio y no devuelve nada que deshacer', () => {
   const h = Historial.crear();

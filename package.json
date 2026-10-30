@@ -4,8 +4,8 @@
   "version": "0.2.0",
   "description": "Planificador de formas en bloques para Minecraft, sin dependencias.",
   "scripts": {
-    "check": "node tests/check.js",
-    "test": "node --test tests/*.test.js",
-    "e2e": "node tests/e2e.js"
+    "check": "node tests/herramientas/check.js",
+    "test": "node --test tests/unit/*.test.js",
+    "e2e": "node tests/e2e/e2e.js"
   }
 }

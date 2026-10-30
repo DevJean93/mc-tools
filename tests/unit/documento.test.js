@@ -1,9 +1,9 @@
 // Flujo del documento: generar, marcas, historial, capas y guardado.
 const test = require('node:test');
 const assert = require('node:assert');
-const Documento = require('../documento.js');
-const Estado = require('../estado.js');
-const Almacen = require('../almacen.js');
+const Documento = require('../../src/nucleo/documento.js');
+const Estado = require('../../src/nucleo/estado.js');
+const Almacen = require('../../src/nucleo/almacen.js');
 
 function montar(almacen = Almacen.memoria()) {
   const st = Estado.cargar(almacen);
