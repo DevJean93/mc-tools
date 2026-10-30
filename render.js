@@ -201,38 +201,66 @@ const Render = (() => {
     }
   };
 
-  // Tramos dentro del dibujo, sin pisar las distancias de los ejes.
-  const capaTramosDentro = (ctx, m, o, P) => {
-    const { g } = o;
-    if (!o.op.tramosDentro || m.s < LAYOUT.celdaTexto) return;
-    const { L, T, s, filas, fuente } = m;
-    const [cx0, cx1, cy0, cy1] = franjas(m);
+  // Etiquetas de los tramos dentro del dibujo: [{ x, y, n }], con x el centro en celdas.
+  // Sin distancias de eje cada tramo lleva su total. Con ellas, un tramo que cruza la franja
+  // central no lleva su total sino lo que hay a cada lado, sin contar los bloques de la franja
+  // (un total de 14 con franja de 2 son 6 a la izquierda y 6 a la derecha). Esos numeros van en
+  // dos columnas fijas, simetricas respecto a la franja, para que no se pisen con los del eje:
+  // la de la izquierda queda centrada entre el eje y el inicio del tramo mas corto con sitio. Un
+  // tramo que no llega a esas columnas no se numera dentro si hay numeros de eje en su fila (se
+  // confundirian con ellos); en las filas de los extremos, sin numero de eje, cada lado lleva
+  // su cifra centrada en su parte.
+  function etiquetasTramosDentro(g, distEjes) {
+    const h = g.length, w = g[0].length;
+    const filas = g.map(f => tramos(f));
+    const etiquetas = [];
+    const poner = (x, y, n) => { if (n > 0) etiquetas.push({ x, y, n }); };
+    if (!distEjes) {
+      filas.forEach((f, y) => f.forEach(r => poner(r.s + r.l / 2, y, r.l)));
+      return etiquetas;
+    }
+
+    const [cx0, cx1] = centro(w), [cy0, cy1] = centro(h);
     const enEjeY = y => y >= cy0 && y <= cy1;
     const colCentro = g.map(f => f[cx0]);
     const ya = colCentro.indexOf(true), yb = colCentro.lastIndexOf(true);
-
-    ctx.font = fuente; ctx.fillStyle = P.sobreBloque; ctx.textAlign = 'center';
-    const ejeConNumero = y => o.op.distEjes && y > ya && y < yb;
+    const ejeConNumero = y => y > ya && y < yb;
     const cruzaEje = r => r.s <= cx1 && r.s + r.l > cx0;
-    // Los tramos que cruzan el eje vertical llevan su total en una misma columna a la
-    // izquierda del eje, centrada entre el eje y el inicio del tramo mas corto. Los que no
-    // dejan una casilla libre antes del eje no se numeran dentro (se confundirian con el eje).
+
     let maxIni = -1;
     filas.forEach((f, y) => {
       if (ejeConNumero(y) && !enEjeY(y)) f.forEach(r => { if (cruzaEje(r) && r.s <= cx0 - 3) maxIni = Math.max(maxIni, r.s); });
     });
-    const colFija = maxIni < 0 ? -1 : Math.floor((maxIni + cx0 - 1) / 2);
+    const colIzq = maxIni < 0 ? -1 : Math.floor((maxIni + cx0 - 1) / 2);
+    const colDer = colIzq < 0 ? -1 : cx1 + (cx0 - colIzq);   // espejo de la izquierda
+
     filas.forEach((f, y) => {
-      if (o.op.distEjes && enEjeY(y)) return;
+      if (enEjeY(y)) return;   // las filas centrales solo llevan los numeros del eje
       f.forEach(r => {
-        let medio = r.s + r.l / 2;
-        if (o.op.distEjes && cruzaEje(r)) {
-          if (colFija >= 0 && r.s <= colFija) medio = colFija + 0.5;
-          else if (ejeConNumero(y)) return;
+        if (!cruzaEje(r)) { poner(r.s + r.l / 2, y, r.l); return; }
+        const fin = r.s + r.l - 1;
+        const izq = Math.max(0, cx0 - r.s), der = Math.max(0, fin - cx1);
+        const llegaIzq = colIzq >= 0 && r.s <= colIzq, llegaDer = colIzq >= 0 && fin >= colDer;
+        if (llegaIzq || llegaDer) {
+          if (llegaIzq) poner(colIzq + 0.5, y, izq);
+          if (llegaDer) poner(colDer + 0.5, y, der);
+        } else if (!ejeConNumero(y)) {
+          poner((r.s + cx0) / 2, y, izq);
+          poner((cx1 + 1 + fin + 1) / 2, y, der);
         }
-        ctx.fillText(String(r.l), L + medio * s, T + y * s + s / 2);
       });
     });
+    return etiquetas;
+  }
+
+  // Tramos dentro del dibujo, sin pisar las distancias de los ejes.
+  const capaTramosDentro = (ctx, m, o, P) => {
+    if (!o.op.tramosDentro || m.s < LAYOUT.celdaTexto) return;
+    const { L, T, s, fuente } = m;
+    ctx.font = fuente; ctx.fillStyle = P.sobreBloque; ctx.textAlign = 'center';
+    for (const e of etiquetasTramosDentro(o.g, o.op.distEjes)) {
+      ctx.fillText(String(e.n), L + e.x * s, T + e.y * s + s / 2);
+    }
   };
 
   // Distancia sobre los ejes: 1 en los bloques del centro y hacia fuera, sin numerar el
@@ -315,7 +343,7 @@ const Render = (() => {
   }
 
   return {
-    dibujar, medir, relativo, etiquetaRel, centro, registrar,
+    dibujar, medir, relativo, etiquetaRel, centro, registrar, etiquetasTramosDentro,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;
