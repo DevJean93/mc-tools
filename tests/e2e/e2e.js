@@ -691,8 +691,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(250);
 
-  ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-tactil'); return getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().height > 0 && s.textContent.includes('toca el número de una fila o columna para marcarla entera'); })()`),
-    'INT-07: la ayuda táctil explica el gesto de marcar filas y columnas');
+  ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-tactil'); return getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().height > 0 && s.textContent.includes('toca el número de una fila o columna para marcarla entera') && s.textContent.includes('si la fila es fina, acércate antes de tocarla'); })()`),
+    'INT-07: la ayuda táctil explica el gesto de marcar filas y columnas y sugiere acercarse si la fila es fina');
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
