@@ -25,6 +25,16 @@ const EntradaTeclado = (() => {
         case '0': ev.preventDefault(); zoom.ajustarZoom(); return;
         case 'PageUp': ev.preventDefault(); capas.irCapa(capas.capaActual() + 1); dibujo.anunciar(capas.capaTexto()); return;
         case 'PageDown': ev.preventDefault(); capas.irCapa(capas.capaActual() - 1); dibujo.anunciar(capas.capaTexto()); return;
+        case 'f': case 'F': case 'c': case 'C': {
+          if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+          const eje = ev.key.toLowerCase() === 'f' ? 'fila' : 'columna';
+          const i = eje === 'fila' ? cursor.y : cursor.x;
+          const r = marcas.marcarLinea(eje, i);
+          dibujo.anunciarLinea(eje, i, r);
+          ev.preventDefault();
+          dibujo.dibujar();
+          return;
+        }
         case ' ': case 'Enter': {
           const { x, y } = cursor;
           if (!marcas.hayBloque(x, y)) { dibujo.anunciar('Celda vacía: no hay bloque que marcar.'); ev.preventDefault(); return; }

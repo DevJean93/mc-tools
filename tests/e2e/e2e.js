@@ -189,6 +189,62 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await prog() === 'Construidos: 16/208 (8 %)' && (await ev(`document.getElementById('anuncio').textContent`)).includes('construido'), 'MAR-01: teclado marca la celda -> ' + await prog());
   await shot('02-teclado.png');
 
+  // 6b) Marcar filas y columnas desde la regla (escritorio). Se empieza de cero: la regla
+  // izquierda ocupa L = 80 px y la superior T = 42 px, con celdas de 26 px.
+  await ev(`localStorage.clear()`);
+  await cargar();
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(150);
+  const rg = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);
+  const filaP = y => [rg.l + 20, rg.t + T + y * s + s / 2];       // banda izquierda
+  const colP = x => [rg.l + L + x * s + s / 2, rg.t + 20];        // banda superior
+  const anuncio = () => ev(`document.getElementById('anuncio').textContent`);
+
+  await mouse('mousePressed', ...filaP(7)); await mouse('mouseReleased', ...filaP(7));
+  await esperar(150);
+  ok(await prog() === 'Construidos: 16/208 (8 %)', 'MAR-14: clic en la banda de la fila 8 marca sus 16 bloques -> ' + await prog());
+  ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('fila 8') && !document.getElementById('avisoAccion').hidden`),
+    'MAR-16: el aviso nombra la fila y ofrece Deshacer');
+  ok((await anuncio()).startsWith('Fila 8: 16 bloques marcados'), 'MAR-16: se anuncia «Fila 8: 16 bloques marcados» -> ' + await anuncio());
+  await shot('02b-fila-marcada.png');
+
+  await mouse('mousePressed', ...filaP(7)); await mouse('mouseReleased', ...filaP(7));
+  await esperar(150);
+  ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-14: otro clic en la misma fila la desmarca entera -> ' + await prog());
+
+  await mouse('mousePressed', ...filaP(7)); await mouse('mouseReleased', ...filaP(7));
+  await esperar(100);
+  await ctrl('z'); await esperar(150);
+  ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-16: Ctrl+Z deshace la fila entera en un solo paso -> ' + await prog());
+
+  await mouse('mousePressed', ...colP(7)); await mouse('mouseReleased', ...colP(7));
+  await esperar(150);
+  ok(await prog() === 'Construidos: 16/208 (8 %)', 'MAR-15: clic en la banda de la columna 8 marca sus 16 bloques -> ' + await prog());
+  ok((await anuncio()).startsWith('Columna 8: 16 bloques marcados'), 'MAR-15: se anuncia «Columna 8: 16 bloques marcados» -> ' + await anuncio());
+  await ctrl('z'); await esperar(150);
+  ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-16: Ctrl+Z tambien deshace la columna');
+
+  // La regla es interactiva: cursor de mano y explicacion en la linea de informacion.
+  await mouse('mouseMoved', ...filaP(7), 'none', 0);
+  ok(await ev(`document.getElementById('lienzo').style.cursor`) === 'pointer', 'MAR-14: el cursor es de mano sobre la regla');
+  ok((await ev(`document.getElementById('info').textContent`)).includes('toda la fila o columna'), 'MAR-14: la informacion explica el clic en la regla');
+  await mouse('mouseMoved', rg.l + L + 8 * s + 13, rg.t + T + 7 * s + 13, 'none', 0);
+  ok(await ev(`document.getElementById('lienzo').style.cursor`) === '', 'MAR-14: sobre el dibujo el cursor vuelve a lo normal');
+
+  // MAR-17: con el dibujo enfocado, F alterna la fila del cursor y C su columna.
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(150);
+  ok(await prog() === 'Construidos: 16/208 (8 %)' && (await anuncio()).startsWith('Fila 8: 16 bloques marcados'),
+    'MAR-17: F marca la fila del cursor -> ' + await prog());
+  await key('f', 'KeyF', 70); await esperar(150);
+  ok(await prog() === 'Construidos: 0/208 (0 %)' && (await anuncio()).startsWith('Fila 8: 16 bloques desmarcados'),
+    'MAR-17: F otra vez la desmarca -> ' + await prog());
+  await key('c', 'KeyC', 67); await esperar(150);
+  ok(await prog() === 'Construidos: 16/208 (8 %)' && (await anuncio()).startsWith('Columna 8: 16 bloques marcados'),
+    'MAR-17: C marca la columna del cursor -> ' + await prog());
+  await shot('02c-columna-teclado.png');
+  await ctrl('z'); await esperar(150);
+
   // 7) Esfera: capas, marcar capa, tabla
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = 11; w.dispatchEvent(new Event('change')); })()`);
   await esperar(200);
@@ -560,6 +616,53 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   const sB4b = await ev(leerScroll);
   ok(sB4b[0] - sB4[0] >= 30 && sB4b[1] - sB4[1] >= 30 && await ev(`window.scrollY`) === yB4,
     `TAC-02: a 1x un arrastre de 0,4 px por evento mueve el dibujo (${sB4[0]},${sB4[1]} -> ${sB4b[0]},${sB4b[1]}) sin mover la pagina`);
+
+  // C6: en movil (390x844) tocar la banda de la regla marca la fila entera; otro toque la
+  // desmarca. Un gesto que sale del margen (> 10 px) no cuenta como toque.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await ev(`localStorage.clear()`);
+  await cargar(); await esperar(400);
+  await ev(`(() => {
+    const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input'));
+  })()`);
+  await esperar(300);
+  // El cambio de zoom reancla el scroll del contenedor: se vuelve a poner a cero al final,
+  // para que la regla izquierda quede visible (el lienzo es mas ancho que 390 px).
+  await ev(`(() => {
+    document.getElementById('lienzo').scrollIntoView({ block: 'center', inline: 'start' });
+    const w = document.getElementById('lienzo').parentElement;
+    w.scrollLeft = 0; w.scrollTop = 0;
+  })()`);
+  await esperar(150);
+  const rgM = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return { l: r.left, t: r.top }; })()`);
+  ok(rgM.l >= 0 && rgM.l + 20 <= 390 && rgM.t >= 0, `MAR-14: la regla izquierda se ve en movil (lienzo en ${Math.round(rgM.l)},${Math.round(rgM.t)})`);
+  const bandaFila = async y => {
+    // El aviso cambia de alto y mueve el lienzo: se mide la regla antes de cada toque.
+    const r = await ev(`(() => { const b = document.getElementById('lienzo').getBoundingClientRect(); return { l: b.left, t: b.top }; })()`);
+    return [r.l + 20, r.t + T + y * s + s / 2];
+  };
+  const toque = async (x, y) => {
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await esperar(200);
+  };
+  await toque(...await bandaFila(7));
+  ok(await prog() === 'Construidos: 16/208 (8 %)', 'MAR-14: tocar la banda de la fila 8 la marca entera -> ' + await prog());
+  ok((await anuncio()).startsWith('Fila 8: 16 bloques marcados'), 'MAR-14: el toque se anuncia -> ' + await anuncio());
+  await shot('07-movil-fila.png');
+  await toque(...await bandaFila(7));
+  ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-14: otro toque en la fila la desmarca -> ' + await prog());
+
+  // Arrastrar desde el margen: el dedo recorre mas de 10 px y no debe marcar nada.
+  const filaM = await bandaFila(7);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: filaM[0], y: filaM[1], id: 1 }] });
+  for (const d of [8, 20, 35, 50]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: filaM[0] + d, y: filaM[1], id: 1 }] });
+    await esperar(20);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(200);
+  ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-14: un arrastre desde el margen no marca la fila -> ' + await prog());
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();

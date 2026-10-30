@@ -95,6 +95,10 @@ Marcar una fila o columna es un solo paso de deshacer. Sale un aviso con el núm
 bloques, la fila o columna y el botón «Deshacer». Los lectores de pantalla anuncian «Fila 3:
 7 bloques marcados».
 
+### MAR-17
+
+Con el dibujo enfocado, `F` alterna la fila del cursor y `C` su columna.
+
 ### MAR-18
 
 Una fila o columna sin bloques no cambia nada ni ocupa historial; se anuncia «La fila N no

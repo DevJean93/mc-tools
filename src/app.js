@@ -96,6 +96,20 @@
     return x >= 0 && y >= 0 && x < geo.w && y < geo.h ? { x, y } : null;
   }
 
+  // Banda de la regla bajo el puntero, si la hay.
+  function regla(ev) {
+    if (!geo) return null;
+    const r = cv.getBoundingClientRect();
+    return Render.zonaRegla(geo, ev.clientX - r.left, ev.clientY - r.top);
+  }
+
+  // Anuncio para lectores de pantalla del resultado de alternar una linea.
+  function anunciarLinea(eje, i, r) {
+    const nombre = eje === 'fila' ? 'Fila' : 'Columna';
+    if (!r.bloques) avisos.anunciar(`La ${eje} ${i + 1} no tiene bloques.`);
+    else avisos.anunciar(`${nombre} ${i + 1}: ${r.n} bloques ${r.valor ? 'marcados' : 'desmarcados'}.`);
+  }
+
   function describir(c) {
     const g = doc.capaActual();
     const estado = !g[c.y][c.x] ? 'vacío' : doc.hecho(c.x, c.y) ? 'bloque construido' : 'bloque';
@@ -122,13 +136,14 @@
   // Interfaz pequena que comparten raton, tactil y teclado (no ven st ni el documento).
   // Cada entrada recibe solo los grupos que usa.
   const accionesDibujo = {
-    celda, describir, informar, programarDibujo, refrescar, dibujar,
-    infoInicial: INFO_INICIAL, anunciar: avisos.anunciar,
+    celda, regla, describir, informar, programarDibujo, refrescar, dibujar,
+    infoInicial: INFO_INICIAL, anunciar: avisos.anunciar, anunciarLinea,
     cursorInicial, dimensionesCapa, verCursor,
   };
   const accionesMarcas = {
     estaHecho: doc.hecho, hayBloque: doc.hayBloque, fijar: doc.fijar,
     antesDeMarcar: doc.antesDeMarcar, trasMarcar: doc.trasMarcar, descartarPaso: doc.descartarPaso,
+    marcarLinea: doc.marcarLinea,
   };
   const accionesZoom = {
     zoom: (n, punto) => zoom.aplicar(n, punto), zoomActual: () => st.zoom,

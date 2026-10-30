@@ -14,9 +14,21 @@ const EntradaRaton = (() => {
     lienzo.addEventListener('pointerdown', ev => {
       if (ev.pointerType === 'touch') return;   // eso lo lleva entrada-tactil
       const c = dibujo.celda(ev);
-      if (!c || (ev.button !== 0 && ev.button !== 2)) return;
+      const r = c ? null : dibujo.regla(ev);
+      if (!c && !r) return;
+      if (!c && ev.button !== 0) return;        // en la regla solo el boton izquierdo
       ev.preventDefault();
       lienzo.focus({ preventScroll: true });
+
+      // Clic en la banda de la regla: alterna la fila o columna entera de la capa.
+      if (r) {
+        const res = marcas.marcarLinea(r.eje, r.i);
+        dibujo.anunciarLinea(r.eje, r.i, res);
+        dibujo.refrescar();
+        return;
+      }
+
+      if (ev.button !== 0 && ev.button !== 2) return;
       trazo = { valor: ev.button === 2 ? false : !marcas.estaHecho(c.x, c.y), cambio: false, id: ev.pointerId };
       marcas.antesDeMarcar();
       lienzo.setPointerCapture(ev.pointerId);
@@ -26,7 +38,9 @@ const EntradaRaton = (() => {
     lienzo.addEventListener('pointermove', ev => {
       if (ev.pointerType === 'touch') return;
       const c = dibujo.celda(ev);
-      dibujo.informar(c ? dibujo.describir(c) : dibujo.infoInicial);
+      const r = c ? null : dibujo.regla(ev);
+      lienzo.style.cursor = r ? 'pointer' : '';
+      dibujo.informar(c ? dibujo.describir(c) : r ? 'Clic para marcar toda la fila o columna.' : dibujo.infoInicial);
       if (trazo && ev.pointerId === trazo.id) pintar(c);
     });
 

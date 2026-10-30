@@ -66,7 +66,7 @@ const EntradaTactil = (() => {
       resto.x = 0; resto.y = 0;   // cada gesto empieza sin fraccion pendiente
 
       if (toques.size === 2) empezarPellizco();
-      else if (toques.size === 1) toque = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, c: dibujo.celda(ev) };
+      else if (toques.size === 1) toque = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY, c: dibujo.celda(ev), r: dibujo.regla(ev) };
       else { toque = null; pellizco = null; }   // tres o mas dedos: se ignora el gesto
     });
 
@@ -94,11 +94,18 @@ const EntradaTactil = (() => {
       if (toques.size === 1 && pellizco) { pellizco = null; toque = null; return; }
       pellizco = null;
 
-      // Toque corto (sin arrastrar ni pellizcar): marca o desmarca la celda.
-      const corto = ev.type === 'pointerup' && toque && toque.id === ev.pointerId && toque.c &&
+      // Toque corto (sin arrastrar ni pellizcar): marca la celda o alterna la linea de la regla.
+      const corto = ev.type === 'pointerup' && toque && toque.id === ev.pointerId && (toque.c || toque.r) &&
         Math.hypot(ev.clientX - toque.x0, ev.clientY - toque.y0) <= UMBRAL_TOQUE;
       const celda = corto ? toque.c : null;
+      const regla = corto && !toque.c ? toque.r : null;
       toque = null;
+      if (regla) {
+        const res = marcas.marcarLinea(regla.eje, regla.i);
+        dibujo.anunciarLinea(regla.eje, regla.i, res);
+        dibujo.refrescar();
+        return;
+      }
       if (!celda) return;
 
       dibujo.informar(dibujo.describir(celda));
