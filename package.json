@@ -6,6 +6,7 @@
   "scripts": {
     "check": "node tests/herramientas/check.js",
     "test": "node --test tests/unit/*.test.js",
-    "e2e": "node tests/e2e/e2e.js"
+    "e2e": "node tests/e2e/e2e.js",
+    "specs": "node --test tests/unit/specs.test.js"
   }
 }
