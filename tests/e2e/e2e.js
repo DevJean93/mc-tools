@@ -833,6 +833,61 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-tactil'); return getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().height > 0 && s.textContent.includes('toca el número de una fila o columna para marcarla entera') && s.textContent.includes('si la fila es fina, acércate antes de tocarla'); })()`),
     'INT-07: la ayuda táctil explica el gesto de marcar filas y columnas y sugiere acercarse si la fila es fina');
 
+  // NUM-15, MAR-14, MAR-15 en movil: con el dibujo desplazado, las reglas fijas se tocan con el dedo.
+  await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'circulo', w: 60, h: 60, igualar: true, zoom: 26, rel: true }))`);
+  await cargar(); await esperar(300);
+  await ev(`(() => { const z = document.getElementById('zoom'); z.value = 26; z.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  await ev(`(() => { const w = document.querySelector('.lienzoWrap'); w.scrollLeft = 400; w.scrollTop = 300; document.getElementById('lienzo').scrollIntoView({ block: 'center' }); })()`);
+  await esperar(300);
+  const fijasMovil = await ev(`(() => ({
+    sup: !document.getElementById('reglaSup').hidden, izq: !document.getElementById('reglaIzq').hidden,
+    sl: document.querySelector('.lienzoWrap').scrollLeft, st: document.querySelector('.lienzoWrap').scrollTop,
+  }))()`);
+  ok(fijasMovil.sup && fijasMovil.izq && fijasMovil.sl > 0 && fijasMovil.st > 0,
+    `NUM-15: en movil, desplazado el dibujo, hay reglas fijas arriba y a la izquierda (${JSON.stringify(fijasMovil)})`);
+  // Punto del dibujo en pantalla a partir del ancla (borde visible del contenido).
+  const puntoMovil = (ax, ay) => ev(`(() => { const r = document.querySelector('.reglasFijas').getBoundingClientRect(); return [r.left + ${ax}, r.top + ${ay}]; })()`);
+  const progM = async () => +(await prog()).match(/([0-9]+)[/]/)[1];
+  const toqueM = async (x, y) => {
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await esperar(250);
+  };
+  const cuentaM = (eje, i) => ev(`(() => { const g = Formas.generar({ forma: 'circulo', w: 60, h: 60, modo: 'relleno', grosor: 1 }).capas[0];
+    return ${JSON.stringify(eje)} === 'fila' ? g[${i}].filter(Boolean).length : g.filter(f => f[${i}]).length; })()`);
+  const celdaM = 26, sl0 = fijasMovil.sl, st0 = fijasMovil.st;
+  // Fila: banda izquierda fija (ancla x 5..80) a 80 px por debajo de la regla superior fija.
+  const filaFijaM = Math.floor((st0 + 80) / celdaM);
+  await toqueM(...await puntoMovil(40, 42 + 80));
+  const nFilaM = await progM(), eFilaM = await cuentaM('fila', filaFijaM);
+  ok(nFilaM === eFilaM && nFilaM > 1, `MAR-14: tocar la regla izquierda fija marca la fila ${filaFijaM + 1} entera en movil (${nFilaM} de ${eFilaM}), no un bloque`);
+  await toqueM(...await puntoMovil(40, 42 + 80));
+  ok(await progM() === 0, 'MAR-14: otro toque en la regla izquierda fija la desmarca');
+  // Columna: banda superior fija a 90 px a la derecha de la regla izquierda fija.
+  const colFijaM = Math.floor((sl0 + 90) / celdaM);
+  await toqueM(...await puntoMovil(80 + 90, 20));
+  const nColM = await progM(), eColM = await cuentaM('columna', colFijaM);
+  ok(nColM === eColM && nColM > 1, `MAR-15: tocar la regla superior fija marca la columna ${colFijaM + 1} entera en movil (${nColM} de ${eColM}), no un bloque`);
+  await toqueM(...await puntoMovil(80 + 90, 20));
+  ok(await progM() === 0, 'MAR-15: otro toque en la regla superior fija la desmarca');
+  await toqueM(...await puntoMovil(30, 20));
+  ok(await progM() === 0, 'MAR-14, MAR-15: en movil, la esquina entre las reglas fijas no hace nada');
+  await toqueM(...await puntoMovil(80 + 120, 42 + 120));
+  ok(await progM() === 1, 'MAR-14: en movil, un toque en un bloque visible sigue marcando solo ese bloque');
+  await toqueM(...await puntoMovil(80 + 120, 42 + 120));
+  // Arrastrar desde el numero de una regla fija desplaza el dibujo y no marca nada.
+  const [ax, ay] = await puntoMovil(40, 42 + 80);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: ax, y: ay, id: 1 }] });
+  for (const d of [8, 20, 35, 50]) {
+    await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: ax, y: ay - d, id: 1 }] });
+    await esperar(20);
+  }
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(250);
+  ok(await progM() === 0, 'MAR-14: en movil, arrastrar desde la regla fija desplaza y no marca');
+  await ev(`localStorage.clear()`);
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
 })().catch(e => { console.error(e); cerrar(); process.exit(1); });
