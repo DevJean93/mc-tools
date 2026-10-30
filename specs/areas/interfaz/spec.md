@@ -47,6 +47,12 @@ En escritorio, el botón de la cabecera oculta y muestra la columna del menú (e
 a ocupar todo el ancho), indica su estado con `aria-expanded` y la preferencia se recuerda al
 recargar.
 
+### INT-07
+
+La ayuda táctil y la de ratón explican el gesto de marcar una fila o columna entera («toca el
+número de una fila o columna para marcarla entera»), y la de teclado dice que `F` alterna la
+fila y `C` la columna.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo

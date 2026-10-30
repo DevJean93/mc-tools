@@ -244,6 +244,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     'MAR-17: C marca la columna del cursor -> ' + await prog());
   await shot('02c-columna-teclado.png');
   await ctrl('z'); await esperar(150);
+  ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-raton'); return s.getBoundingClientRect().height > 0 && s.textContent.includes('clic en el número de la regla marca la fila o columna entera') && s.textContent.includes('F marca la fila del cursor y C su columna'); })()`),
+    'INT-07: la ayuda de ratón y teclado explica el gesto de marcar filas y columnas');
 
   // 7) Esfera: capas, marcar capa, tabla
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = 11; w.dispatchEvent(new Event('change')); })()`);
@@ -620,6 +622,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   // C6: en movil (390x844) tocar la banda de la regla marca la fila entera; otro toque la
   // desmarca. Un gesto que sale del margen (> 10 px) no cuenta como toque.
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  // La ayuda tactil solo se muestra con puntero grueso (pointer: coarse).
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 });
   await ev(`localStorage.clear()`);
   await cargar(); await esperar(400);
   await ev(`(() => {
@@ -663,6 +667,9 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(200);
   ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-14: un arrastre desde el margen no marca la fila -> ' + await prog());
+
+  ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-tactil'); return getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().height > 0 && s.textContent.includes('toca el número de una fila o columna para marcarla entera'); })()`),
+    'INT-07: la ayuda táctil explica el gesto de marcar filas y columnas');
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
