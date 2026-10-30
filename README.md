@@ -67,13 +67,35 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 
 Los scripts son clásicos (sin módulos ES ni `fetch`) para que funcione con `file://`.
 
+Las pruebas viven en `tests/unit/` (Node), `tests/e2e/` (Edge headless) y
+`tests/herramientas/` (sintaxis y validador). Las specs están en `specs/`: la constitución,
+las áreas vivas (`specs/areas/<área>/spec.md`) y las propuestas de cambio
+(`specs/cambios/`). Se versionan en git y no se publican en GitHub Pages.
+
 ## Desarrollo
 
 ```bash
-npm test        # tests de geometría, estado, historial, marcas, materiales y registro
-npm run check   # verificación sintáctica de todos los scripts
-npm run e2e     # comprobaciones en Edge headless (móvil y escritorio)
+npm test        # 112 tests unitarios, incluido el validador de specs
+npm run check   # sintaxis de todos los scripts de src/ y tests/
+npm run e2e     # 63 comprobaciones en Edge headless (móvil y escritorio)
+npm run specs   # valida las specs e imprime la cobertura requisito -> tests
 ```
+
+## Metodología (SDD)
+
+La spec es la fuente de verdad; el código y los tests la implementan.
+
+1. Un cambio de comportamiento empieza con una propuesta en `specs/cambios/NNN-…/`.
+2. La propuesta pasa por `Borrador` → `En revisión` → `Aprobada` (solo se aprueba con el
+   visto bueno explícito).
+3. Con `Aprobada` se escribe `plan.md` y se implementa tarea a tarea: primero el test en
+   rojo con el ID del requisito, después el código.
+4. Al terminar, el delta se aplica al área (`specs/areas/<área>/spec.md`) y la propuesta se
+   archiva en `specs/cambios/archivo/`.
+
+Cada requisito vigente tiene al menos un test que cita su ID (`NUM-07: …`). Solo se admite
+`[verificación manual]`, con motivo, en lo puramente visual. El detalle está en
+`specs/README.md` y los principios en `specs/constitucion.md`.
 
 ## Aviso
 
