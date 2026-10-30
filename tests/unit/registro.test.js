@@ -5,7 +5,7 @@ const Formas = require('../../src/nucleo/formas.js');
 const Estado = require('../../src/nucleo/estado.js');
 const Almacen = require('../../src/nucleo/almacen.js');
 
-test('registrar una forma nueva la hace disponible en toda la app', () => {
+test('FOR-09: registrar una forma nueva la hace disponible en toda la app', () => {
   const antes = [...Formas.FORMAS];
 
   // Marco cuadrado: solo el borde de una rejilla fija de 5x5.
@@ -28,7 +28,7 @@ test('registrar una forma nueva la hace disponible en toda la app', () => {
   assert.equal(Estado.cargar(almacen).forma, 'marco');
 });
 
-test('una forma nueva con variantes propias se valida y se carga sin tocar estado.js', () => {
+test('FOR-10: una forma nueva con variantes propias se valida y se carga sin tocar estado.js', () => {
   const antes = [...Estado.ENUMS.esfera];
   Formas.registrar('torre', {
     nombre: 'Torre de prueba',
@@ -51,13 +51,13 @@ test('una forma nueva con variantes propias se valida y se carga sin tocar estad
   assert.equal(Estado.cargar(Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ esfera: 'no-existe' }) })).esfera, 'esfera');
 });
 
-test('una forma desconocida sigue dando un error claro', () => {
+test('FOR-08: una forma desconocida sigue dando un error claro', () => {
   assert.throws(() => Formas.generar({ forma: 'no-existe', w: 4, h: 4 }), /Forma desconocida/);
   const almacen = Almacen.memoria({ 'mc-formas-v1': JSON.stringify({ forma: 'no-existe' }) });
   assert.equal(Estado.cargar(almacen).forma, 'circulo', 'al cargar cae en el valor por defecto');
 });
 
-test('una forma 3D nueva usa el maximo 3D y genera una capa por nivel', () => {
+test('FOR-09: una forma 3D nueva usa el maximo 3D y genera una capa por nivel', () => {
   Formas.registrar('cubo', {
     nombre: 'Cubo de prueba',
     es3D: true,
@@ -84,7 +84,7 @@ test('una forma 3D nueva usa el maximo 3D y genera una capa por nivel', () => {
   assert.equal(Formas.contar(r.capas[0]), 16);
 });
 
-test('las variantes y orientaciones de una forma no valen para las demas', () => {
+test('FOR-10: las variantes y orientaciones de una forma no valen para las demas', () => {
   Formas.registrar('faro', {
     nombre: 'Faro de prueba',
     es3D: false,

@@ -6,19 +6,19 @@ const { contar } = Formas;
 const total = r => r.capas.reduce((a, g) => a + contar(g), 0);
 const gen = p => Formas.generar({ grosor: 1, modo: 'relleno', ...p });
 
-test('círculo 16×16: 208 bloques, simétrico en ambos ejes', () => {
+test('FOR-01: círculo 16×16: 208 bloques, simétrico en ambos ejes', () => {
   const g = gen({ forma: 'circulo', w: 16, h: 16 }).capas[0];
   assert.equal(contar(g), 208);
   assert.deepEqual(g, g.map(f => [...f].reverse()));
   assert.deepEqual(g, [...g].reverse());
 });
 
-test('totales coinciden con las capas', () => {
+test('FOR-02: totales coinciden con las capas', () => {
   const r = gen({ forma: 'esfera', w: 12, esfera: 'esfera', modo: 'hueco', grosor: 2 });
   assert.deepEqual(r.totales, r.capas.map(contar));
 });
 
-test('valores de referencia', () => {
+test('FOR-03: valores de referencia', () => {
   const casos = [
     [{ forma: 'circulo', w: 16, h: 16, modo: 'hueco', grosor: 2 }, 84],
     [{ forma: 'esfera', w: 16, esfera: 'esfera' }, 2176],
@@ -33,7 +33,7 @@ test('valores de referencia', () => {
   for (const [p, esperado] of casos) assert.equal(total(gen(p)), esperado, JSON.stringify(p));
 });
 
-test('hueco siempre es subconjunto del sólido', () => {
+test('FOR-03: hueco siempre es subconjunto del sólido', () => {
   const base = { forma: 'circulo', w: 16, h: 16 };
   const solido = gen(base).capas[0];
   for (const grosor of [1, 2, 3, 4]) {
@@ -45,7 +45,7 @@ test('hueco siempre es subconjunto del sólido', () => {
   }
 });
 
-test('grosor excesivo se recorta y no devuelve el sólido', () => {
+test('FOR-04: grosor excesivo se recorta y no devuelve el sólido', () => {
   const r = gen({ forma: 'circulo', w: 16, h: 16, modo: 'hueco', grosor: 50 });
   assert.equal(r.grosorRecortado, true);
   assert.equal(r.grosor, 7);
@@ -57,14 +57,14 @@ test('grosor excesivo se recorta y no devuelve el sólido', () => {
   assert.ok(total(e) < 2176);
 });
 
-test('cúpula = mitad superior exacta de la esfera', () => {
+test('FOR-05: cúpula = mitad superior exacta de la esfera', () => {
   const esfera = gen({ forma: 'esfera', w: 16, esfera: 'esfera' });
   const cupula = gen({ forma: 'esfera', w: 16, esfera: 'cupula' });
   assert.equal(cupula.capas.length, 8);
   assert.deepEqual(cupula.capas, esfera.capas.slice(8));
 });
 
-test('centro par 2×2 e impar 1×1', () => {
+test('FOR-06: centro par 2×2 e impar 1×1', () => {
   const par = gen({ forma: 'circulo', w: 16, h: 16 }).capas[0];
   assert.ok(par[7][7] && par[7][8] && par[8][7] && par[8][8]);
   const impar = gen({ forma: 'circulo', w: 15, h: 15 }).capas[0];
@@ -72,7 +72,7 @@ test('centro par 2×2 e impar 1×1', () => {
   assert.ok(impar[7][7]);
 });
 
-test('tamaños degenerados no fallan y respetan el marco', () => {
+test('FOR-07: tamaños degenerados no fallan y respetan el marco', () => {
   for (const forma of ['circulo', 'rectangulo', 'triangulo', 'rombo', 'hexagono']) {
     for (const w of [1, 2, 3]) {
       const g = gen({ forma, w, h: w }).capas[0];
@@ -83,7 +83,7 @@ test('tamaños degenerados no fallan y respetan el marco', () => {
   assert.equal(total(gen({ forma: 'esfera', w: 1, esfera: 'esfera' })), 1);
 });
 
-test('parámetros inválidos fallan con mensaje claro o se recortan', () => {
+test('FOR-08: parámetros inválidos fallan con mensaje claro o se recortan', () => {
   assert.throws(() => Formas.generar({ forma: 'foo', w: 4, h: 4 }), /Forma desconocida/);
   assert.throws(() => Formas.generar({ forma: 'circulo', w: 'abc', h: 4 }), /Ancho/);
   assert.equal(gen({ forma: 'circulo', w: 999, h: 999 }).capas[0].length, Formas.MAX_2D);
@@ -97,7 +97,7 @@ test('rendimiento: esfera Ø100 hueca (g=50)', { skip: !!process.env.CI }, () =>
 });
 
 // --- contrato comun del registro ------------------------------------------------------
-test('contrato: todas las formas registradas generan, respetan su tamano y son simetricas', () => {
+test('FOR-11: contrato: todas las formas registradas generan, respetan su tamano y son simetricas', () => {
   assert.ok(Formas.FORMAS.length >= 6, 'estan todas las formas de la app');
   for (const id of Formas.FORMAS) {
     const def = Formas.obtener(id);
@@ -117,7 +117,7 @@ test('contrato: todas las formas registradas generan, respetan su tamano y son s
   }
 });
 
-test('contrato: el hueco de cada forma es subconjunto de su solido', () => {
+test('FOR-03: contrato: el hueco de cada forma es subconjunto de su solido', () => {
   for (const id of Formas.FORMAS) {
     const solido = Formas.generar({ forma: id, w: 16, h: 16, modo: 'relleno' });
     for (const grosor of [1, 2, 3, 5]) {
@@ -130,7 +130,7 @@ test('contrato: el hueco de cada forma es subconjunto de su solido', () => {
   }
 });
 
-test('contrato: una forma mal definida no se registra', () => {
+test('FOR-11: contrato: una forma mal definida no se registra', () => {
   assert.throws(() => Formas.registrar('sin-pintar', { dimensiones: () => ({ w: 1, h: 1, d: 1 }) }), /contrato/);
   assert.throws(() => Formas.registrar('', { dimensiones: () => ({}), llenar: () => true }), /identificador/);
   assert.throws(() => Formas.registrar('circulo', { dimensiones: () => ({}), llenar: () => true }), /duplicada/);

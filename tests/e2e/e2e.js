@@ -95,10 +95,10 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`(() => {
     const ops = [...document.getElementById('forma').options];
     return ops.length === Formas.FORMAS.length && ops.every(o => Formas.FORMAS.includes(o.value) && o.textContent === Formas.obtener(o.value).nombre);
-  })()`), 'B2: el selector de formas sale del registro (FORMAS + nombre)');
+  })()`), 'FOR-12: el selector de formas sale del registro (FORMAS + nombre)');
   ok(await ev(`[...document.getElementById('forma').options].map(o => o.textContent).join('|') ===
     'Círculo / Óvalo|Cuadrado / Rectángulo|Triángulo|Rombo|Hexágono|Esfera / Cúpula (3D)'`),
-  'A2: el selector conserva el orden Círculo, Cuadrado, Triángulo, Rombo, Hexágono, Esfera');
+  'FOR-12: el selector conserva el orden Círculo, Cuadrado, Triángulo, Rombo, Hexágono, Esfera');
   // C2: `poner()` se llama en cada cambio; no debe rehacer las opciones de los selectores.
   const mutaciones = await ev(`new Promise(res => {
     let n = 0;
@@ -110,7 +110,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     setTimeout(() => { obs.disconnect(); w.value = '16'; w.dispatchEvent(new Event('input')); res(n); }, 250);
   })`);
   await esperar(300);
-  ok(mutaciones === 0, 'C2: escribir no reconstruye los selectores de forma y variante');
+  ok(mutaciones === 0, 'FOR-12: escribir no reconstruye los selectores de forma y variante');
   // B1: la orientacion no depende del id de la forma sino de sus opciones declaradas.
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'hexagono'; f.dispatchEvent(new Event('input')); })()`);
   await esperar(200);
@@ -118,7 +118,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); })()`);
   await esperar(200);
   ok(orientHex && await ev(`document.getElementById('rowOrient').hidden`),
-    'B1: la orientacion aparece solo en las formas que la ofrecen');
+    'FOR-13: la orientacion aparece solo en las formas que la ofrecen');
 
   // B2/B3: la orientacion y las variantes salen de la definicion de cada forma.
   const elegirForma = id => ev(`(() => { const f = document.getElementById('forma'); f.value = '${id}'; f.dispatchEvent(new Event('input')); })()`).then(() => esperar(200));
@@ -126,20 +126,20 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`[...document.getElementById('orient').options].map(o => o.value + ':' + o.textContent).join('|') ===
     Formas.obtener('hexagono').orientaciones.map(o => o.valor + ':' + o.etiqueta).join('|') &&
     document.getElementById('orient').options.length === 2`),
-  'B2: las orientaciones del selector salen de la definicion del hexagono');
+  'FOR-13: las orientaciones del selector salen de la definicion del hexagono');
   await ev(`(() => { const o = document.getElementById('orient'); o.value = 'punta'; o.dispatchEvent(new Event('input')); })()`);
   await esperar(200);
   await elegirForma('circulo'); await elegirForma('hexagono');
-  ok(await ev(`document.getElementById('orient').value === 'punta'`), 'B2: al volver al hexagono se recuerda la orientacion elegida');
+  ok(await ev(`document.getElementById('orient').value === 'punta'`), 'FOR-13: al volver al hexagono se recuerda la orientacion elegida');
   await cargar();
   ok(await ev(`document.getElementById('forma').value === 'hexagono' && document.getElementById('orient').value === 'punta' && !document.getElementById('rowOrient').hidden`),
-    'B2: la orientacion guardada se restaura al recargar');
+    'FOR-13: la orientacion guardada se restaura al recargar');
   await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'esfera', w: 12, esfera: 'cupula' }))`); await cargar();
   ok(await ev(`document.getElementById('esfera').value === 'cupula' && document.getElementById('capaTxt').textContent.includes('de 6')`),
-    'B3: una cupula guardada se restaura (6 capas)');
+    'FOR-14: una cupula guardada se restaura (6 capas)');
   await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'esfera', w: 12, esfera: 'plano' }))`); await cargar();
   ok(await ev(`document.getElementById('esfera').value === 'esfera' && document.getElementById('capaTxt').textContent.includes('de 12')`),
-    'B3: una variante que no es de la forma cae en la primera (esfera, 12 capas)');
+    'FOR-14: una variante que no es de la forma cae en la primera (esfera, 12 capas)');
   await ev(`localStorage.clear()`); await cargar();
 
   // 2) Pintar arrastrando sobre la fila central (fila 8 = y 7)
@@ -178,7 +178,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   // 5) Grosor maximo
   await ev(`(() => { const m = document.getElementById('modo'); m.value = 'hueco'; m.dispatchEvent(new Event('input')); const g = document.getElementById('grosor'); g.value = 40; g.dispatchEvent(new Event('change')); })()`);
   await esperar(150);
-  ok(await ev(`document.getElementById('grosor').value === '7' && document.getElementById('maxG').textContent === '(máx. 7)' && document.getElementById('avisoTxt').textContent.includes('Grosor máximo')`), 'A3: grosor 40 se recorta a 7 con aviso');
+  ok(await ev(`document.getElementById('grosor').value === '7' && document.getElementById('maxG').textContent === '(máx. 7)' && document.getElementById('avisoTxt').textContent.includes('Grosor máximo')`), 'FOR-04: grosor 40 se recorta a 7 con aviso');
   await ctrl('z'); await esperar(150);
   ok(await ev(`document.getElementById('modo').value === 'relleno'`) && await prog() === 'Construidos: 15/208 (7 %)', 'A2: deshacer vuelve a solido con las marcas');
 
@@ -192,7 +192,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   // 7) Esfera: capas, marcar capa, tabla
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = 11; w.dispatchEvent(new Event('change')); })()`);
   await esperar(200);
-  ok(await ev(`document.getElementById('capa').max === '10' && document.getElementById('rowH').hidden && document.getElementById('w').max === '100'`), 'A4: esfera 11 capas, alto oculto, max 100');
+  ok(await ev(`document.getElementById('capa').max === '10' && document.getElementById('rowH').hidden && document.getElementById('w').max === '100'`), 'FOR-02: esfera 11 capas, alto oculto, max 100');
   await ev(`document.getElementById('marcarCapa').click()`);
   await esperar(100);
   ok(await ev(`document.querySelector('tr.sel').textContent.includes('100 %')`), 'B1: marcar capa -> 100 % en la tabla');
@@ -412,15 +412,15 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`(() => { const w = document.getElementById('w'); w.value = ''; w.dispatchEvent(new Event('input')); })()`);
   await esperar(350);
   ok(await ev(`document.getElementById('w').value === '' && document.querySelector('.tot').textContent.startsWith('208')`),
-    'FORM: al borrar el ancho queda vacio y la forma no cambia');
+    'FOR-15: al borrar el ancho queda vacio y la forma no cambia');
   await ev(`(() => { const w = document.getElementById('w'); w.value = '2'; w.dispatchEvent(new Event('input')); })()`);
   await esperar(300);
   ok(await ev(`document.getElementById('w').value === '2' && document.querySelector('.tot').textContent.startsWith('4')`),
-    'FORM: al teclear 2 se aplica 2 (no se queda en el minimo 1)');
+    'FOR-15: al teclear 2 se aplica 2 (no se queda en el minimo 1)');
   await ev(`(() => { const w = document.getElementById('w'); w.value = '20'; w.dispatchEvent(new Event('input')); })()`);
   await esperar(300);
   ok(await ev(`document.getElementById('w').value === '20' && document.querySelector('.tot').textContent.startsWith('316')`),
-    'FORM: escribir 20 despues del 2 da 20');
+    'FOR-15: escribir 20 despues del 2 da 20');
 
   // A5: en alta densidad (3x), arrastrar dentro de un dibujo grande no empuja la pagina.
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 3, mobile: true });
