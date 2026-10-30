@@ -214,13 +214,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); const w = document.getElementById('w'); w.value = 200; w.dispatchEvent(new Event('change')); })()`);
   await esperar(400);
   const zAuto = await zoom();
-  ok(zAuto < 26 && await cabe(), `ZOOM: circulo 200 se aleja solo hasta caber (zoom ${zAuto})`);
+  ok(zAuto < 26 && await cabe(), `ZOO-03: circulo 200 se aleja solo hasta caber (zoom ${zAuto})`);
   await shot('05-circulo200.png');
   await ev(`document.getElementById('zoomMas').click()`); await esperar(100);
   const zMas = await zoom();
-  ok(zMas > zAuto, `ZOOM: boton + acerca (${zAuto} -> ${zMas})`);
+  ok(zMas > zAuto, `ZOO-01: boton + acerca (${zAuto} -> ${zMas})`);
   await ev(`document.getElementById('zoomMenos').click()`); await esperar(100);
-  ok(await zoom() < zMas, `ZOOM: boton - aleja (${zMas} -> ${await zoom()})`);
+  ok(await zoom() < zMas, `ZOO-01: boton - aleja (${zMas} -> ${await zoom()})`);
   // Ctrl + rueda anclado al puntero: la celda bajo el raton no cambia
   await ev(`(() => { const z = document.getElementById('zoom'); z.value = 10; z.dispatchEvent(new Event('input')); })()`);
   await esperar(150);
@@ -231,14 +231,14 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   for (let i = 0; i < 3; i++) { await send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: pr[0], y: pr[1], deltaX: 0, deltaY: -120, modifiers: 2 }); await esperar(60); }
   await mouse('mouseMoved', pr[0] + 0.5, pr[1], 'none', 0);
   const celdaDespues = (await ev(`document.getElementById('info').textContent`)).split(' · ')[0];
-  ok(await zoom() > z0 && celdaAntes === celdaDespues, `ZOOM: Ctrl+rueda acerca hacia el puntero (${z0} -> ${await zoom()}; ${celdaAntes} | ${celdaDespues})`);
+  ok(await zoom() > z0 && celdaAntes === celdaDespues, `ZOO-04: Ctrl+rueda acerca hacia el puntero (${z0} -> ${await zoom()}; ${celdaAntes} | ${celdaDespues})`);
   await shot('06-zoom-puntero.png');
   // Teclado: 0 ajusta, + acerca
   await ev(`document.getElementById('lienzo').focus()`);
   await key('0', 'Digit0', 48); await esperar(100);
-  ok(await zoom() === zAuto && await cabe(), 'ZOOM: tecla 0 ajusta a la ventana');
+  ok(await zoom() === zAuto && await cabe(), 'ZOO-02: tecla 0 ajusta a la ventana');
   await key('+', 'Equal', 187); await esperar(100);
-  ok(await zoom() > zAuto, 'ZOOM: tecla + acerca');
+  ok(await zoom() > zAuto, 'ZOO-01: tecla + acerca');
   // Pellizco tactil con dos dedos
   await key('0', 'Digit0', 48); await esperar(100);
   const c0 = await ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.left + 200, r.top + 200]; })()`);
@@ -250,7 +250,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await esperar(150);
   ok(await zoom() >= zp * 2.5, `ZOOM: pellizcar con dos dedos acerca (${zp} -> ${await zoom()})`);
   // Zoom no borra marcas ni regenera
-  ok((await prog()).startsWith('Construidos:'), 'ZOOM: progreso intacto');
+  ok((await prog()).startsWith('Construidos:'), 'ZOO-05: progreso intacto');
 
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
