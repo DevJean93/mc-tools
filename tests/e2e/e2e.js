@@ -23,6 +23,13 @@ const mouse = (type, x, y, button = 'left', buttons = 1) => send('Input.dispatch
 const key = (k, code, vk) => send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk }).then(() => send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }));
 const ok = (c, m) => { console.log((c ? 'OK    ' : 'FALLO ') + m); if (!c) process.exitCode = 1; };
 const prog = () => ev(`document.getElementById('progTxt').textContent`);
+// Caja del aviso temporal: margenes a cada lado, ancho y lineas que ocupa su texto.
+const medirAviso = () => ev(`(() => {
+  const a = document.getElementById('aviso'), t = document.getElementById('avisoTxt');
+  const r = a.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+  return { visible: !a.hidden, izq: Math.round(r.left), der: Math.round(vw - r.right), ancho: Math.round(r.width),
+    lineas: Math.round(t.getBoundingClientRect().height / parseFloat(getComputedStyle(t).lineHeight)), texto: t.textContent };
+})()`);
 const ctrl = k => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '${k}', ctrlKey: true, bubbles: true }))`);
 async function cargar() { await send('Page.navigate', { url: URL_APP }); await esperar(1200); }
 
@@ -205,6 +212,9 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await prog() === 'Construidos: 16/208 (8 %)', 'MAR-14: clic en la banda de la fila 8 marca sus 16 bloques -> ' + await prog());
   ok(await ev(`!document.getElementById('aviso').hidden && document.getElementById('avisoTxt').textContent.includes('fila 8') && !document.getElementById('avisoAccion').hidden`),
     'MAR-16: el aviso nombra la fila y ofrece Deshacer');
+  const avisoEsc = await medirAviso();
+  ok(avisoEsc.visible && Math.abs(avisoEsc.izq - avisoEsc.der) <= 2 && avisoEsc.ancho <= 560 && avisoEsc.lineas === 1,
+    `INT-08: en escritorio el aviso queda centrado y en una linea (${JSON.stringify(avisoEsc)})`);
   ok((await anuncio()).startsWith('Fila 8: 16 bloques marcados'), 'MAR-16: se anuncia «Fila 8: 16 bloques marcados» -> ' + await anuncio());
   await shot('02b-fila-marcada.png');
 
@@ -667,6 +677,19 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(200);
   ok(await prog() === 'Construidos: 0/208 (0 %)', 'MAR-14: un arrastre desde el margen no marca la fila -> ' + await prog());
+
+  // INT-08: el aviso de una fila usa el ancho de la pantalla (no solo la mitad derecha).
+  const filaAviso = await bandaFila(7);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: filaAviso[0], y: filaAviso[1], id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(250);
+  const avisoMov = await medirAviso();
+  ok(avisoMov.visible && avisoMov.texto.includes('fila 8') && avisoMov.izq >= 15 && avisoMov.der >= 15 &&
+    Math.abs(avisoMov.izq - avisoMov.der) <= 2 && avisoMov.lineas <= 2,
+  `INT-08: en movil el aviso queda centrado, dentro de la pantalla y en dos lineas como mucho (${JSON.stringify(avisoMov)})`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: filaAviso[0], y: filaAviso[1], id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await esperar(250);
 
   ok(await ev(`(() => { const s = document.querySelector('#ayudaLienzo .solo-tactil'); return getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().height > 0 && s.textContent.includes('toca el número de una fila o columna para marcarla entera'); })()`),
     'INT-07: la ayuda táctil explica el gesto de marcar filas y columnas');
