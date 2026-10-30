@@ -75,8 +75,8 @@ que el dibujo normal, desplazado lo que se haya movido el contenido (`dx`, `dy`)
 
 ## Tareas
 
-- [ ] T01 Propuesta y plan; el validador en verde.
-- [ ] T02 Lógica pura: tests de `zonaRegla`/`zonaCelda` con origen en rojo → implementación;
+- [x] T01 Propuesta y plan; el validador en verde.
+- [x] T02 Lógica pura: tests de `zonaRegla`/`zonaCelda` con origen en rojo → implementación;
       `capaReglas` con las dos reglas por separado (el dibujo no cambia).
 - [ ] T03 Superposición: ancla y lienzos, `origenVisible()` y repintado; E2E en rojo → verde.
 - [ ] T04 Clic y toque en la regla fija, esquina y teclado: E2E en rojo → verde.

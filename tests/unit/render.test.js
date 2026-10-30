@@ -241,3 +241,55 @@ test('NUM-14: ninguna posicion lleva un signo menos', () => {
     for (const eje of ['x', 'y']) assert.ok(!/[-−]/.test(Render.textoRelativo(i, n, eje)), `n=${n} i=${i}`);
   }
 });
+
+// --- reglas fijas al desplazar: el origen visible { x0, y0 } desplaza las bandas -----------------
+// Con el dibujo desplazado, las reglas fijas ocupan [x0, x0+L) y [y0, y0+T) en coordenadas del dibujo.
+const ORIGEN = { x0: 100, y0: 60 };
+
+test('NUM-15: sin desplazamiento (origen 0 u omitido) la geometria es la de siempre', () => {
+  const cero = { x0: 0, y0: 0 };
+  for (const [px, py] of [[10, GEO.T + 40], [GEO.L + 40, 10], [GEO.L + 40, GEO.T + 40], [10, 10]]) {
+    assert.deepEqual(Render.zonaRegla(GEO, px, py, cero), Render.zonaRegla(GEO, px, py));
+    assert.deepEqual(Render.zonaCelda(GEO, px, py, cero), Render.zonaCelda(GEO, px, py));
+  }
+  assert.deepEqual(Render.zonaCelda(GEO, GEO.L, GEO.T), { x: 0, y: 0 });
+  assert.deepEqual(Render.zonaCelda(GEO, GEO.L + 15 * GEO.s + 1, GEO.T + 15 * GEO.s + 1), { x: 15, y: 15 });
+  assert.equal(Render.zonaCelda(GEO, GEO.L - 1, GEO.T + 10), null, 'sobre la regla izquierda');
+  assert.equal(Render.zonaCelda(GEO, GEO.L + 16 * GEO.s, GEO.T + 10), null, 'fuera del dibujo');
+});
+
+test('MAR-14: la regla izquierda fija desplazada da la fila de ese punto del dibujo', () => {
+  const py = ORIGEN.y0 + GEO.T + 5 * GEO.s + 3;   // por debajo de la regla superior fija
+  assert.deepEqual(Render.zonaRegla(GEO, ORIGEN.x0 + 4, py, ORIGEN), { eje: 'fila', i: Math.floor((py - GEO.T) / GEO.s) });
+  assert.equal(Render.zonaRegla(GEO, ORIGEN.x0 + GEO.L - 1, py, ORIGEN).eje, 'fila', 'hasta el final de la banda');
+  assert.equal(Render.zonaRegla(GEO, ORIGEN.x0 + GEO.L, py, ORIGEN), null, 'a partir de ahi es dibujo');
+  assert.equal(Render.zonaRegla(GEO, ORIGEN.x0 - 1, py, ORIGEN), null, 'a la izquierda de la banda fija ya no hay regla');
+});
+
+test('MAR-15: la regla superior fija desplazada da la columna de ese punto del dibujo', () => {
+  const px = ORIGEN.x0 + GEO.L + 4 * GEO.s + 3;   // a la derecha de la regla izquierda fija
+  assert.deepEqual(Render.zonaRegla(GEO, px, ORIGEN.y0 + 5, ORIGEN), { eje: 'columna', i: Math.floor((px - GEO.L) / GEO.s) });
+  assert.equal(Render.zonaRegla(GEO, px, ORIGEN.y0 + GEO.T - 1, ORIGEN).eje, 'columna');
+  assert.equal(Render.zonaRegla(GEO, px, ORIGEN.y0 + GEO.T, ORIGEN), null, 'a partir de ahi es dibujo');
+  assert.equal(Render.zonaRegla(GEO, px, ORIGEN.y0 - 1, ORIGEN), null);
+});
+
+test('MAR-14, MAR-15: la esquina entre las dos reglas fijas no es regla ni celda', () => {
+  const [px, py] = [ORIGEN.x0 + GEO.L - 1, ORIGEN.y0 + GEO.T - 1];
+  assert.equal(Render.zonaRegla(GEO, px, py, ORIGEN), null);
+  assert.equal(Render.zonaCelda(GEO, px, py, ORIGEN), null);
+});
+
+test('MAR-14, MAR-15: una fila o columna oculta bajo la otra regla fija no se puede tocar', () => {
+  // Bajo la regla superior fija ([y0, y0+T)) la banda izquierda no devuelve ninguna fila...
+  assert.equal(Render.zonaRegla(GEO, ORIGEN.x0 + 4, ORIGEN.y0 + GEO.T - 1, ORIGEN), null);
+  // ...y bajo la izquierda ([x0, x0+L)) la superior no devuelve ninguna columna.
+  assert.equal(Render.zonaRegla(GEO, ORIGEN.x0 + GEO.L - 1, ORIGEN.y0 + 4, ORIGEN), null);
+});
+
+test('NUM-15: bajo una regla fija no hay celda, y fuera de ellas la celda es la de ese punto', () => {
+  assert.equal(Render.zonaCelda(GEO, ORIGEN.x0 + GEO.L - 1, ORIGEN.y0 + GEO.T + 30, ORIGEN), null, 'bajo la izquierda');
+  assert.equal(Render.zonaCelda(GEO, ORIGEN.x0 + GEO.L + 30, ORIGEN.y0 + GEO.T - 1, ORIGEN), null, 'bajo la superior');
+  const px = ORIGEN.x0 + GEO.L + 30, py = ORIGEN.y0 + GEO.T + 30;
+  assert.deepEqual(Render.zonaCelda(GEO, px, py, ORIGEN), { x: Math.floor((px - GEO.L) / GEO.s), y: Math.floor((py - GEO.T) / GEO.s) });
+});

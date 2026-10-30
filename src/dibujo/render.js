@@ -177,30 +177,39 @@ const Render = (() => {
     ctx.strokeRect(m.L + cx0 * m.s + 1, m.T + cy0 * m.s + 1, (cx1 - cx0 + 1) * m.s - 2, (cy1 - cy0 + 1) * m.s - 2);
   };
 
-  // Reglas: numeracion 1..N y, opcionalmente, relativa al centro.
-  const capaReglas = (ctx, m, o, P) => {
-    const { L, T, s, w, h, H0, paso, fuente } = m;
+  // Reglas: numeracion 1..N y, opcionalmente, relativa al centro. Cada una se pinta por separado
+  // para que las reglas fijas al desplazar (superpuestas) reutilicen exactamente el mismo codigo.
+  function pintarReglaSuperior(ctx, m, op, P) {
+    const { L, s, w, H0, paso, fuente } = m;
     ctx.font = fuente;
-    const verAbs = n => n === 1 || n % paso === 0;
     ctx.textAlign = 'center';
+    ctx.fillStyle = P.regla;
     for (let x = 0; x < w; x++) {
-      if (verAbs(x + 1)) {
-        ctx.fillStyle = P.regla;
-        ctx.fillText(String(x + 1), L + x * s + s / 2, H0 + LAYOUT.topAbs / 2);
-      }
+      if (x === 0 || (x + 1) % paso === 0) ctx.fillText(String(x + 1), L + x * s + s / 2, H0 + LAYOUT.topAbs / 2);
     }
-    if (o.op.rel) {
+    if (op.rel) {
       ctx.fillStyle = P.oro;
       for (const c of cifrasReglaRelativa(w, paso)) ctx.fillText(String(c.n), L + c.i * s + s / 2, H0 + LAYOUT.topAbs + LAYOUT.topRel / 2);
     }
+  }
+
+  function pintarReglaIzquierda(ctx, m, op, P) {
+    const { L, T, s, h, paso, fuente } = m;
+    ctx.font = fuente;
     ctx.textAlign = 'right';
+    ctx.fillStyle = P.regla;
     for (let y = 0; y < h; y++) {
-      if (verAbs(y + 1)) { ctx.fillStyle = P.regla; ctx.fillText(String(y + 1), LAYOUT.abs, T + y * s + s / 2); }
+      if (y === 0 || (y + 1) % paso === 0) ctx.fillText(String(y + 1), LAYOUT.abs, T + y * s + s / 2);
     }
-    if (o.op.rel) {
+    if (op.rel) {
       ctx.fillStyle = P.oro;
       for (const c of cifrasReglaRelativa(h, paso)) ctx.fillText(String(c.n), L - LAYOUT.sep, T + c.i * s + s / 2);
     }
+  }
+
+  const capaReglas = (ctx, m, o, P) => {
+    pintarReglaSuperior(ctx, m, o.op, P);
+    pintarReglaIzquierda(ctx, m, o.op, P);
   };
 
   // Tramos por fila (derecha) y por columna (abajo).
@@ -367,24 +376,77 @@ const Render = (() => {
 
     for (const capa of CAPAS) capa.pintar(ctx, m, o, P);
 
-    return { L, T, s: m.s, w: m.w, h: m.h, ocultos: m.ocultos };
+    return { L, T, s: m.s, w: m.w, h: m.h, ocultos: m.ocultos, paso: m.paso, fuente: m.fuente };
   }
 
-  // Banda de la regla bajo un punto del lienzo (px, py): fila en el margen izquierdo, columna
-  // en el superior. La esquina, el dibujo y los margenes derecho e inferior no son regla.
-  function zonaRegla(geo, px, py) {
+  // Con el dibujo desplazado, las reglas fijas ocupan [x0, x0+L) y [y0, y0+T) en coordenadas del
+  // dibujo (x0 e y0 son lo que se ha desplazado el contenido); sin desplazamiento valen 0.
+  const SIN_ORIGEN = { x0: 0, y0: 0 };
+
+  // Banda de la regla bajo un punto (px, py) del dibujo: fila en el margen izquierdo, columna en el
+  // superior. La esquina, el dibujo y los margenes derecho e inferior no son regla, y una fila o
+  // columna que queda oculta bajo la otra regla fija tampoco se puede tocar.
+  function zonaRegla(geo, px, py, origen = SIN_ORIGEN) {
     if (!geo || px < 0 || py < 0) return null;
-    const { L, T, s, w, h } = geo;
-    const enAlto = py >= T && py < T + h * s;
-    const enAncho = px >= L && px < L + w * s;
-    if (px < L && enAlto) return { eje: 'fila', i: Math.floor((py - T) / s) };
-    if (py < T && enAncho) return { eje: 'columna', i: Math.floor((px - L) / s) };
+    const { L, T, s, w, h } = geo, { x0, y0 } = origen;
+    const filaVisible = py >= y0 + T && py < T + h * s;
+    const columnaVisible = px >= x0 + L && px < L + w * s;
+    if (px >= x0 && px < x0 + L && filaVisible) return { eje: 'fila', i: Math.floor((py - T) / s) };
+    if (py >= y0 && py < y0 + T && columnaVisible) return { eje: 'columna', i: Math.floor((px - L) / s) };
     return null;
+  }
+
+  // Celda bajo un punto (px, py) del dibujo; null sobre las reglas (fijas o no) o fuera del dibujo.
+  function zonaCelda(geo, px, py, origen = SIN_ORIGEN) {
+    if (!geo) return null;
+    const { L, T, s, w, h } = geo;
+    if (px < origen.x0 + L || py < origen.y0 + T) return null;
+    const x = Math.floor((px - L) / s), y = Math.floor((py - T) / s);
+    return x < w && y < h ? { x, y } : null;
+  }
+
+  /**
+   * Pinta las reglas fijas: dos lienzos de superposicion que muestran la regla superior y la
+   * izquierda en el borde visible. `geo` es lo que devolvio `dibujar`; `origen` lo desplazado;
+   * `ancho` y `alto` el espacio visible; los lienzos que no hacen falta se dejan para ocultar.
+   * @param {{ sup: HTMLCanvasElement, izq: HTMLCanvasElement }} cvs
+   * @param {{ geo: object, op: object, origen: {x0:number,y0:number}, ancho: number, alto: number, dpr: number }} o
+   */
+  function dibujarReglasFijas(cvs, o) {
+    const P = paleta(), { geo, op, origen: { x0, y0 }, ancho, alto, dpr } = o;
+    const m = { L: geo.L, T: geo.T, s: geo.s, w: geo.w, h: geo.h, H0: 0, paso: geo.paso, fuente: geo.fuente };
+
+    const preparar = (cv, w, h) => {
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      cv.style.width = w + 'px'; cv.style.height = h + 'px';
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = P.lienzo; ctx.fillRect(0, 0, w, h);
+      ctx.textBaseline = 'middle';
+      return ctx;
+    };
+
+    if (y0 > 0) {   // regla superior: solo se desplaza en horizontal; no pisa la izquierda
+      const ctx = preparar(cvs.sup, ancho, geo.T);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(geo.L, 0, Math.max(0, ancho - geo.L), geo.T); ctx.clip();
+      ctx.translate(-x0, 0);
+      pintarReglaSuperior(ctx, m, op, P);
+      ctx.restore();
+    }
+    if (x0 > 0) {   // regla izquierda: solo se desplaza en vertical; no pisa la superior
+      const ctx = preparar(cvs.izq, geo.L, alto);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, geo.T, geo.L, Math.max(0, alto - geo.T)); ctx.clip();
+      ctx.translate(0, -y0);
+      pintarReglaIzquierda(ctx, m, op, P);
+      ctx.restore();
+    }
   }
 
   return {
     dibujar, medir, reglaRelativa, cifrasReglaRelativa, textoRelativo, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
-    zonaRegla,
+    zonaRegla, zonaCelda, dibujarReglasFijas,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;
