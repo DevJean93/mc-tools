@@ -207,9 +207,9 @@ const Render = (() => {
   // (un total de 14 con franja de 2 son 6 a la izquierda y 6 a la derecha). Esos numeros van en
   // dos columnas fijas, simetricas respecto a la franja, para que no se pisen con los del eje:
   // la de la izquierda queda centrada entre el eje y el inicio del tramo mas corto con sitio. Un
-  // tramo que no llega a esas columnas no se numera dentro si hay numeros de eje en su fila (se
-  // confundirian con ellos); en las filas de los extremos, sin numero de eje, cada lado lleva
-  // su cifra centrada en su parte.
+  // tramo que no llega a esas columnas no se numera dentro en las filas interiores (se
+  // confundirian con los numeros del eje); en las filas de los extremos cada lado lleva su cifra
+  // centrada en su parte.
   function etiquetasTramosDentro(g, distEjes) {
     const h = g.length, w = g[0].length;
     const filas = g.map(f => tramos(f));
@@ -224,12 +224,12 @@ const Render = (() => {
     const enEjeY = y => y >= cy0 && y <= cy1;
     const colCentro = g.map(f => f[cx0]);
     const ya = colCentro.indexOf(true), yb = colCentro.lastIndexOf(true);
-    const ejeConNumero = y => y > ya && y < yb;
+    const interior = y => y > ya && y < yb;   // filas entre los extremos de la columna central
     const cruzaEje = r => r.s <= cx1 && r.s + r.l > cx0;
 
     let maxIni = -1;
     filas.forEach((f, y) => {
-      if (ejeConNumero(y) && !enEjeY(y)) f.forEach(r => { if (cruzaEje(r) && r.s <= cx0 - 3) maxIni = Math.max(maxIni, r.s); });
+      if (interior(y) && !enEjeY(y)) f.forEach(r => { if (cruzaEje(r) && r.s <= cx0 - 3) maxIni = Math.max(maxIni, r.s); });
     });
     const colIzq = maxIni < 0 ? -1 : Math.floor((maxIni + cx0 - 1) / 2);
     const colDer = colIzq < 0 ? -1 : cx1 + (cx0 - colIzq);   // espejo de la izquierda
@@ -244,9 +244,11 @@ const Render = (() => {
         if (llegaIzq || llegaDer) {
           if (llegaIzq) poner(colIzq + 0.5, y, izq);
           if (llegaDer) poner(colDer + 0.5, y, der);
-        } else if (!ejeConNumero(y)) {
-          poner((r.s + cx0) / 2, y, izq);
-          poner((cx1 + 1 + fin + 1) / 2, y, der);
+        } else if (!interior(y)) {
+          // Fila del extremo: un lado de un solo bloque queda pegado al numero de eje de la franja
+          // y no se numera.
+          if (izq > 1) poner((r.s + cx0) / 2, y, izq);
+          if (der > 1) poner((cx1 + 1 + fin + 1) / 2, y, der);
         }
       });
     });
@@ -263,27 +265,35 @@ const Render = (() => {
     }
   };
 
-  // Distancia sobre los ejes: 1 en los bloques del centro y hacia fuera, sin numerar el
-  // bloque del borde de la forma. Tambien en el interior vacio (modo hueco).
-  const capaDistEjes = (ctx, m, o, P) => {
-    const { g } = o;
-    if (!o.op.distEjes || m.s < LAYOUT.celdaTexto) return;
-    const { L, T, s, fuente } = m;
-    const [cx0, cx1, cy0, cy1] = franjas(m);
-    const enEjeY = y => y >= cy0 && y <= cy1;
-    ctx.font = fuente; ctx.textAlign = 'center';
-    const num = (x, y, d) => {
-      ctx.fillStyle = g[y][x] ? P.sobreBloque : P.regla;
-      ctx.fillText(String(d), L + x * s + s / 2, T + y * s + s / 2);
-    };
+  // Numeros de los ejes: [{ x, y, n, lleno }]. n cuenta desde la franja central (1) hacia fuera
+  // hasta el bloque del borde de la forma, incluido: con 14 bloques a cada lado de una franja de 2
+  // el ultimo es el 15. En modo hueco tambien se numera el interior vacio (lleno = false).
+  function etiquetasEjes(g) {
+    const h = g.length, w = g[0].length;
+    const [cx0, cx1] = centro(w), [cy0, cy1] = centro(h);
+    const etiquetas = [];
     for (let y = cy0; y <= cy1; y++) {
       const a = g[y].indexOf(true), b = g[y].lastIndexOf(true);
-      for (let x = a + 1; a >= 0 && x < b; x++) num(x, y, distFranja(x, cx0, cx1) + 1);
+      for (let x = a; a >= 0 && x <= b; x++) etiquetas.push({ x, y, n: distFranja(x, cx0, cx1) + 1, lleno: g[y][x] });
     }
     for (let x = cx0; x <= cx1; x++) {
       const col = g.map(f => f[x]);
       const a = col.indexOf(true), b = col.lastIndexOf(true);
-      for (let y = a + 1; a >= 0 && y < b; y++) if (!enEjeY(y)) num(x, y, distFranja(y, cy0, cy1) + 1);
+      for (let y = a; a >= 0 && y <= b; y++) {
+        if (y < cy0 || y > cy1) etiquetas.push({ x, y, n: distFranja(y, cy0, cy1) + 1, lleno: g[y][x] });
+      }
+    }
+    return etiquetas;
+  }
+
+  // Distancia sobre los ejes centrales.
+  const capaDistEjes = (ctx, m, o, P) => {
+    if (!o.op.distEjes || m.s < LAYOUT.celdaTexto) return;
+    const { L, T, s, fuente } = m;
+    ctx.font = fuente; ctx.textAlign = 'center';
+    for (const e of etiquetasEjes(o.g)) {
+      ctx.fillStyle = e.lleno ? P.sobreBloque : P.regla;
+      ctx.fillText(String(e.n), L + e.x * s + s / 2, T + e.y * s + s / 2);
     }
   };
 
@@ -343,7 +353,7 @@ const Render = (() => {
   }
 
   return {
-    dibujar, medir, relativo, etiquetaRel, centro, registrar, etiquetasTramosDentro,
+    dibujar, medir, relativo, etiquetaRel, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;

@@ -84,3 +84,45 @@ test('un tramo estrecho que no llega a las columnas no se numera junto al eje', 
   assert.equal(f[0].n + f[1].n + 1, anchoFila(g, 4));
   assert.ok(e.every(t => t.n > 0), 'nunca se escriben ceros');
 });
+
+// --- numeros de los ejes -----------------------------------------------------------------
+const eje = (e, y) => e.filter(t => t.y === y).sort((a, b) => a.x - b.x).map(t => t.n);
+
+test('ejes: la cuenta empieza en 1 en la franja y llega hasta el bloque del borde (15 en un circulo de 30)', () => {
+  const e = Render.etiquetasEjes(capa({ forma: 'circulo', w: 30, h: 30 }));
+  // 14 bloques a cada lado de la franja de 2: franja = 1, el ultimo de cada lado = 15.
+  assert.deepEqual(eje(e, 14), [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  const col = e.filter(t => t.x === 14 && (t.y < 14 || t.y > 15)).sort((a, b) => a.y - b.y).map(t => t.n);
+  assert.deepEqual(col, [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+});
+
+test('ejes: el maximo es el numero de bloques por lado + 1, tambien con franja de 1 bloque', () => {
+  for (const w of [16, 20, 30, 31, 40]) {
+    const g = capa({ forma: 'circulo', w, h: w });
+    const [cx0, cx1] = Render.centro(w), banda = cx1 - cx0 + 1;
+    const porLado = (w - banda) / 2;
+    const max = Math.max(...Render.etiquetasEjes(g).map(t => t.n));
+    assert.equal(max, porLado + 1, `circulo ${w}: ${porLado} bloques por lado`);
+  }
+});
+
+test('ejes: cada celda se numera una sola vez (los dos ejes no se pisan en la franja)', () => {
+  const e = Render.etiquetasEjes(capa({ forma: 'circulo', w: 30, h: 30 }));
+  const vistas = new Set(e.map(t => `${t.x},${t.y}`));
+  assert.equal(vistas.size, e.length);
+});
+
+test('ejes: en modo hueco tambien se numera el interior vacio, hasta el borde', () => {
+  const g = capa({ forma: 'circulo', w: 20, h: 20, modo: 'hueco', grosor: 1 });
+  const e = Render.etiquetasEjes(g);
+  const f = e.filter(t => t.y === 9).sort((a, b) => a.x - b.x);
+  assert.equal(f.length, g[9].lastIndexOf(true) - g[9].indexOf(true) + 1, 'todas las celdas entre los dos bordes');
+  assert.equal(f[0].n, 10, 'el borde es el 10 (9 bloques por lado + 1)');
+  assert.equal(f[0].lleno, true, 'el borde es bloque');
+  assert.equal(f[1].lleno, false, 'el interior esta vacio');
+});
+
+test('ejes: la forma sin bloques en la franja no numera nada', () => {
+  const vacia = [[false, false], [false, false]];
+  assert.deepEqual(Render.etiquetasEjes(vacia), []);
+});
