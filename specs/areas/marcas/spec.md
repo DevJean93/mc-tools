@@ -109,12 +109,47 @@ Una fila o columna sin bloques no cambia nada ni ocupa historial; se anuncia «L
 tiene bloques». Tocar la esquina entre las dos reglas o los márgenes de la derecha y de abajo
 no hace nada.
 
+### MAR-19
+
+El proyecto actual se puede guardar como un archivo descargable. El archivo contiene el nombre de la
+aplicación, la versión del formato, los parámetros de la forma (tipo, ancho, alto, proporción, modo,
+grosor, variante, orientación y capa actual) y las marcas en el mismo formato compacto que usa el
+navegador. No incluye el zoom ni las opciones de vista, que son preferencias de cada dispositivo. El
+nombre del archivo dice la forma y el tamaño.
+
+Ejemplos: `formas-mc-circulo-30x30.json`, `formas-mc-esfera-11.json`, `formas-mc-cupula-16.json`.
+
+### MAR-20
+
+Un archivo de proyecto válido se puede cargar: sustituye la forma y las marcas actuales, se guarda
+también en el navegador (para que sobreviva a recargar) y sale un aviso «Proyecto cargado.» con el
+botón «Deshacer». Deshacer, o `Ctrl+Z`, devuelve de una vez la forma y las marcas anteriores. El zoom
+y las opciones de vista no cambian.
+
+### MAR-21
+
+Un archivo que no es un proyecto de Formas MC (no es JSON, o no lleva el nombre de la app o una
+versión válida) se rechaza con un mensaje que dice qué hacer, y no cambia nada ni ocupa historial. Uno
+de una versión más nueva se rechaza igual y dice que hay que actualizar la app. Los valores de un
+archivo válido se validan con las mismas reglas que lo guardado en el navegador (los fuera de rango se
+recortan, los desconocidos se descartan) y las marcas se validan contra la forma ya generada. Unas
+marcas que no corresponden a la forma del archivo se descartan y el aviso lo dice.
+
+Ejemplo: un ancho de 999 en el archivo se carga como 200.
+
+### MAR-22
+
+Guardar y cargar un proyecto funciona aunque el navegador bloquee el almacenamiento; la nota fija de
+almacenamiento sigue visible.
+
 ## Casos límite
 
 - Un almacén que lanza al leer equivale a no tener nada guardado.
 - Marcas de otra firma se ignoran por completo.
 - Capa guardada fuera de rango: se limita al generar.
 - Un trazo de arrastre completo ocupa un solo paso de historial.
+- Cargar un proyecto ocupa un solo paso de historial, aunque cambien la forma, las marcas y la capa.
+- Un archivo sin forma o sin marcas se abre igualmente, con los valores por defecto y sin marcas.
 - Con poco zoom la banda de una fila o columna mide menos de 24 px y su número no se ve; la
   zona sensible sigue siendo toda la banda.
 
@@ -151,3 +186,24 @@ no hace nada.
   el dedo es de MAR, porque cambia las marcas y no la vista.
 - 2026-10-29: con las reglas fijas, una fila o columna que queda oculta bajo la otra regla no se
   puede tocar, y el cursor del teclado se desplaza para no quedar tapado (cambio 005).
+- 2026-10-31: el proyecto es la forma y las marcas, no solo la forma: la copia de seguridad que se
+  quería es la del progreso, que es lo que se pierde al borrar los datos del navegador. Se descartó
+  guardar solo los parámetros porque se solapa con el enlace para compartir (propuesta 007).
+- 2026-10-31: el archivo no lleva zoom ni opciones de vista porque son preferencias de cada
+  dispositivo: cargar el proyecto en un móvil no debe cambiarle el zoom ni apagarle una regla.
+- 2026-10-31: cargar sustituye lo que hay con aviso y Deshacer en lugar de pedir confirmación: es el
+  mismo patrón de las demás acciones que cambian marcas, no interrumpe y un diálogo nativo es
+  incómodo en móvil. Un solo paso de historial para que un Deshacer devuelva todo.
+- 2026-10-31: el formato del archivo reutiliza el formato compacto de las marcas del navegador y
+  la validación reutiliza `Estado.cargar` (con un almacén de solo lectura): así el archivo y el
+  navegador no pueden validar distinto, y no cambian las claves `mc-formas-v1*` ni la firma. Se
+  extrajeron `compactarMarcas` y `marcasDesde` con una cadena de referencia en un test para no
+  alterar lo que se guarda.
+- 2026-10-31: el archivo lleva la versión del formato: se abre el de la versión actual y uno más
+  nuevo se rechaza con un mensaje. Cuando el formato cambie hará falta una migración con su test.
+- 2026-10-31: el autoguardado del navegador se mantiene y el archivo es una copia manual: un
+  navegador no puede escribir un archivo por debajo sin que el usuario lo pida cada vez.
+- 2026-10-31: guardar y cargar funcionan con el almacenamiento bloqueado; es justo el caso en que
+  hoy el progreso se pierde al recargar y el archivo es la única copia posible.
+- 2026-10-31: cuando unas marcas no corresponden a la forma del archivo (solo pasa si alguien lo
+  editó a mano) se abre la forma sin ellas y el mismo aviso lo dice: solo se ve un aviso a la vez.

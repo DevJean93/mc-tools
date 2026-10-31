@@ -168,9 +168,9 @@ alcanza desplazando la hoja del menú.
 - [x] T05 `INT-09` y E2E de `MAR-19` a `MAR-22`: E2E en rojo → sección «Proyecto» en
       `index.html`, icono `i-subir`, selector oculto y conexión en `app.js`. Hecho cuando: todos
       los E2E pasan en escritorio y móvil. Commit.
-- [ ] T06 Validación visual con la skill de UI: capturas en escritorio y móvil, ajustes de estilo
+- [x] T06 Validación visual con la skill de UI: capturas en escritorio y móvil, ajustes de estilo
       si hacen falta y comparación píxel a píxel del lienzo. Commit si hay ajustes.
-- [ ] T07 Archivar: el delta pasa a `specs/areas/marcas/spec.md` (`MAR-19` a `MAR-22`) y a
+- [x] T07 Archivar: el delta pasa a `specs/areas/marcas/spec.md` (`MAR-19` a `MAR-22`) y a
       `specs/areas/interfaz/spec.md` (`INT-09`) con sus decisiones; se actualiza `README.md`; la
       propuesta queda en `Hecha` y se mueve a `specs/cambios/archivo/`. Hecho cuando: `npm run
       specs` en verde sin requisitos sin test. Commit.

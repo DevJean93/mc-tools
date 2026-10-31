@@ -63,6 +63,12 @@ línea.
 Ejemplo: en un móvil de 375 px, «Marcados 16 bloques de la fila 8.» con su botón «Deshacer»
 ocupa como mucho dos líneas.
 
+### INT-09
+
+El menú tiene una sección «Proyecto» con dos botones, «Guardar proyecto» y «Cargar proyecto», con
+texto visible, nombre accesible y objetivo táctil de al menos 44 px en móvil. «Cargar proyecto» abre
+el selector de archivos del dispositivo; el selector en sí queda oculto.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -108,3 +114,7 @@ ocupa como mucho dos líneas.
 - 2026-10-29: con el zoom inicial del móvil una fila de la regla mide 15 px, menos que los
   24 px que pide WCAG 2.2 para un objetivo. Marcar bloque a bloque es el control equivalente y
   la ayuda táctil sugiere acercarse; no se agranda la banda porque pisaría la fila de al lado.
+- 2026-10-31: «Proyecto» es una sección propia al final del menú y no se mezcla con «Vista» ni con
+  «Materiales»: guardar y cargar no son una opción de vista ni un cálculo. Reutiliza la rejilla de
+  dos botones de los de exportar y los iconos de descarga y de subir, con una frase de ayuda que
+  explica para qué sirve. La barra inferior del móvil no cambia: se llega desplazando el menú.

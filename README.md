@@ -21,6 +21,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
 - **Marcar lo construido:** clic o arrastre marca, clic derecho desmarca; botones para marcar/desmarcar la capa o todo. El clic en el número de una fila o columna de la regla marca o desmarca la línea entera (un solo paso de deshacer; `F` y `C` lo hacen con el cursor del teclado). Con el dibujo enfocado: flechas (Mayús = 5 celdas), Espacio/Intro, RePág/AvPág para cambiar de capa. `Ctrl+Z` / `Ctrl+Y` deshacen y rehacen. El progreso se guarda en el navegador y se recupera al volver.
 - **Zoom:** de 2 a 48 px por bloque con los botones −/+, el deslizador, `Ctrl` + rueda (hacia el puntero), pellizcando en pantallas táctiles o con `+`/`-` en el teclado. **Ajustar** (o `0`) encaja la capa entera en la ventana, y si la forma crece y deja de caber, el zoom se reduce solo. Con poco zoom se ocultan los números que no caben y la regla numera cada 2, 5, 10… bloques.
 - **En pantallas táctiles:** un toque corto marca el bloque, el toque en el número de una fila o columna de la regla la marca entera, arrastrar con un dedo mueve el dibujo (y la página cuando ya no cabe) y dos dedos hacen zoom.
+- **Proyecto:** «Guardar proyecto» descarga un archivo `.json` con la forma y lo construido, y «Cargar proyecto» lo recupera (con aviso y «Deshacer»). Sirve de copia de seguridad y para pasar la obra a otro dispositivo; funciona aunque el navegador no pueda guardar.
 - **Exportar:** PNG de la capa actual o de todas las capas (una imagen por capa), con cabecera de forma, capa, bloques y fecha.
 
 Si cambias la geometría con bloques marcados, las marcas se limpian y aparece un aviso con **Deshacer**.
@@ -38,7 +39,7 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 ## Límites conocidos
 
 - Esfera/cúpula hasta 100 de diámetro.
-- El progreso vive en el `localStorage` de ese navegador y equipo; borrar los datos del sitio lo elimina.
+- El progreso se guarda solo en el `localStorage` de ese navegador y equipo; borrar los datos del sitio lo elimina. Para no perderlo, guarda un proyecto en un archivo.
 - Las imágenes muy grandes (zoom alto + forma grande) pueden fallar al exportar: reduce el zoom.
 - Un solo material por forma.
 
