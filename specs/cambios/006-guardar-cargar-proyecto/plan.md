@@ -152,7 +152,7 @@ alcanza desplazando la hoja del menú.
 
 ## Tareas
 
-- [ ] T01 Fijar el formato actual: test `MAR-05` con la cadena de referencia de las marcas
+- [x] T01 Fijar el formato actual: test `MAR-05` con la cadena de referencia de las marcas
       guardadas (en verde) → extraer `compactarMarcas` y `marcasDesde` en `estado.js` sin cambiar
       el resultado. Hecho cuando: todos los tests siguen en verde. Commit.
 - [ ] T02 `MAR-19`: tests de `aArchivo` y `nombreArchivoProyecto` en rojo → implementar. Hecho

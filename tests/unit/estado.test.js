@@ -55,6 +55,14 @@ test('MAR-10: guardar informa del fallo si el almacen no escribe', () => {
   assert.equal(Estado.guardarMarcas('x', new Set(), roto), false);
 });
 
+test('MAR-05: el formato compacto de las marcas guardadas no cambia (los datos de los usuarios siguen valiendo)', () => {
+  const almacen = Almacen.memoria();
+  const hechos = new Set(['0,0,0', '0,2,1', '1,3,3']);
+  assert.equal(Estado.guardarMarcas('circulo|4|4|relleno|||', hechos, almacen), true);
+  assert.equal(almacen.leer('mc-formas-v1:marcas'),
+    '{"firma":"circulo|4|4|relleno|||","porCapa":{"0":[0,0,2,1],"1":[3,3]}}');
+});
+
 test('MAR-05: las marcas se guardan y se recuperan solo para su geometria', () => {
   const almacen = Almacen.memoria();
   const capas = [[[true, true], [true, false]]];   // 2x2 con (1,1) vacio

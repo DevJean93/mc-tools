@@ -106,20 +106,23 @@ const Estado = (() => {
   }
 
   // Marcas en formato compacto: { firma, porCapa: { "c": [x0, y0, x1, y1, ...] } }.
-  function guardarMarcas(f, hechos, almacen) {
+  function compactarMarcas(firma, hechos) {
     const porCapa = {};
     for (const k of hechos) {
       const [c, x, y] = k.split(',');
       (porCapa[c] || (porCapa[c] = [])).push(+x, +y);
     }
-    return almacenValido(almacen).escribir(KEY_MARCAS, JSON.stringify({ firma: f, porCapa }));
+    return { firma, porCapa };
+  }
+
+  function guardarMarcas(f, hechos, almacen) {
+    return almacenValido(almacen).escribir(KEY_MARCAS, JSON.stringify(compactarMarcas(f, hechos)));
   }
 
   // Devuelve solo las marcas validas para la geometria actual.
-  function cargarMarcas(f, capas, almacen) {
+  function marcasDesde(raw, firma, capas) {
     const hechos = new Set();
-    const raw = leerJSON(almacen, KEY_MARCAS);
-    if (!raw || raw.firma !== f || !raw.porCapa || typeof raw.porCapa !== 'object') return hechos;
+    if (!raw || raw.firma !== firma || !raw.porCapa || typeof raw.porCapa !== 'object') return hechos;
     for (const [c, xy] of Object.entries(raw.porCapa)) {
       const g = capas[+c];
       if (!g || !Array.isArray(xy)) continue;
@@ -131,9 +134,13 @@ const Estado = (() => {
     return hechos;
   }
 
+  function cargarMarcas(f, capas, almacen) {
+    return marcasDesde(leerJSON(almacen, KEY_MARCAS), f, capas);
+  }
+
   return {
     LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
-    cargar, guardar, firma, guardarMarcas, cargarMarcas,
+    cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;
