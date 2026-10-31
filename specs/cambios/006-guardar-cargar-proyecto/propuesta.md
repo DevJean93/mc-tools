@@ -2,7 +2,7 @@
 
 ## Estado
 
-En revisión
+Aprobada
 
 ## Motivo
 
