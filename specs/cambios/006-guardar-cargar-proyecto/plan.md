@@ -157,7 +157,7 @@ alcanza desplazando la hoja del menú.
       el resultado. Hecho cuando: todos los tests siguen en verde. Commit.
 - [x] T02 `MAR-19`: tests de `aArchivo` y `nombreArchivoProyecto` en rojo → implementar. Hecho
       cuando: la cadena de referencia y los nombres pasan. Commit.
-- [ ] T03 `MAR-21`: tests de `desdeArchivo` en rojo → implementar reutilizando `Estado.cargar` con
+- [x] T03 `MAR-21`: tests de `desdeArchivo` en rojo → implementar reutilizando `Estado.cargar` con
       un almacén de solo lectura sobre la forma del archivo. Hecho cuando: errores y validación
       pasan. Commit.
 - [ ] T04 `MAR-20`, `MAR-21`, `MAR-22`: tests de `Documento.proyecto` y `cargarProyecto` en rojo →

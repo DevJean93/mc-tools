@@ -151,6 +151,28 @@ const Estado = (() => {
     return JSON.stringify({ app: APP_ARCHIVO, version: VERSION_ARCHIVO, forma, marcas: compactarMarcas(firma, hechos) });
   }
 
+  const MSG_NO_PROYECTO = 'No es un proyecto de Formas MC. Elige un archivo guardado con «Guardar proyecto».';
+  const MSG_VERSION_NUEVA = 'Este proyecto es de una versión más nueva de Formas MC. Actualiza la app para abrirlo.';
+
+  // Lee el texto de un archivo de proyecto. Devuelve { ok: true, forma, marcas } o
+  // { ok: false, motivo, mensaje } sin tocar nada. Los valores de la forma se validan con las
+  // mismas reglas que lo guardado en el navegador (los fuera de rango se recortan y los desconocidos
+  // se descartan): se reutiliza `cargar` con un almacen de solo lectura. Las marcas se devuelven
+  // tal cual: solo se pueden validar contra la forma ya generada.
+  function desdeArchivo(texto) {
+    let o;
+    try { o = JSON.parse(texto); } catch (e) { o = null; }
+    if (!o || typeof o !== 'object' || Array.isArray(o) || o.app !== APP_ARCHIVO || !Number.isInteger(o.version) || o.version < 1) {
+      return { ok: false, motivo: 'no-proyecto', mensaje: MSG_NO_PROYECTO };
+    }
+    if (o.version > VERSION_ARCHIVO) return { ok: false, motivo: 'version-nueva', mensaje: MSG_VERSION_NUEVA };
+    const crudo = o.forma && typeof o.forma === 'object' && !Array.isArray(o.forma) ? o.forma : {};
+    const st = cargar({ leer: k => (k === KEY ? JSON.stringify(crudo) : null), escribir: () => false });
+    const forma = {};
+    for (const k of [...CLAVES_GEO, 'capa']) forma[k] = st[k];
+    return { ok: true, forma, marcas: o.marcas && typeof o.marcas === 'object' ? o.marcas : null };
+  }
+
   // formas-mc-circulo-30x30.json, formas-mc-esfera-11.json, formas-mc-cupula-16.json
   function nombreArchivoProyecto(st) {
     const def = Formas.obtener(st.forma) || {};
@@ -161,7 +183,7 @@ const Estado = (() => {
   return {
     LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
-    VERSION_ARCHIVO, aArchivo, nombreArchivoProyecto,
+    VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;

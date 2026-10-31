@@ -216,6 +216,67 @@ test('MAR-19: el nombre del archivo dice la forma y el tamano', () => {
   assert.equal(nombre({ forma: 'esfera', w: 16, esfera: 'cupula' }), 'formas-mc-cupula-16.json');
 });
 
+const archivoOk = o => JSON.stringify({ app: 'formas-mc', version: 1, ...o });
+
+test('MAR-21: un archivo que no es un proyecto de Formas MC se rechaza con su mensaje', () => {
+  for (const texto of ['{basura', '', '[1,2,3]', 'null', '42', '{"version":1}', '{"app":"otra","version":1}']) {
+    const r = Estado.desdeArchivo(texto);
+    assert.equal(r.ok, false, JSON.stringify(texto));
+    assert.equal(r.motivo, 'no-proyecto', JSON.stringify(texto));
+    assert.equal(r.mensaje, 'No es un proyecto de Formas MC. Elige un archivo guardado con «Guardar proyecto».');
+  }
+});
+
+test('MAR-21: una version invalida (falta, no es un entero o es menor que 1) tampoco es un proyecto', () => {
+  for (const v of [undefined, 0, -1, 1.5, '1', null]) {
+    const r = Estado.desdeArchivo(JSON.stringify({ app: 'formas-mc', version: v, forma: {} }));
+    assert.equal(r.ok, false, String(v));
+    assert.equal(r.motivo, 'no-proyecto', String(v));
+  }
+});
+
+test('MAR-21: un archivo de una version mas nueva se rechaza y dice que hay que actualizar', () => {
+  const r = Estado.desdeArchivo(archivoOk({ version: Estado.VERSION_ARCHIVO + 1, forma: {} }));
+  assert.equal(r.ok, false);
+  assert.equal(r.motivo, 'version-nueva');
+  assert.equal(r.mensaje, 'Este proyecto es de una versión más nueva de Formas MC. Actualiza la app para abrirlo.');
+});
+
+test('MAR-21: los valores de un archivo valido se validan como lo guardado en el navegador', () => {
+  const r = Estado.desdeArchivo(archivoOk({ forma: { forma: 'foo', w: 999, h: -5, grosor: -3, capa: 4, zoom: 40, rel: false } }));
+  assert.equal(r.ok, true);
+  assert.equal(r.forma.forma, 'circulo', 'forma desconocida -> por defecto');
+  assert.equal(r.forma.w, Estado.LIMITES.w2d, 'ancho recortado al maximo');
+  assert.equal(r.forma.h, 1, 'alto recortado al minimo');
+  assert.equal(r.forma.grosor, 1);
+  assert.equal(r.forma.capa, 4);
+  assert.deepEqual(Object.keys(r.forma), [...Estado.CLAVES_GEO, 'capa'], 'solo geometria y capa: el zoom y la vista no entran');
+  const esf = Estado.desdeArchivo(archivoOk({ forma: { forma: 'esfera', w: 300, esfera: 'cupula' } }));
+  assert.equal(esf.forma.w, Estado.LIMITES.w3d, 'en esfera el ancho se limita al maximo 3D');
+  assert.equal(esf.forma.esfera, 'cupula');
+});
+
+test('MAR-21: sin forma o sin marcas se abre igualmente, con los valores por defecto y sin marcas', () => {
+  const r = Estado.desdeArchivo(archivoOk({}));
+  assert.equal(r.ok, true);
+  assert.equal(r.forma.forma, Estado.DEFAULTS.forma);
+  assert.equal(r.marcas, null);
+});
+
+test('MAR-21: las marcas del archivo se devuelven tal cual (se validan contra la forma generada)', () => {
+  const marcas = { firma: 'circulo|4|4|relleno|||', porCapa: { 0: [0, 0, 2, 1] } };
+  assert.deepEqual(Estado.desdeArchivo(archivoOk({ forma: { forma: 'circulo', w: 4, h: 4 }, marcas })).marcas, marcas);
+});
+
+test('MAR-19, MAR-21: guardar y leer devuelve la misma forma y las mismas marcas (ida y vuelta)', () => {
+  const st = { ...Estado.DEFAULTS, forma: 'hexagono', w: 20, h: 18, igualar: false, modo: 'hueco', grosor: 3, orient: 'punta', capa: 0 };
+  const firma = Estado.firma(st), hechos = new Set(['0,3,0', '0,4,1']);
+  const r = Estado.desdeArchivo(Estado.aArchivo(st, firma, hechos));
+  assert.equal(r.ok, true);
+  for (const k of [...Estado.CLAVES_GEO, 'capa']) assert.equal(r.forma[k], st[k], k);
+  assert.deepEqual(r.marcas, Estado.compactarMarcas(firma, hechos));
+});
+
 test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);
