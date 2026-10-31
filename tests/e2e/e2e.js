@@ -490,6 +490,93 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // MAR-19, MAR-20, MAR-21, MAR-22, INT-09: guardar y cargar un proyecto en un archivo (escritorio).
+  await cargar();
+  const proyectosGuardados = () => fs.readdirSync(OUT).filter(f => /^formas-mc-.*\.json$/.test(f));
+  const borrarProyectos = () => { for (const f of proyectosGuardados()) fs.unlinkSync(path.join(OUT, f)); };
+  const esperarProyecto = async () => { for (let i = 0; i < 25 && !proyectosGuardados().length; i++) await esperar(150); return proyectosGuardados(); };
+  // Carga un texto como si el usuario hubiera elegido ese archivo en el selector.
+  const cargarArchivo = texto => ev(`(() => {
+    const i = document.getElementById('archivoProyecto'), dt = new DataTransfer();
+    dt.items.add(new File([${JSON.stringify(texto)}], 'proyecto.json', { type: 'application/json' }));
+    i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`).then(() => esperar(400));
+  const aviso = () => ev(`(() => { const a = document.getElementById('aviso'); return { visible: !a.hidden, texto: document.getElementById('avisoTxt').textContent, accion: !document.getElementById('avisoAccion').hidden }; })()`);
+  borrarProyectos();
+
+  const secProy = await ev(`(() => {
+    const s = document.getElementById('secProyecto'); if (!s) return null;
+    const g = document.getElementById('guardarProyecto'), c = document.getElementById('cargarProyecto'), mat = document.getElementById('secMat');
+    return { titulo: s.querySelector('h2').textContent, guardar: g && g.textContent.trim(), cargar: c && c.textContent.trim(),
+      trasMateriales: !!(mat.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING), enElMenu: document.getElementById('panel').contains(s),
+      ayuda: !!s.querySelector('.ayuda'), selectorOculto: document.getElementById('archivoProyecto').hidden };
+  })()`);
+  ok(secProy && secProy.titulo === 'Proyecto' && secProy.guardar === 'Guardar proyecto' && secProy.cargar === 'Cargar proyecto' &&
+    secProy.trasMateriales && secProy.enElMenu && secProy.ayuda && secProy.selectorOculto,
+  `INT-09: el menu tiene la seccion «Proyecto» con «Guardar proyecto» y «Cargar proyecto» (${JSON.stringify(secProy)})`);
+  const abre = await ev(`(() => { const i = document.getElementById('archivoProyecto'); window.__abrio = 0;
+    i.addEventListener('click', e => { e.preventDefault(); window.__abrio++; }); document.getElementById('cargarProyecto').click(); return window.__abrio; })()`);
+  ok(abre === 1, 'INT-09: «Cargar proyecto» abre el selector de archivos del dispositivo');
+
+  // MAR-19: «Guardar proyecto» descarga un archivo con la forma y las marcas (fila 8 marcada con F).
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  ok((await prog()).startsWith('Construidos: 16/208'), 'MAR-19: preparado un proyecto con una fila marcada (' + await prog() + ')');
+  await ev(`document.getElementById('guardarProyecto').click()`);
+  const guardados = await esperarProyecto();
+  const proyecto = guardados.length ? JSON.parse(fs.readFileSync(path.join(OUT, guardados[0]), 'utf8')) : null;
+  ok(proyecto && guardados[0] === 'formas-mc-circulo-16x16.json' && proyecto.app === 'formas-mc' && proyecto.version === 1 &&
+    proyecto.forma.forma === 'circulo' && proyecto.forma.w === 16 && proyecto.forma.modo === 'relleno' &&
+    proyecto.marcas.porCapa['0'].length === 32 && !('zoom' in proyecto.forma) && !('rel' in proyecto.forma),
+  `MAR-19: «Guardar proyecto» descarga ${guardados[0]} con la forma, las 16 marcas y sin zoom ni vista`);
+  ok((await aviso()).texto === 'Proyecto guardado: formas-mc-circulo-16x16.json', 'MAR-19: al guardar sale un aviso con el nombre del archivo (' + (await aviso()).texto + ')');
+
+  // MAR-20: cargar sustituye la forma y las marcas, con aviso y Deshacer.
+  const textoProyecto = guardados.length ? fs.readFileSync(path.join(OUT, guardados[0]), 'utf8') : '{}';
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'rombo'; f.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  ok(await ev(`document.getElementById('forma').value === 'rombo'`) && (await prog()).startsWith('Construidos: 0/'), 'MAR-20: preparada otra forma sin marcas');
+  await cargarArchivo(textoProyecto);
+  const trasCargar = await aviso();
+  ok(await ev(`document.getElementById('forma').value === 'circulo'`) && (await prog()).startsWith('Construidos: 16/208') &&
+    trasCargar.texto === 'Proyecto cargado.' && trasCargar.accion,
+  `MAR-20: cargar sustituye la forma y las marcas y ofrece Deshacer (${await prog()} · ${trasCargar.texto})`);
+  await ev(`document.getElementById('avisoAccion').click()`); await esperar(300);
+  ok(await ev(`document.getElementById('forma').value === 'rombo'`) && (await prog()).startsWith('Construidos: 0/'),
+    'MAR-20: «Deshacer» del aviso devuelve la forma de antes de un solo paso');
+
+  // MAR-21: un archivo que no es un proyecto, o de una version mas nueva, no cambia nada.
+  await cargarArchivo('{"esto":"no es un proyecto"}');
+  const noProy = await aviso();
+  ok(noProy.texto.startsWith('No es un proyecto de Formas MC') && !noProy.accion && await ev(`document.getElementById('forma').value === 'rombo'`),
+    `MAR-21: un archivo que no es un proyecto se rechaza con un mensaje y no cambia nada (${noProy.texto})`);
+  await cargarArchivo('{"app":"formas-mc","version":99,"forma":{"forma":"circulo"}}');
+  const nueva = await aviso();
+  ok(nueva.texto.includes('versión más nueva') && await ev(`document.getElementById('forma').value === 'rombo'`),
+    `MAR-21: un archivo de una version mas nueva se rechaza y dice que hay que actualizar (${nueva.texto})`);
+  await shot('05-proyecto-error.png');
+
+  // MAR-22: con el almacenamiento bloqueado, guardar y cargar funcionan y la nota fija sigue visible.
+  const bloqueoProyecto = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('bloqueado', 'SecurityError'); } });`,
+  });
+  await cargar(); borrarProyectos();
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  await ev(`document.getElementById('guardarProyecto').click()`);
+  const sinAlmacen = await esperarProyecto();
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'rombo'; f.dispatchEvent(new Event('input')); })()`);
+  await esperar(300);
+  if (sinAlmacen.length) await cargarArchivo(fs.readFileSync(path.join(OUT, sinAlmacen[0]), 'utf8'));
+  ok(sinAlmacen.length === 1 && await ev(`document.getElementById('forma').value === 'circulo'`) && (await prog()).startsWith('Construidos: 16/208') &&
+    await ev(`!document.getElementById('nota').hidden`),
+  `MAR-22: con el almacenamiento bloqueado se guarda y se carga un proyecto y la nota fija sigue (${await prog()})`);
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: bloqueoProyecto.identifier });
+  borrarProyectos();
+  await cargar();   // la pagina actual sigue con el almacenamiento bloqueado: recargar antes de limpiarlo
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');
@@ -505,6 +592,23 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     return !p.hidden && p.scrollTop > 0 && llego && document.querySelector('.navmovil a[href="#secMat"]').getAttribute('aria-current') === 'true'; })()`), 'INT-05: Materiales abre el menu en su seccion');
   await ev(`document.querySelector('.navmovil a[href="#secDibujo"]').click()`); await esperar(300);
   ok(await ev(`document.getElementById('panel').hidden`), 'INT-05: Dibujo cierra el menu');
+  // INT-09 en movil: los botones de «Proyecto» se ven, caben y se pueden pulsar con el dedo (>= 44 px).
+  await ev(`document.getElementById('verMenu').click()`); await esperar(300);
+  await ev(`document.getElementById('secProyecto') && document.getElementById('secProyecto').scrollIntoView({ block: 'center' })`);
+  await esperar(500);
+  const botonesProyecto = await ev(`(() => {
+    const caja = id => { const e = document.getElementById(id); if (!e) return null; const r = e.getBoundingClientRect(); return { izq: Math.round(r.left), der: Math.round(r.right), alto: Math.round(r.height), ancho: Math.round(r.width) }; };
+    const nav = document.querySelector('.navmovil').getBoundingClientRect();
+    const g = document.getElementById('guardarProyecto');
+    return { guardar: caja('guardarProyecto'), cargar: caja('cargarProyecto'), vw: document.documentElement.clientWidth, bajoNav: g ? g.getBoundingClientRect().bottom > nav.top : null };
+  })()`);
+  ok(botonesProyecto.guardar && botonesProyecto.cargar &&
+    botonesProyecto.guardar.alto >= 44 && botonesProyecto.cargar.alto >= 44 &&
+    botonesProyecto.guardar.izq >= 0 && botonesProyecto.cargar.der <= botonesProyecto.vw && botonesProyecto.bajoNav === false,
+  `INT-09: en movil los botones de Proyecto se ven, caben y miden al menos 44 px (${JSON.stringify(botonesProyecto)})`);
+  await shot('06-proyecto-movil.png');
+  await ev(`document.getElementById('cerrarMenu').click()`); await esperar(300);
+
   await shot('04-movil.png');
 
 

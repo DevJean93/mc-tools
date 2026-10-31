@@ -165,7 +165,7 @@ alcanza desplazando la hoja del menú.
       implementar con historial, `regenerar({ sinLeer, conservar })` y avisos. Hecho cuando: la
       ida y vuelta, deshacer y rehacer, las marcas descartadas y el almacén sin persistencia
       pasan. Commit.
-- [ ] T05 `INT-09` y E2E de `MAR-19` a `MAR-22`: E2E en rojo → sección «Proyecto» en
+- [x] T05 `INT-09` y E2E de `MAR-19` a `MAR-22`: E2E en rojo → sección «Proyecto» en
       `index.html`, icono `i-subir`, selector oculto y conexión en `app.js`. Hecho cuando: todos
       los E2E pasan en escritorio y móvil. Commit.
 - [ ] T06 Validación visual con la skill de UI: capturas en escritorio y móvil, ajustes de estilo

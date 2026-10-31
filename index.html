@@ -18,6 +18,7 @@
   <symbol id="i-deshacer" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
   <symbol id="i-rehacer" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/></symbol>
   <symbol id="i-descargar" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-subir" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
   <symbol id="i-mas" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></symbol>
@@ -90,6 +91,16 @@
       <h2 id="t-mat">Materiales</h2>
       <div id="materiales"></div>
       <div id="tablaCapas"></div>
+    </section>
+
+    <section id="secProyecto" aria-labelledby="t-proyecto">
+      <h2 id="t-proyecto">Proyecto</h2>
+      <p class="ayuda">Guarda una copia con la forma y lo construido para moverla a otro dispositivo o recuperarla.</p>
+      <div class="botones">
+        <button type="button" id="guardarProyecto"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>Guardar proyecto</button>
+        <button type="button" id="cargarProyecto"><svg class="ico" aria-hidden="true"><use href="#i-subir"/></svg>Cargar proyecto</button>
+      </div>
+      <input type="file" id="archivoProyecto" accept=".json,application/json" hidden>
     </section>
   </aside>
 

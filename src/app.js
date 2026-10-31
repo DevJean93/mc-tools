@@ -240,6 +240,22 @@
   al('exportar', 'click', () => exportador.capa(doc.capa()));
   al('exportarTodas', 'click', () => exportador.todas());
 
+  // Proyecto: guardar la forma y las marcas en un archivo y cargar uno guardado.
+  const archivoProyecto = $('archivoProyecto');
+  al('guardarProyecto', 'click', () => {
+    const { texto, nombre } = doc.proyecto();
+    Exportar.descargar(new Blob([texto], { type: 'application/json' }), nombre);
+    avisos.avisar(`Proyecto guardado: ${nombre}`);
+  });
+  al('cargarProyecto', 'click', () => archivoProyecto.click());
+  archivoProyecto.addEventListener('change', async () => {
+    const archivo = archivoProyecto.files[0];
+    if (!archivo) return;
+    try { doc.cargarProyecto(await archivo.text()); }
+    catch (e) { avisos.avisar('No se pudo leer el archivo.'); }
+    archivoProyecto.value = '';   // permite elegir otra vez el mismo archivo
+  });
+
   Menu.crear({
     panel: $('panel'), boton: $('verMenu'), botonTexto: $('verMenuTxt'), cerrar: $('cerrarMenu'),
     nav: document.querySelectorAll('.navmovil a'), main: document.querySelector('main'),
