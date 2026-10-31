@@ -41,12 +41,13 @@ alcanza desplazando la hoja del menú.
 
 **Mensajes:**
 - al guardar, un aviso «Proyecto guardado: formas-mc-circulo-30x30.json»;
-- al cargar, un aviso «Proyecto cargado: Círculo 30×30, hueco.» con el botón «Deshacer»;
+- al cargar, un aviso «Proyecto cargado.» con el botón «Deshacer» (la forma cargada ya se ve en
+  pantalla);
 - si hay error, un aviso con el motivo y qué hacer: «No es un proyecto de Formas MC. Elige un
   archivo .json guardado con «Guardar proyecto».» / «Este proyecto es de una versión más nueva
   de Formas MC. Actualiza la app para abrirlo.»;
-- si se descartan marcas, un aviso: «Se cargó la forma, pero sus marcas no le corresponden y se
-  descartaron.».
+- si se descartan marcas, el mismo aviso lo dice, porque solo se ve un aviso a la vez: «Proyecto
+  cargado. Sus marcas no correspondían a la forma y se descartaron.».
 
 ## Archivos a tocar
 
@@ -160,7 +161,7 @@ alcanza desplazando la hoja del menú.
 - [x] T03 `MAR-21`: tests de `desdeArchivo` en rojo → implementar reutilizando `Estado.cargar` con
       un almacén de solo lectura sobre la forma del archivo. Hecho cuando: errores y validación
       pasan. Commit.
-- [ ] T04 `MAR-20`, `MAR-21`, `MAR-22`: tests de `Documento.proyecto` y `cargarProyecto` en rojo →
+- [x] T04 `MAR-20`, `MAR-21`, `MAR-22`: tests de `Documento.proyecto` y `cargarProyecto` en rojo →
       implementar con historial, `regenerar({ sinLeer, conservar })` y avisos. Hecho cuando: la
       ida y vuelta, deshacer y rehacer, las marcas descartadas y el almacén sin persistencia
       pasan. Commit.

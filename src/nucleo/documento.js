@@ -127,11 +127,35 @@ const Documento = (() => {
       return r;
     }
 
+    // El proyecto actual como archivo: el texto y el nombre con el que se descarga.
+    const proyecto = () => ({
+      texto: Estado.aArchivo(st, firmaActual, marcas.conjunto()),
+      nombre: Estado.nombreArchivoProyecto(st),
+    });
+
+    // Carga un archivo de proyecto. Un archivo no valido no cambia nada. Uno valido sustituye la forma
+    // y las marcas en un solo paso de historial (un Deshacer lo devuelve todo). El zoom y la vista no
+    // cambian. Las marcas se validan contra la forma ya generada; si no son de esa forma se descartan.
+    function cargarProyecto(texto) {
+      const r = Estado.desdeArchivo(texto);
+      if (!r.ok) { avisos.avisar(r.mensaje); return r; }
+      antesDeMarcar();
+      Object.assign(st, r.forma);
+      marcas.limpiar();
+      regenerar({ sinLeer: true, conservar: true });
+      const nueva = Estado.firma(st);
+      const propias = !r.marcas || r.marcas.firma === nueva;
+      marcas.restaurar(propias ? Estado.marcasDesde(r.marcas, nueva, capas) : []);
+      trasMarcar();
+      avisos.avisar(propias ? 'Proyecto cargado.' : 'Proyecto cargado. Sus marcas no correspondían a la forma y se descartaron.', deshacer);
+      return r;
+    }
+
     return {
       capas: () => capas, capaActual, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
-      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado,
+      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto,
       hechos: marcas.conjunto, porCapa: n => marcas.porCapa(n),
       puedeDeshacer: historial.puedeDeshacer, puedeRehacer: historial.puedeRehacer,
     };
