@@ -155,7 +155,7 @@ alcanza desplazando la hoja del menú.
 - [x] T01 Fijar el formato actual: test `MAR-05` con la cadena de referencia de las marcas
       guardadas (en verde) → extraer `compactarMarcas` y `marcasDesde` en `estado.js` sin cambiar
       el resultado. Hecho cuando: todos los tests siguen en verde. Commit.
-- [ ] T02 `MAR-19`: tests de `aArchivo` y `nombreArchivoProyecto` en rojo → implementar. Hecho
+- [x] T02 `MAR-19`: tests de `aArchivo` y `nombreArchivoProyecto` en rojo → implementar. Hecho
       cuando: la cadena de referencia y los nombres pasan. Commit.
 - [ ] T03 `MAR-21`: tests de `desdeArchivo` en rojo → implementar reutilizando `Estado.cargar` con
       un almacén de solo lectura sobre la forma del archivo. Hecho cuando: errores y validación

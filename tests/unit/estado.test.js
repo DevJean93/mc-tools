@@ -184,6 +184,38 @@ test('MAR-08: un almacen que lee pero no escribe se declara no persistente', () 
   }
 });
 
+// --- archivo de proyecto (cambio 006) --------------------------------------------------------
+const stCirculo4 = { ...Estado.DEFAULTS, forma: 'circulo', w: 4, h: 4, igualar: true, modo: 'relleno', grosor: 1, capa: 0, zoom: 40, rel: false };
+
+test('MAR-19: el archivo de proyecto lleva la app, la version, la forma y las marcas (cadena de referencia)', () => {
+  const texto = Estado.aArchivo(stCirculo4, 'circulo|4|4|relleno|||', new Set(['0,0,0', '0,2,1']));
+  assert.equal(texto,
+    '{"app":"formas-mc","version":1,"forma":{"forma":"circulo","w":4,"h":4,"igualar":true,"modo":"relleno",' +
+    '"grosor":1,"esfera":"esfera","orient":"plano","capa":0},"marcas":{"firma":"circulo|4|4|relleno|||","porCapa":{"0":[0,0,2,1]}}}');
+});
+
+test('MAR-19: el archivo lleva solo los parametros de geometria y la capa, no el zoom ni la vista', () => {
+  const o = JSON.parse(Estado.aArchivo(stCirculo4, 'f', new Set()));
+  assert.deepEqual(Object.keys(o.forma), [...Estado.CLAVES_GEO, 'capa']);
+  for (const k of ['zoom', ...Estado.VISTA]) assert.equal(k in o.forma, false, `${k} no va en el archivo`);
+  assert.equal(o.app, 'formas-mc');
+  assert.equal(o.version, Estado.VERSION_ARCHIVO);
+});
+
+test('MAR-19: el formato del archivo usa el mismo formato compacto de marcas que el navegador', () => {
+  const hechos = new Set(['0,1,1', '1,3,3']);
+  const o = JSON.parse(Estado.aArchivo(stCirculo4, 'circulo|4|4|relleno|||', hechos));
+  assert.deepEqual(o.marcas, Estado.compactarMarcas('circulo|4|4|relleno|||', hechos));
+});
+
+test('MAR-19: el nombre del archivo dice la forma y el tamano', () => {
+  const nombre = o => Estado.nombreArchivoProyecto({ ...Estado.DEFAULTS, ...o });
+  assert.equal(nombre({ forma: 'circulo', w: 30, h: 30 }), 'formas-mc-circulo-30x30.json');
+  assert.equal(nombre({ forma: 'rectangulo', w: 14, h: 10 }), 'formas-mc-rectangulo-14x10.json');
+  assert.equal(nombre({ forma: 'esfera', w: 11, esfera: 'esfera' }), 'formas-mc-esfera-11.json');
+  assert.equal(nombre({ forma: 'esfera', w: 16, esfera: 'cupula' }), 'formas-mc-cupula-16.json');
+});
+
 test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);

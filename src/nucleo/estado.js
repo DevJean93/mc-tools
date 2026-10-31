@@ -138,9 +138,30 @@ const Estado = (() => {
     return marcasDesde(leerJSON(almacen, KEY_MARCAS), f, capas);
   }
 
+  // --- archivo de proyecto ---------------------------------------------------------------
+  // Un proyecto es la forma (sus parametros de geometria y la capa actual) y las marcas, en el mismo
+  // formato compacto que el navegador. No lleva el zoom ni la vista: son preferencias del dispositivo.
+  const APP_ARCHIVO = 'formas-mc';
+  const VERSION_ARCHIVO = 1;
+
+  function aArchivo(st, firma, hechos) {
+    const forma = {};
+    for (const k of CLAVES_GEO) forma[k] = st[k];
+    forma.capa = st.capa;
+    return JSON.stringify({ app: APP_ARCHIVO, version: VERSION_ARCHIVO, forma, marcas: compactarMarcas(firma, hechos) });
+  }
+
+  // formas-mc-circulo-30x30.json, formas-mc-esfera-11.json, formas-mc-cupula-16.json
+  function nombreArchivoProyecto(st) {
+    const def = Formas.obtener(st.forma) || {};
+    const que = def.variantes ? st.esfera : st.forma;
+    return `formas-mc-${que}-${def.es3D ? st.w : st.w + 'x' + st.h}.json`;
+  }
+
   return {
     LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
+    VERSION_ARCHIVO, aArchivo, nombreArchivoProyecto,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;
