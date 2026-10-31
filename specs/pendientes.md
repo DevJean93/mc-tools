@@ -1,25 +1,20 @@
 # Pendientes e ideas
 
-Lo que se ha hablado pero todavía no es una propuesta. Cuando algo se decide, pasa a
+Lo que se ha hablado pero todavía no está decidido. Cuando algo se decide, pasa a
 `specs/cambios/NNN-…/propuesta.md` con `/sdd-proponer` y se quita de aquí.
 
-## Ofrecido al usuario, sin respuesta
+## Propuestas en borrador, sin aclarar
 
-- **Números del panel de materiales en negrita**, como las cifras del lienzo (área MAT).
-- **Reglas fijas al desplazar** (sticky): con mucho zoom las reglas salen de la vista; hoy la
-  posición se ve en la línea de información al pasar el ratón o tocar un bloque.
+Las ideas de la auditoría inicial ya son propuestas en `Borrador`, cada una con sus preguntas
+abiertas. El siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
-(La regla relativa sin negativos ya es una propuesta: `cambios/001-regla-relativa-sin-negativos/`.)
-
-## Ideas de la auditoría inicial, sin empezar
-
-- Guardar y cargar un proyecto en un archivo JSON.
-- Enlace para compartir una forma con sus parámetros en el hash de la URL.
-- Guías de chunk cada 16 bloques sobre la rejilla.
-- Altura Y por capa en las formas 3D.
-- Ficha imprimible con la forma numerada y los materiales.
-- Varios materiales por forma.
-- Formas guardadas como plantillas (presets).
+- `006-guardar-cargar-proyecto` — guardar y cargar un proyecto en un archivo (área MAR).
+- `007-enlace-para-compartir` — enlace con los parámetros de la forma (área FOR).
+- `008-guias-de-chunk` — guía cada 16 bloques sobre la rejilla (área NUM).
+- `009-altura-y-por-capa` — altura Y de cada capa en las formas 3D (área NUM).
+- `010-ficha-imprimible` — ficha imprimible con la forma numerada y los materiales (área MAT).
+- `011-varios-materiales` — varios materiales por forma (área MAT).
+- `012-plantillas` — formas guardadas como plantillas (área FOR).
 
 ## Por decidir
 
