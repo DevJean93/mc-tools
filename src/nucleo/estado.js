@@ -154,6 +154,16 @@ const Estado = (() => {
   const MSG_NO_PROYECTO = 'No es un proyecto de Formas MC. Elige un archivo guardado con «Guardar proyecto».';
   const MSG_VERSION_NUEVA = 'Este proyecto es de una versión más nueva de Formas MC. Actualiza la app para abrirlo.';
 
+  // Forma validada a partir de un objeto crudo (de un archivo o de un enlace): los parametros de
+  // geometria y la capa, con las mismas reglas que lo guardado en el navegador. Se reutiliza
+  // `cargar` con un almacen de solo lectura, asi no hay dos validaciones que puedan divergir.
+  function formaValidada(crudo) {
+    const st = cargar({ leer: k => (k === KEY ? JSON.stringify(crudo) : null), escribir: () => false });
+    const forma = {};
+    for (const k of [...CLAVES_GEO, 'capa']) forma[k] = st[k];
+    return forma;
+  }
+
   // Lee el texto de un archivo de proyecto. Devuelve { ok: true, forma, marcas } o
   // { ok: false, motivo, mensaje } sin tocar nada. Los valores de la forma se validan con las
   // mismas reglas que lo guardado en el navegador (los fuera de rango se recortan y los desconocidos
@@ -167,10 +177,31 @@ const Estado = (() => {
     }
     if (o.version > VERSION_ARCHIVO) return { ok: false, motivo: 'version-nueva', mensaje: MSG_VERSION_NUEVA };
     const crudo = o.forma && typeof o.forma === 'object' && !Array.isArray(o.forma) ? o.forma : {};
-    const st = cargar({ leer: k => (k === KEY ? JSON.stringify(crudo) : null), escribir: () => false });
-    const forma = {};
-    for (const k of [...CLAVES_GEO, 'capa']) forma[k] = st[k];
-    return { ok: true, forma, marcas: o.marcas && typeof o.marcas === 'object' ? o.marcas : null };
+    return { ok: true, forma: formaValidada(crudo), marcas: o.marcas && typeof o.marcas === 'object' ? o.marcas : null };
+  }
+
+  // --- enlace para compartir -------------------------------------------------------------
+  // La forma en el fragmento de la direccion: los parametros de geometria y la capa, sin marcas, zoom
+  // ni vista. Los booleanos van como 1 y 0.
+  const CLAVES_ENLACE = [...CLAVES_GEO, 'capa'];
+
+  function aEnlace(st) {
+    return CLAVES_ENLACE.map(k => `${k}=${encodeURIComponent(typeof st[k] === 'boolean' ? +st[k] : st[k])}`).join('&');
+  }
+
+  // Forma validada de un fragmento, o null si no es de forma (vacio o sin ninguna de sus claves).
+  // Lo que falta toma el valor por defecto de la app y no lo guardado en el navegador, para que un
+  // mismo enlace dé la misma forma en cualquier sitio.
+  function desdeEnlace(fragmento) {
+    if (typeof fragmento !== 'string') return null;
+    const p = new URLSearchParams(fragmento.replace(/^#/, ''));
+    const crudo = {};
+    for (const k of CLAVES_ENLACE) {
+      if (!p.has(k)) continue;
+      const v = p.get(k);
+      crudo[k] = k === 'igualar' ? (v === '1' ? true : v === '0' ? false : v) : v;
+    }
+    return Object.keys(crudo).length ? formaValidada(crudo) : null;
   }
 
   // formas-mc-circulo-30x30.json, formas-mc-esfera-11.json, formas-mc-cupula-16.json
@@ -183,7 +214,7 @@ const Estado = (() => {
   return {
     LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
-    VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto,
+    VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;

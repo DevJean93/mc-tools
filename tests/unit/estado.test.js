@@ -277,6 +277,73 @@ test('MAR-19, MAR-21: guardar y leer devuelve la misma forma y las mismas marcas
   assert.deepEqual(r.marcas, Estado.compactarMarcas(firma, hechos));
 });
 
+// Enlace para compartir: la forma en el fragmento de la direccion (sin marcas, zoom ni vista).
+const FORMA_ENLACE = { ...Estado.DEFAULTS, forma: 'circulo', w: 30, h: 30, igualar: true, modo: 'hueco', grosor: 2, capa: 0 };
+const FRAGMENTO_REF = 'forma=circulo&w=30&h=30&igualar=1&modo=hueco&grosor=2&esfera=esfera&orient=plano&capa=0';
+
+test('FOR-16: la forma actual se escribe como la cadena de referencia', () => {
+  assert.equal(Estado.aEnlace(FORMA_ENLACE), FRAGMENTO_REF);
+});
+
+test('FOR-16: el enlace lleva los parametros de geometria y la capa, y nada de zoom ni vista', () => {
+  const claves = [...new URLSearchParams(Estado.aEnlace({ ...FORMA_ENLACE, zoom: 40, rel: false, tramos: false, distEjes: false })).keys()];
+  assert.deepEqual(claves, [...Estado.CLAVES_GEO, 'capa']);
+});
+
+test('FOR-16: los booleanos van como 1 y 0', () => {
+  assert.match(Estado.aEnlace({ ...FORMA_ENLACE, igualar: false }), /&igualar=0&/);
+  assert.match(Estado.aEnlace({ ...FORMA_ENLACE, igualar: true }), /&igualar=1&/);
+});
+
+test('FOR-17: la cadena de referencia se lee como la misma forma (ida y vuelta)', () => {
+  const r = Estado.desdeEnlace(FRAGMENTO_REF);
+  for (const k of [...Estado.CLAVES_GEO, 'capa']) assert.equal(r[k], FORMA_ENLACE[k], k);
+  assert.deepEqual(Estado.desdeEnlace(Estado.aEnlace(FORMA_ENLACE)), Estado.desdeEnlace(FRAGMENTO_REF));
+});
+
+test('FOR-17: una esfera con capa y variante tambien hace el viaje de ida y vuelta', () => {
+  const st = { ...Estado.DEFAULTS, forma: 'esfera', w: 11, h: 11, esfera: 'cupula', capa: 4 };
+  const r = Estado.desdeEnlace(Estado.aEnlace(st));
+  assert.equal(r.forma, 'esfera'); assert.equal(r.w, 11); assert.equal(r.esfera, 'cupula'); assert.equal(r.capa, 4);
+});
+
+test('FOR-17: los valores no validos se recortan o caen en el valor por defecto', () => {
+  const r = Estado.desdeEnlace('forma=nada&w=999&modo=raro&grosor=-3&capa=zzz&orient=zigzag');
+  assert.equal(r.forma, 'circulo');
+  assert.equal(r.w, 200);
+  assert.equal(r.modo, 'relleno');
+  assert.equal(r.grosor, 1);
+  assert.equal(r.capa, 0);
+  assert.equal(r.orient, Estado.DEFAULTS.orient);
+  assert.equal(Estado.desdeEnlace('forma=circulo&w=abc').w, Estado.DEFAULTS.w);
+});
+
+test('FOR-17: una esfera de mas de 100 se recorta a 100', () => {
+  assert.equal(Estado.desdeEnlace('forma=esfera&w=150').w, 100);
+});
+
+test('FOR-17: lo que falta toma el valor por defecto de la app, no lo guardado', () => {
+  const r = Estado.desdeEnlace('forma=rombo&w=20');
+  assert.equal(r.forma, 'rombo'); assert.equal(r.w, 20);
+  assert.equal(r.modo, Estado.DEFAULTS.modo); assert.equal(r.grosor, Estado.DEFAULTS.grosor);
+});
+
+test('FOR-17: un fragmento que no es de forma se ignora (devuelve null)', () => {
+  for (const f of ['', '#', 'hola', 'x=1', 'zoom=40&rel=0', undefined, null]) assert.equal(Estado.desdeEnlace(f), null, String(f));
+});
+
+test('FOR-17: con # delante, claves repetidas o texto raro no falla', () => {
+  assert.equal(Estado.desdeEnlace('#' + FRAGMENTO_REF).w, 30);
+  assert.equal(Estado.desdeEnlace('forma=rombo&forma=circulo').forma, 'rombo');
+  assert.doesNotThrow(() => Estado.desdeEnlace('forma=%E0%A4%A&w=%&=&&'));
+  assert.equal(Estado.desdeEnlace('forma=<script>&w=20').forma, 'circulo');
+});
+
+test('FOR-17: el enlace no trae zoom ni vista aunque se pidan', () => {
+  const r = Estado.desdeEnlace('forma=circulo&zoom=40&rel=0&tramos=0');
+  assert.deepEqual(Object.keys(r), [...Estado.CLAVES_GEO, 'capa']);
+});
+
 test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);
