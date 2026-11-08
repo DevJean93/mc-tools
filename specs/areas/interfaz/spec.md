@@ -84,6 +84,15 @@ archivos (PUB-01), en la fuente monoespaciada de las cifras y sin partirse en do
 atenuado del pie, que tiene contraste suficiente sobre el fondo. Sirve para comprobar en cualquier
 dispositivo qué versión se está ejecutando.
 
+### INT-12
+
+En «Vista» hay una casilla «Guías de chunk». Al activarla aparecen dos campos numéricos, «X del centro»
+y «Z del centro», con etiqueta visible, texto de 16 px y objetivo táctil de 44 px en móvil, que admiten
+enteros negativos; junto a ellos una ayuda que, sin coordenadas, pide la X y la Z del bloque central y,
+con ellas, recuerda la convención del centro 2×2 y el sentido de los ejes. La leyenda del dibujo
+muestra la guía solo cuando hay guías dibujadas. Al desactivar la casilla los campos se ocultan pero
+conservan su valor. La casilla y las coordenadas se recuerdan al recargar.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -144,3 +153,8 @@ dispositivo qué versión se está ejecutando.
 - 2026-11-08: la versión va en el pie y no en el menú ni en un aviso: es información de consulta,
   no una acción, y el pie ya es el sitio de lo secundario. Se muestra siempre, para comprobar en la
   tablet si llegó lo nuevo sin herramientas de desarrollo.
+- 2026-11-08: los campos de coordenadas aparecen solo al activar la casilla (divulgación progresiva) y
+  usan `type="number"` sin `inputmode`: en iOS el teclado numérico no tiene el signo menos y las
+  coordenadas pueden ser negativas. No se pisa el campo que se está tecleando al repintar el panel.
+- 2026-11-08: la entrada de la leyenda aparece solo con guías visibles, para que la leyenda no hable de
+  algo que no se ve.

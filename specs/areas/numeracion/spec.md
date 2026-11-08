@@ -109,12 +109,43 @@ haya desplazado hacia abajo y la izquierda mientras se haya desplazado hacia la 
 la regla relativa si está activa. Sin desplazamiento no hay reglas añadidas y el dibujo es
 exactamente igual que siempre.
 
+### NUM-16
+
+Con «Guías de chunk» activada y las coordenadas del centro escritas, el dibujo traza una guía en cada
+frontera de chunk que cae dentro de él: entre dos columnas cuya X del mundo pasa de un múltiplo de 16
+menos 1 a un múltiplo de 16, y lo mismo entre filas con la Z. La X del mundo crece hacia la derecha
+(este) y la Z hacia abajo (sur), como en el mapa del juego, y las coordenadas son las del bloque
+central (con centro 2×2, las del bloque de arriba a la izquierda). La guía es una línea de 2 px en un
+color propio (`--guia-chunk`) que no usa el resto del dibujo, por encima de la rejilla; se distingue de
+las líneas cada 5 por el color y por el grosor, y la leyenda la explica. No hay guías en los bordes del
+dibujo, solo entre dos celdas. Son las mismas en todas las capas de una forma 3D y salen también en el
+PNG exportado.
+
+Ejemplo: círculo de 16 con el centro en X = 100, Z = −40: la columna 0 está en X = 93, así que hay una
+guía vertical entre las columnas 2 y 3 (X 95 y 96); la fila 0 está en Z = −47, y hay una guía
+horizontal entre las filas 14 y 15 (Z −33 y −32). Con tamaño impar (15) y X = 0, la guía cae justo a la
+izquierda del bloque central.
+
+### NUM-17
+
+Con la opción activada pero sin la X o la Z (o con alguna vacía) no se dibuja ninguna guía y el panel
+pide escribir la X y la Z del bloque central. Con la opción desactivada el dibujo es idéntico, píxel a
+píxel, al de antes de que existieran las guías. Las guías son una opción de vista: no cambian la
+forma, la firma de las marcas ni las marcas, y cambiarlas no saca avisos; tampoco viajan en el enlace
+(FOR-16) ni en el archivo de proyecto (MAR-19). La casilla y las coordenadas se guardan con las demás
+opciones de vista; un estado guardado antes de existir las guías carga igual, con la opción apagada y
+sin coordenadas. Las coordenadas son enteros de −30 000 000 a 30 000 000: se redondean, se recortan, y
+un texto o un campo vacío es «sin coordenada».
+
 ## Casos límite
 
 - Franja de 2 (tamaño par): centro 2×2 y la regla relativa muestra `1 | 1` en la franja.
 - Franja de 1 (tamaño impar): el eje central y la regla relativa valen 1 en el bloque central.
 - Círculo 30: 14 bloques por lado → el eje llega a 15, no a 14.
 - Triángulo 21×15: las filas 1 a 3 no tienen sitio para cifras internas.
+- Guías de chunk en un dibujo de 200: 13 guías por eje, de 16 en 16, ninguna en los bordes.
+- Una forma sin ninguna frontera de chunk dentro (p. ej. 10×10 con el centro en X = 5) o de un solo bloque no tiene guías ni falla.
+- Con coordenadas negativas las guías caen donde toca (X = −1 con centro 1×1: a la derecha del centro).
 
 ## Fuera de alcance
 
@@ -154,3 +185,18 @@ exactamente igual que siempre.
 - 2026-10-29: las reglas fijas no reciben eventos y son `aria-hidden`; el puntero llega al lienzo
   principal y la geometría (`zonaRegla`, `zonaCelda`) ya sabe qué parte tapan. Solo aparecen con
   desplazamiento, para que sin él el dibujo sea idéntico píxel a píxel.
+- 2026-11-08: las guías se alinean a las coordenadas del mundo a partir de la X y la Z del bloque
+  central, que el jugador lee con F3. Se descartó contarlas desde el borde del dibujo: no coincide con
+  los chunks reales, que es lo que pide el motivo (granjas, redstone).
+- 2026-11-08: se activan con una casilla en «Vista», como las demás opciones, y al activarla aparecen
+  los campos de coordenadas, así se pueden ocultar sin borrar los números.
+- 2026-11-08: la guía tiene color propio (fucsia `#E879F9`) y 2 px de grosor: se distingue de la línea
+  cada 5 por las dos cosas, no solo por el color (constitución, principio 7).
+- 2026-11-08: con tamaño par se pide la coordenada del bloque de arriba a la izquierda del centro 2×2:
+  es la convención que ya fija `Render.centro` y la ayuda del campo lo dice.
+- 2026-11-08: las guías son una opción de vista y no viajan en el enlace ni en el archivo de proyecto;
+  si se quisieran compartir, sería otra propuesta.
+- 2026-11-08: `% 16 === 0` ya vale para múltiplos negativos (`-16 % 16` es `-0`), así que `fronterasChunk`
+  no necesita un módulo positivo. Se descubrió al intentar una mutación que no se detectaba.
+- 2026-11-08: `fronterasChunk` es una función pura de `Render` y la capa se registra tras la rejilla;
+  sin la opción o sin las dos coordenadas no pinta nada, así que el dibujo no cambia.
