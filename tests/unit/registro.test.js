@@ -1,5 +1,5 @@
 // Registro de formas: una forma nueva entra sin tocar shapes.js ni estado.js.
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Formas = require('../../src/nucleo/formas.js');
 const Estado = require('../../src/nucleo/estado.js');

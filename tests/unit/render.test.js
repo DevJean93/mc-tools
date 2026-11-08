@@ -1,5 +1,5 @@
 // Etiquetas de los tramos dentro del dibujo (calculo puro, sin canvas).
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Render = require('../../src/dibujo/render.js');
 const Formas = require('../../src/nucleo/formas.js');

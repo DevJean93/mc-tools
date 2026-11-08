@@ -1,5 +1,5 @@
 // Historial: pilas de deshacer/rehacer con limite (sin DOM).
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Historial = require('../../src/nucleo/historial.js');
 

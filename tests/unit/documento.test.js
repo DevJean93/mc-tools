@@ -1,5 +1,5 @@
 // Flujo del documento: generar, marcas, historial, capas y guardado.
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert');
 const Documento = require('../../src/nucleo/documento.js');
 const Estado = require('../../src/nucleo/estado.js');

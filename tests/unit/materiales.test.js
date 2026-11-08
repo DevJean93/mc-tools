@@ -1,5 +1,5 @@
 // Materiales: conversion de bloques a stacks/shulkers/cofres y textos de progreso (sin DOM).
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Materiales = require('../../src/nucleo/materiales.js');
 

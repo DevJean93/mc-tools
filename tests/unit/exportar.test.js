@@ -1,5 +1,5 @@
 // Partes puras de la exportacion: la cabecera de cada capa y el aviso de capas muy grandes.
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Exportar = require('../../src/interfaz/exportar.js');
 const Formas = require('../../src/nucleo/formas.js');

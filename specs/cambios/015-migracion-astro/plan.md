@@ -133,7 +133,7 @@ autoalojadas y el despliegue.
 
 ## Tareas
 
-- [ ] T01 — Vitest como ejecutor. Test primero: `npm test` debe ejecutar los tests con `vitest run`
+- [x] T01 — Vitest como ejecutor. Test primero: `npm test` debe ejecutar los tests con `vitest run`
   (en rojo: aún no existe). Cambio: `vitest` fijado, `vitest.config.js`, los tests importan `test` de
   `vitest` en vez de `node:test` (CommonJS aún). Archivos: `package.json`, lockfile, `.gitignore`,
   `vitest.config.js`, `tests/unit/*.test.js`. Hecho cuando: 234 tests con los mismos nombres y

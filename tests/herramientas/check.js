@@ -1,7 +1,7 @@
 // Comprueba la sintaxis de todos los scripts (src y tests) sin ejecutarlos.
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
+const { spawnSync } = require('child_process');
 
 const raiz = path.join(__dirname, '..', '..');
 
@@ -20,11 +20,11 @@ const archivos = [...buscar(path.join(raiz, 'src')), ...buscar(path.join(raiz, '
 
 let fallos = 0;
 for (const archivo of archivos) {
-  try {
-    new vm.Script(fs.readFileSync(archivo, 'utf8'), { filename: archivo });
-  } catch (e) {
+  // node --check entiende tanto scripts clasicos como modulos ES (los tests ya usan import).
+  const r = spawnSync(process.execPath, ['--check', archivo], { encoding: 'utf8' });
+  if (r.status !== 0) {
     fallos++;
-    console.error(`FALLO ${path.relative(raiz, archivo)}: ${e.message}`);
+    console.error(`FALLO ${path.relative(raiz, archivo)}: ${r.stderr}`);
   }
 }
 console.log(`${archivos.length - fallos}/${archivos.length} scripts con sintaxis válida`);

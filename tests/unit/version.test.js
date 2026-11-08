@@ -1,5 +1,5 @@
 // Version de los archivos: huella del contenido en las direcciones locales de index.html y en el pie.
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Version = require('../herramientas/version.js');
 

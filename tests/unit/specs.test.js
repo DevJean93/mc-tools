@@ -1,5 +1,5 @@
 // Validador de las specs: el repositorio y los casos negativos en memoria.
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');

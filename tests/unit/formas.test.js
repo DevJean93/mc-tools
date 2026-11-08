@@ -1,4 +1,4 @@
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Formas = require('../../src/nucleo/formas.js');
 
@@ -90,11 +90,11 @@ test('FOR-08: parámetros inválidos fallan con mensaje claro o se recortan', ()
   assert.equal(gen({ forma: 'esfera', w: 999, esfera: 'esfera' }).capas.length, Formas.MAX_3D);
 });
 
-test('rendimiento: esfera Ø100 hueca (g=50)', { skip: !!process.env.CI }, () => {
+test('rendimiento: esfera Ø100 hueca (g=50)', () => {
   const t0 = performance.now();
   gen({ forma: 'esfera', w: 100, modo: 'hueco', grosor: 50, esfera: 'esfera' });
   assert.ok(performance.now() - t0 < 300);
-});
+}, { skip: !!process.env.CI });
 
 // --- contrato comun del registro ------------------------------------------------------
 test('FOR-11: contrato: todas las formas registradas generan, respetan su tamano y son simetricas', () => {

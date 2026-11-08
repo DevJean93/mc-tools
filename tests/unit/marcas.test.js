@@ -1,5 +1,5 @@
 // Marcas: solo bloques reales, por capa, con instantanea/restauracion (sin DOM).
-const test = require('node:test');
+import { test } from 'vitest';
 const assert = require('node:assert/strict');
 const Marcas = require('../../src/nucleo/marcas.js');
 
