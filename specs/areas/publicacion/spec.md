@@ -12,26 +12,18 @@ no cambien cómo se usa la app (sigue abriéndose con doble clic, sin instalaci�
 
 ### PUB-01
 
-Cada hoja de estilos y cada script **locales** que carga `index.html` lleva en su dirección una
-versión (`?v=…`), la misma en todos. Las direcciones externas (las fuentes de Google) no la llevan. La
-app sigue abriéndose con doble clic (`file://`) y carga todos sus archivos igual que sin versión.
-
-Ejemplo: `<script src="src/app.js?v=8edada70">`.
+(retirado en cambio 015) Las direcciones `?v=` escritas a mano: el build de Astro pone la huella en el
+nombre de cada archivo. El ID no se reutiliza.
 
 ### PUB-02
 
-La versión es una huella del contenido: SHA-256 de `index.html` sin sus marcas de versión (sin los
-`?v=` y con el `<span id="version">` del pie vacío) y de cada archivo local en el orden en que se
-carga, cada uno con su ruta delante, con los saltos de línea normalizados a LF; se usan los 8 primeros
-caracteres hexadecimales. Cambia si cambia cualquiera de esos archivos, también solo el HTML, y no
-cambia si no cambia ninguno. `npm run versionar` la calcula y la escribe en todas las direcciones y en
-el pie; ejecutarlo dos veces seguidas no cambia nada más, y conserva los saltos de línea del archivo.
+(retirado en cambio 015) La huella de `index.html` y `npm run versionar`: ya no hay ese paso manual. El ID
+no se reutiliza.
 
 ### PUB-03
 
-`npm test` falla si `index.html` no está al día y dice qué falla: una dirección local sin versión (con
-su nombre), versiones distintas entre direcciones, un pie sin versión o con otra, o una versión que no
-es la huella de los archivos actuales («no está al día: ejecuta npm run versionar»).
+(retirado en cambio 015) La prueba de «index.html al día»: sin el paso manual no tiene sentido. El ID no se
+reutiliza.
 
 ## Casos límite
 

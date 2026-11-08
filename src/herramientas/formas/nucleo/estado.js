@@ -1,7 +1,7 @@
 // Parametros de la aplicacion: valores por defecto, validacion, persistencia y firma de geometria.
 // El almacen se inyecta: Almacen.local() en la app, Almacen.memoria() en los tests.
-const Estado = (() => {
-  const Formas = typeof module !== 'undefined' ? require('./formas.js') : globalThis.Formas;
+import { Formas } from './formas.js';
+export const Estado = (() => {
 
   const KEY = 'mc-formas-v1';
   const KEY_MARCAS = KEY + ':marcas';
@@ -237,4 +237,3 @@ const Estado = (() => {
     VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace,
   };
 })();
-if (typeof module !== 'undefined') module.exports = Estado; else globalThis.Estado = Estado;

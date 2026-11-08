@@ -1,6 +1,6 @@
 // Menu lateral: mostrar/ocultar en escritorio (con preferencia recordada), hoja a pantalla
 // completa en movil, foco, Escape y barra inferior de secciones.
-const Menu = (() => {
+export const Menu = (() => {
   const CLAVE = 'mc-formas-v1:menu';
 
   function crear({ panel, boton, botonTexto, cerrar, nav, main, cuerpo, almacen, clave = CLAVE, consulta = '(max-width: 800px)' }) {
@@ -73,4 +73,3 @@ const Menu = (() => {
 
   return { crear, CLAVE };
 })();
-if (typeof module !== 'undefined') module.exports = Menu; else globalThis.Menu = Menu;

@@ -1,7 +1,7 @@
 // Dibujo de una capa en un <canvas>: medidas y una lista de capas de dibujo encadenables.
 // Anadir una superposicion nueva = Render.registrar(nombre, pintar, { despuesDe: 'otra' }),
 // sin tocar las capas existentes. Cada capa recibe (ctx, medidas, opciones, paleta).
-const Render = (() => {
+export const Render = (() => {
   // Margenes del dibujo (px). abs/rel: columnas de la regla izquierda; top*: filas de la regla superior.
   const LAYOUT = {
     abs: 34, rel: 38, sep: 8,
@@ -493,4 +493,3 @@ const Render = (() => {
     fronterasChunk, zonaRegla, zonaCelda, dibujarReglasFijas,
   };
 })();
-if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;

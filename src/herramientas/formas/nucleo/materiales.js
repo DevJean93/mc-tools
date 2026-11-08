@@ -1,5 +1,5 @@
 // Calculo puro de materiales: bloques -> stacks, shulkers, cofres y porcentajes. Sin DOM.
-const Materiales = (() => {
+export const Materiales = (() => {
   const STACK = 64;
   const SHULKER = 27 * STACK;      // 1728
   const COFRE_DOBLE = 54 * STACK;  // 3456
@@ -60,4 +60,3 @@ const Materiales = (() => {
 
   return { STACK, SHULKER, COFRE_DOBLE, resumen, textoResumenCentro, pct, fmtStacks };
 })();
-if (typeof module !== 'undefined') module.exports = Materiales; else globalThis.Materiales = Materiales;

@@ -5,7 +5,7 @@
 //   2 dedos -> pellizco con zoom anclado al punto medio; si la distancia no cambia, los
 //              dedos desplazan el dibujo. Los dedos pueden llegar en momentos distintos.
 // No conoce el estado: recibe solo los grupos de acciones que usa (dibujo, marcas, zoom).
-const EntradaTactil = (() => {
+export const EntradaTactil = (() => {
   const UMBRAL_TOQUE = 10;   // px de movimiento que convierten un toque en arrastre
 
   function conectar({ lienzo, contenedor, limites, limitar, dibujo, marcas, zoom }) {
@@ -122,4 +122,3 @@ const EntradaTactil = (() => {
 
   return { conectar, UMBRAL_TOQUE };
 })();
-if (typeof module !== 'undefined') module.exports = EntradaTactil; else globalThis.EntradaTactil = EntradaTactil;

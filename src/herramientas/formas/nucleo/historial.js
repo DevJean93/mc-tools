@@ -1,5 +1,5 @@
 // Pila de deshacer/rehacer con limite. Guarda instantaneas opacas: no sabe que contienen.
-const Historial = (() => {
+export const Historial = (() => {
   const MAX = 50;
 
   function crear(max = MAX) {
@@ -30,4 +30,3 @@ const Historial = (() => {
 
   return { crear, MAX };
 })();
-if (typeof module !== 'undefined') module.exports = Historial; else globalThis.Historial = Historial;

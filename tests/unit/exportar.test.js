@@ -1,8 +1,8 @@
 // Partes puras de la exportacion: la cabecera de cada capa y el aviso de capas muy grandes.
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Exportar = require('../../src/interfaz/exportar.js');
-const Formas = require('../../src/nucleo/formas.js');
+import assert from 'node:assert/strict';
+import { Exportar } from '../../src/herramientas/formas/interfaz/exportar.js';
+import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
 
 const ctx = extra => ({
   nombre: 'Esfera', dimensiones: '11 × 11 × 11', modoTexto: 'relleno', altura: () => null,

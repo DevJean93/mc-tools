@@ -1,20 +1,39 @@
-// Prueba E2E con Edge headless via CDP (Node 22+). Uso: node tests/e2e.js  (capturas en %TEMP%/formas-mc-e2e)
+// Prueba E2E con Edge headless via CDP (Node 22+). Uso: npm run e2e  (capturas en %TEMP%/formas-mc-e2e)
+// Construye el sitio (astro build), lo sirve con astro preview y navega a /mc-tools/formas/.
 const { spawn, spawnSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 const OUT = path.join(require('os').tmpdir(), 'formas-mc-e2e'); fs.mkdirSync(OUT, { recursive: true });
-const URL_APP = require('url').pathToFileURL(path.join(__dirname, '..', '..', 'index.html')).href;
+const RAIZ = path.join(__dirname, '..', '..');
+const ORIGEN = 'http://localhost:4321';
+const URL_PORTADA = ORIGEN + '/mc-tools/';
+const URL_APP = URL_PORTADA + 'formas/';
+const ASTRO = path.join(RAIZ, 'node_modules', 'astro', 'bin', 'astro.mjs');
 const EDGE = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const perfil = path.join(OUT, 'perfil');
-const edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9333', '--window-size=1400,1000', `--user-data-dir=${perfil}`, 'about:blank']);
+let preview = null;
+let edge = null;
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 // En Windows edge.kill() solo cierra el proceso padre: Edge relanza el navegador con otro PID y
 // sus hijos siguen vivos en el mismo puerto, y la siguiente ejecucion se conectaria a ese navegador
 // viejo (con su emulacion movil puesta). Se cierran por la carpeta de perfil, que es de esta prueba.
-const cerrar = () => {
+const cerrarEdge = () => {
   const comando = `Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" | Where-Object { $_.CommandLine -like '*${perfil}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
   try { spawnSync('powershell', ['-NoProfile', '-Command', comando], { stdio: 'ignore' }); } catch (e) { /* nada que cerrar */ }
-  edge.kill();
+  if (edge) edge.kill();
 };
+// astro preview tambien deja procesos hijos: se cierra el arbol entero.
+const cerrar = () => {
+  cerrarEdge();
+  if (preview) { try { spawnSync('taskkill', ['/PID', String(preview.pid), '/T', '/F'], { stdio: 'ignore' }); } catch (e) { /* ya cerrado */ } }
+};
+// Construye el sitio y lo sirve; espera a que responda.
+async function servir() {
+  const c = spawnSync(process.execPath, [ASTRO, 'build'], { cwd: RAIZ, stdio: 'inherit' });
+  if (c.status !== 0) throw new Error('astro build ha fallado');
+  preview = spawn(process.execPath, [ASTRO, 'preview', '--port', '4321', '--host', 'localhost'], { cwd: RAIZ, stdio: 'ignore' });
+  for (let i = 0; i < 60; i++) { try { if ((await fetch(URL_APP)).ok) return; } catch { /* aun no */ } await esperar(250); }
+  throw new Error('astro preview no responde en ' + URL_APP);
+}
 let ws, id = 0; const pend = new Map(); const errores = [];
 const send = (method, params = {}) => new Promise((res, rej) => { const i = ++id; pend.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params })); });
 const ev = async expr => { const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw new Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
@@ -34,6 +53,9 @@ const ctrl = k => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key:
 async function cargar() { await send('Page.navigate', { url: URL_APP }); await esperar(1200); }
 
 (async () => {
+  cerrarEdge();   // un Edge huerfano con este perfil haria que la prueba se conecte al navegador viejo
+  await servir();
+  edge = spawn(EDGE, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9333', '--window-size=1400,1000', `--user-data-dir=${perfil}`, 'about:blank']);
   let tabs;
   for (let i = 0; i < 40; i++) { try { tabs = await (await fetch('http://127.0.0.1:9333/json')).json(); break; } catch { await esperar(250); } }
   const pg = tabs.find(t => t.type === 'page');
@@ -577,18 +599,13 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
-  // INT-11, PUB-01: el pie muestra la version y todas las direcciones locales la llevan.
+  // INT-11: el pie muestra la version, en la fuente de las cifras y sin partirse.
   const versiones = await ev(`(() => {
-    const locales = [...document.querySelectorAll('script[src], link[rel="stylesheet"]')]
-      .map(e => e.getAttribute('src') || e.getAttribute('href')).filter(d => !/^(https?:)?\\/\\//.test(d));
     const pie = document.getElementById('version');
-    return { pie: pie ? pie.textContent : null, v: locales.map(d => new URLSearchParams(d.split('?')[1] || '').get('v')), n: locales.length,
-      cargado: typeof Estado === 'object' && typeof Documento === 'object' && !!document.getElementById('lienzo').width };
+    return { pie: pie ? pie.textContent : null, cargado: typeof Formas === 'object' && !!document.getElementById('lienzo').width };
   })()`);
-  const vApp = versiones.v[versiones.v.length - 1];
-  ok(versiones.n >= 19 && versiones.v.every(v => v && /^[0-9a-f]{8}$/.test(v) && v === vApp) && versiones.cargado,
-    `PUB-01: los ${versiones.n} archivos locales llevan la misma version (${vApp}) y la app carga con file://`);
-  ok(versiones.pie === `Versión ${vApp}`, `INT-11: el pie muestra la version de los archivos (${versiones.pie})`);
+  ok(versiones.cargado, 'La app carga (Formas expuesta y lienzo dibujado)');
+  ok(/^Versión \S+$/.test(versiones.pie), `INT-11: el pie muestra la version (${versiones.pie})`);
 
   // FOR-16, FOR-17, FOR-18, INT-10: enlace para compartir una forma (escritorio).
   // Para abrir un enlace hay que salir de la pagina: navegar solo cambiando el # no la recarga.

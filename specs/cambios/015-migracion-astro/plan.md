@@ -139,7 +139,7 @@ autoalojadas y el despliegue.
   `vitest.config.js`, `tests/unit/*.test.js`. Hecho cuando: 234 tests con los mismos nombres y
   `npm run specs` en verde, `check` y `e2e` sin cambios en verde. Commit: «Pruebas: pasan a Vitest sin
   cambiar nombres ni IDs (015 T01)».
-- [ ] T02 — Astro y módulos ES: `/formas/` idéntica. Test primero (rojo): el E2E apuntado a
+- [x] T02 — Astro y módulos ES: `/formas/` idéntica. Test primero (rojo): el E2E apuntado a
   `http://localhost:4321/mc-tools/formas/` con el arnés que arranca `astro preview`; y los tests
   unitarios con `import`. Cambio: `astro`, `typescript`, `@astrojs/check`, `astro.config.mjs`
   (`site`, `base`), `tsconfig.json`, `git mv` del código, módulos ES, `Base.astro` y

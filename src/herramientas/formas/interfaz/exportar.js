@@ -1,5 +1,5 @@
 // Exportacion a PNG de una capa o de todas. El navegador solo entra por `descargar(blob, nombre)`.
-const Exportar = (() => {
+export const Exportar = (() => {
   // Descarga real en el navegador: enlace temporal con el blob.
   function descargar(blob, nombre) {
     const a = document.createElement('a');
@@ -153,4 +153,3 @@ const Exportar = (() => {
 
   return { crear, descargar, cabecera, capaMasAnchaQue };
 })();
-if (typeof module !== 'undefined') module.exports = Exportar; else globalThis.Exportar = Exportar;

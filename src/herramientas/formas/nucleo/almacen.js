@@ -1,6 +1,6 @@
 // Almacenamiento clave/valor tras un adaptador: localStorage del navegador o memoria (tests).
 // Nunca lanza: si el navegador bloquea el almacenamiento, leer devuelve null y escribir false.
-const Almacen = (() => {
+export const Almacen = (() => {
   const PRUEBA = '__mc-formas-prueba';
 
   // Envuelve cualquier Storage (localStorage, sessionStorage...). `persistente: false` marca un
@@ -68,4 +68,3 @@ const Almacen = (() => {
 
   return { desde, memoria, local };
 })();
-if (typeof module !== 'undefined') module.exports = Almacen; else globalThis.Almacen = Almacen;

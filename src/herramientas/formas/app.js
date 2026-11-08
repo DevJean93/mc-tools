@@ -1,5 +1,26 @@
 // Raiz de composicion: crea los modulos, inyecta sus dependencias, conecta los eventos y arranca.
 // Aqui no hay reglas de negocio: solo cableado entre estado, documento, vistas y entradas.
+import { Almacen } from './nucleo/almacen.js';
+import { Estado } from './nucleo/estado.js';
+import { Formas } from './nucleo/formas.js';
+import { Documento } from './nucleo/documento.js';
+import { Materiales } from './nucleo/materiales.js';
+import { Avisos } from './interfaz/avisos.js';
+import { Panel } from './interfaz/panel.js';
+import { VistaMateriales } from './interfaz/vista-materiales.js';
+import { Exportar } from './interfaz/exportar.js';
+import { Menu } from './interfaz/menu.js';
+import { Render } from './dibujo/render.js';
+import { Zoom } from './dibujo/zoom.js';
+import { EntradaRaton } from './entrada/raton.js';
+import { EntradaTactil } from './entrada/tactil.js';
+import { EntradaTeclado } from './entrada/teclado.js';
+
+// Formas y Render quedan accesibles como globales para las pruebas E2E (que llaman a
+// Formas.generar y sustituyen Render.dibujar desde la consola de la pagina). La app no los usa.
+globalThis.Formas = Formas;
+globalThis.Render = Render;
+
 (() => {
   const $ = id => document.getElementById(id);
   const al = (id, evento, fn) => $(id).addEventListener(evento, fn);

@@ -27,7 +27,7 @@
  *   orient?: string, esfera?: string    // parametros propios de la forma activa (orientacion, variante)
  * }} Parametros
  */
-const Formas = (() => {
+export const Formas = (() => {
   const MAX_2D = 200, MAX_3D = 100, MAX_GROSOR = 50;
 
   /** @type {Map<string, {es3D:boolean, dimensiones:Function, llenar:Function}>} */
@@ -214,4 +214,3 @@ const Formas = (() => {
 
   return { generar, contar, registrar, obtener, existe, FORMAS, MAX_2D, MAX_3D, MAX_GROSOR };
 })();
-if (typeof module !== 'undefined') module.exports = Formas; else globalThis.Formas = Formas;

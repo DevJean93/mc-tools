@@ -1,8 +1,8 @@
 // Etiquetas de los tramos dentro del dibujo (calculo puro, sin canvas).
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Render = require('../../src/dibujo/render.js');
-const Formas = require('../../src/nucleo/formas.js');
+import assert from 'node:assert/strict';
+import { Render } from '../../src/herramientas/formas/dibujo/render.js';
+import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
 
 const capa = p => Formas.generar({ modo: 'relleno', grosor: 1, ...p }).capas[0];
 const etiquetas = (p, distEjes = true) => Render.etiquetasTramosDentro(capa(p), distEjes);

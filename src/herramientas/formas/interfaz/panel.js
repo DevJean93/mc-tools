@@ -1,8 +1,8 @@
 // Enlace entre el formulario y los parametros: leer el panel a st y volcar st al panel.
 // No decide nada mas: quien llama sabe cuando regenerar.
-const Panel = (() => {
-  const Estado = typeof module !== 'undefined' ? require('../nucleo/estado.js') : globalThis.Estado;
-  const Formas = typeof module !== 'undefined' ? require('../nucleo/formas.js') : globalThis.Formas;
+import { Estado } from '../nucleo/estado.js';
+import { Formas } from '../nucleo/formas.js';
+export const Panel = (() => {
   const TOGGLES = Estado.VISTA;
   const CAMPOS = ['w', 'h', 'grosor'];
   const SELECTS = ['forma', 'igualar', 'modo', 'esfera', 'orient'];
@@ -135,4 +135,3 @@ const Panel = (() => {
 
   return { crear };
 })();
-if (typeof module !== 'undefined') module.exports = Panel; else globalThis.Panel = Panel;

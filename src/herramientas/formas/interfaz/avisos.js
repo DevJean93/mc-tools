@@ -1,6 +1,6 @@
 // Avisos de la interfaz: mensaje flotante con accion, error y nota fijas de cabecera y avisos para lectores.
 // Todo el DOM se inyecta, asi el resto de modulos no lo toca directamente.
-const Avisos = (() => {
+export const Avisos = (() => {
   function crear({ caja, texto, boton, error, anuncio, nota, notaTexto }) {
     let temporizador = null;
 
@@ -30,4 +30,3 @@ const Avisos = (() => {
 
   return { crear };
 })();
-if (typeof module !== 'undefined') module.exports = Avisos; else globalThis.Avisos = Avisos;

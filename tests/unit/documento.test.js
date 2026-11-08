@@ -1,9 +1,9 @@
 // Flujo del documento: generar, marcas, historial, capas y guardado.
 import { test } from 'vitest';
-const assert = require('node:assert');
-const Documento = require('../../src/nucleo/documento.js');
-const Estado = require('../../src/nucleo/estado.js');
-const Almacen = require('../../src/nucleo/almacen.js');
+import assert from 'node:assert';
+import { Documento } from '../../src/herramientas/formas/nucleo/documento.js';
+import { Estado } from '../../src/herramientas/formas/nucleo/estado.js';
+import { Almacen } from '../../src/herramientas/formas/nucleo/almacen.js';
 
 function montar(almacen = Almacen.memoria()) {
   const st = Estado.cargar(almacen);

@@ -1,6 +1,6 @@
 // Bloques marcados como construidos. Sin DOM: recibe las capas y valida contra ellas.
 // Clave de cada bloque: "capa,x,y".
-const Marcas = (() => {
+export const Marcas = (() => {
   const clave = (c, x, y) => `${c},${x},${y}`;
 
   function crear(inicial = []) {
@@ -70,4 +70,3 @@ const Marcas = (() => {
 
   return { crear, clave };
 })();
-if (typeof module !== 'undefined') module.exports = Marcas; else globalThis.Marcas = Marcas;

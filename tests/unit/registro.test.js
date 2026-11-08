@@ -1,9 +1,9 @@
 // Registro de formas: una forma nueva entra sin tocar shapes.js ni estado.js.
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Formas = require('../../src/nucleo/formas.js');
-const Estado = require('../../src/nucleo/estado.js');
-const Almacen = require('../../src/nucleo/almacen.js');
+import assert from 'node:assert/strict';
+import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
+import { Estado } from '../../src/herramientas/formas/nucleo/estado.js';
+import { Almacen } from '../../src/herramientas/formas/nucleo/almacen.js';
 
 test('FOR-09: registrar una forma nueva la hace disponible en toda la app', () => {
   const antes = [...Formas.FORMAS];

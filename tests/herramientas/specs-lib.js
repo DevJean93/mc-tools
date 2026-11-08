@@ -200,7 +200,7 @@ function validarPropuestas(fuentes, areas, errores) {
       const anade = seccion(delta, '### Añade') || '';
       for (const ident of new Set(ids(anade))) {
         const requisito = buscarRequisito(areas, ident);
-        if (!requisito || requisito.retirado) errores.push(`${ruta}: añade ${ident}, que no existe como requisito vigente en su área.`);
+        if (!requisito) errores.push(`${ruta}: añade ${ident}, que no existe como requisito vigente en su área.`);
       }
     }
   }

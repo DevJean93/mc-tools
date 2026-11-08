@@ -1,0 +1,22 @@
+---
+// Estructura común de todas las páginas: cabecera del documento, aviso de Mojang y pie con la versión.
+interface Props { titulo: string; descripcion: string }
+const { titulo, descripcion } = Astro.props;
+---
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1B2336">
+<meta name="description" content={descripcion}>
+<title>{titulo}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+</head>
+<body>
+<slot />
+<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión dev</span></footer>
+</body>
+</html>

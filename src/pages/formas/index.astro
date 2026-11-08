@@ -1,17 +1,11 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1B2336">
-<meta name="description" content="Planificador de formas en bloques para Minecraft: círculos, rectángulos, triángulos, rombos, hexágonos, esferas y cúpulas con numeración y lista de materiales.">
-<title>Formas MC</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="src/estilos.css?v=5b304101">
-</head>
-<body>
+---
+import Base from '../../layouts/Base.astro';
+import '../../herramientas/formas/estilos.css';
+---
+<Base
+  titulo="Formas MC"
+  descripcion="Planificador de formas en bloques para Minecraft: círculos, rectángulos, triángulos, rombos, hexágonos, esferas y cúpulas con numeración y lista de materiales."
+>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-izq" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-der" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
@@ -184,25 +178,8 @@
   <a href="#secForma"><svg class="ico" aria-hidden="true"><use href="#i-forma"/></svg>Forma</a>
   <a href="#secMat"><svg class="ico" aria-hidden="true"><use href="#i-cajas"/></svg>Materiales</a>
 </nav>
-<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión 5b304101</span></footer>
 
-<script src="src/nucleo/almacen.js?v=5b304101"></script>
-<script src="src/nucleo/formas.js?v=5b304101"></script>
-<script src="src/nucleo/estado.js?v=5b304101"></script>
-<script src="src/nucleo/historial.js?v=5b304101"></script>
-<script src="src/nucleo/marcas.js?v=5b304101"></script>
-<script src="src/nucleo/materiales.js?v=5b304101"></script>
-<script src="src/interfaz/avisos.js?v=5b304101"></script>
-<script src="src/interfaz/vista-materiales.js?v=5b304101"></script>
-<script src="src/interfaz/panel.js?v=5b304101"></script>
-<script src="src/nucleo/documento.js?v=5b304101"></script>
-<script src="src/dibujo/render.js?v=5b304101"></script>
-<script src="src/dibujo/zoom.js?v=5b304101"></script>
-<script src="src/interfaz/exportar.js?v=5b304101"></script>
-<script src="src/interfaz/menu.js?v=5b304101"></script>
-<script src="src/entrada/raton.js?v=5b304101"></script>
-<script src="src/entrada/tactil.js?v=5b304101"></script>
-<script src="src/entrada/teclado.js?v=5b304101"></script>
-<script src="src/app.js?v=5b304101"></script>
-</body>
-</html>
+<script>
+  import '../../herramientas/formas/app.js';
+</script>
+</Base>

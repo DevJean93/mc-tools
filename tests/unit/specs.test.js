@@ -1,9 +1,9 @@
 // Validador de las specs: el repositorio y los casos negativos en memoria.
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const fs = require('fs');
-const path = require('path');
-const Specs = require('../herramientas/specs-lib.js');
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import Specs from '../herramientas/specs-lib.js';
 
 const raiz = path.join(__dirname, '..', '..');
 
@@ -204,6 +204,15 @@ test('specs: avisa si una propuesta archivada añade un ID que no existe', () =>
     'specs/cambios/archivo/001-prueba/propuesta.md': propuesta({ estado: 'Hecha', delta: `### Añade\n\n- \`${FOR2}\`: algo.\n` }),
   });
   assert.ok(contiene(errores(fuentes), FOR2));
+});
+
+test('specs: acepta una propuesta archivada que añadió un ID retirado después', () => {
+  const retirado = area('FOR', requisito(FOR1) + requisito(FOR2, '(retirado en cambio 002) Ya no aplica.'));
+  const fuentes = base({
+    'specs/areas/formas/spec.md': retirado,
+    'specs/cambios/archivo/001-prueba/propuesta.md': propuesta({ estado: 'Hecha', delta: `### Añade\n\n- \`${FOR2}\`: algo.\n` }),
+  });
+  assert.deepEqual(errores(fuentes), []);
 });
 
 test('specs: la cobertura asocia cada ID con los tests que lo citan', () => {

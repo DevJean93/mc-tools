@@ -1,7 +1,7 @@
 // Historial: pilas de deshacer/rehacer con limite (sin DOM).
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Historial = require('../../src/nucleo/historial.js');
+import assert from 'node:assert/strict';
+import { Historial } from '../../src/herramientas/formas/nucleo/historial.js';
 
 test('MAR-04: empieza vacio y no devuelve nada que deshacer', () => {
   const h = Historial.crear();

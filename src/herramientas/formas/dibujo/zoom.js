@@ -1,8 +1,8 @@
 // Zoom del dibujo: anclaje al puntero, ajuste a la ventana y alejado automatico.
 // No conoce el estado global: mide y consulta la geometria por `dibujo`, pide y fija el
 // zoom por `zoom` (obtener/fijar); avisa del redibujo con `alDibujar()`.
-const Zoom = (() => {
-  const Estado = typeof module !== 'undefined' ? require('../nucleo/estado.js') : globalThis.Estado;
+import { Estado } from '../nucleo/estado.js';
+export const Zoom = (() => {
   const NIVELES = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48];
 
   function crear({ lienzo, contenedor, limites, dibujo, zoom, alDibujar }) {
@@ -71,4 +71,3 @@ const Zoom = (() => {
 
   return { crear };
 })();
-if (typeof module !== 'undefined') module.exports = Zoom; else globalThis.Zoom = Zoom;

@@ -1,7 +1,7 @@
 // Materiales: conversion de bloques a stacks/shulkers/cofres y textos de progreso (sin DOM).
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Materiales = require('../../src/nucleo/materiales.js');
+import assert from 'node:assert/strict';
+import { Materiales } from '../../src/herramientas/formas/nucleo/materiales.js';
 
 test('MAT-01: 208 bloques son 3 stacks y 16 sueltos', () => {
   const r = Materiales.resumen([208], [0]);

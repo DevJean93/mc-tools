@@ -3,15 +3,20 @@
   "private": true,
   "license": "UNLICENSED",
   "version": "0.2.0",
-  "description": "Planificador de formas en bloques para Minecraft, sin dependencias.",
+  "description": "Planificador de formas en bloques para Minecraft (sitio estático con Astro).",
   "scripts": {
-    "check": "node tests/herramientas/check.js",
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
     "test": "vitest run",
     "e2e": "node tests/e2e/e2e.js",
-    "specs": "vitest run tests/unit/specs.test.js",
-    "versionar": "node tests/herramientas/version.js"
+    "specs": "vitest run tests/unit/specs.test.js"
   },
   "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "astro": "6.4.8",
+    "typescript": "5.9.3",
     "vitest": "3.2.7"
   }
 }

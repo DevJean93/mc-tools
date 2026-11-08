@@ -1,6 +1,7 @@
 // Pinta en HTML el resultado de Materiales: totales, tabla por capa y barra de progreso.
 // Solo presentacion: los numeros los calcula materiales.js.
-const VistaMateriales = (() => {
+import { Materiales } from '../nucleo/materiales.js';
+export const VistaMateriales = (() => {
   function crear({ materiales, tabla, barra, progreso, lienzo }) {
     function pintar(r, capa, textos = {}) {
       // `textos.sinMarcas` (la ficha impresa) quita todo lo que habla de lo construido: solo el total.
@@ -48,4 +49,3 @@ const VistaMateriales = (() => {
 
   return { crear };
 })();
-if (typeof module !== 'undefined') module.exports = VistaMateriales; else globalThis.VistaMateriales = VistaMateriales;

@@ -1,7 +1,7 @@
 // Entrada de teclado: cursor de celdas, marcar, capas, zoom y atajos de deshacer.
 // El cursor vive aqui; la app solo lo consulta para dibujarlo.
 // Recibe solo los grupos de acciones que usa (dibujo, marcas, zoom, capas, historial).
-const EntradaTeclado = (() => {
+export const EntradaTeclado = (() => {
   function conectar({ lienzo, dibujo, marcas, zoom, capas, historial, documento = document }) {
     let cursor = null;
 
@@ -70,4 +70,3 @@ const EntradaTeclado = (() => {
 
   return { conectar };
 })();
-if (typeof module !== 'undefined') module.exports = EntradaTeclado; else globalThis.EntradaTeclado = EntradaTeclado;

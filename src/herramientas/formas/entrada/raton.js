@@ -1,6 +1,6 @@
 // Entrada de raton y lapiz: clic/arrastre marca, clic derecho desmarca, Ctrl+rueda hace zoom.
 // No conoce el estado: recibe solo los grupos de acciones que usa (dibujo, marcas, zoom).
-const EntradaRaton = (() => {
+export const EntradaRaton = (() => {
   function conectar({ lienzo, contenedor, dibujo, marcas, zoom }) {
     let trazo = null;   // { valor, cambio, id } mientras se pinta
 
@@ -67,4 +67,3 @@ const EntradaRaton = (() => {
 
   return { conectar };
 })();
-if (typeof module !== 'undefined') module.exports = EntradaRaton; else globalThis.EntradaRaton = EntradaRaton;

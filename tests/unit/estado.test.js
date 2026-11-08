@@ -1,9 +1,9 @@
 // Estado: validacion, valores por defecto y marcas, con un almacen en memoria (sin DOM).
 import { test } from 'vitest';
-const assert = require('node:assert/strict');
-const Estado = require('../../src/nucleo/estado.js');
-const Almacen = require('../../src/nucleo/almacen.js');
-const Formas = require('../../src/nucleo/formas.js');
+import assert from 'node:assert/strict';
+import { Estado } from '../../src/herramientas/formas/nucleo/estado.js';
+import { Almacen } from '../../src/herramientas/formas/nucleo/almacen.js';
+import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
 
 const conDatos = (clave, valor) => Almacen.memoria({ [clave]: valor });
 
