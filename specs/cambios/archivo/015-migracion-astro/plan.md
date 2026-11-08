@@ -97,7 +97,7 @@ autoalojadas y el despliegue.
 - [x] Spec y test primero; IDs `PUB-04`..`PUB-10` en los tests.
 - [x] `mc-formas-v1*` y la firma de marcas sin cambios, con test de cadenas de referencia (`PUB-09`).
 - [x] Accesibilidad y móvil en la portada (44 px, contraste, 390 px, `prefers-reduced-motion`).
-- [ ] `check`, `test`, `e2e` en verde; capturas y comparación píxel a píxel revisadas (al terminar).
+- [x] `check`, `test`, `e2e` en verde; capturas y comparación píxel a píxel revisadas (al terminar).
 - [x] Dependencias nuevas solo las de la enmienda: `astro`, `vitest`, `typescript`, `@astrojs/check`,
       `@fontsource/*`; versiones exactas.
 
@@ -178,9 +178,9 @@ autoalojadas y el despliegue.
 - [x] T08 — Despliegue (`PUB-07`). Test primero: test unitario del YAML (rojo: no existe). Cambio:
   `.github/workflows/deploy.yml`, se borra `_config.yml`. Commit: «Despliegue por GitHub Actions
   (015 T08, PUB-07)».
-- [ ] T09 — Comparación final y capturas. Sin commit de código: píxel a píxel final, capturas en
+- [x] T09 — Comparación final y capturas. Sin commit de código: píxel a píxel final, capturas en
   `scratchpad/shots-015`, tamaño de `dist/`.
-- [ ] T10 — Archivar (`/sdd-archivar 015`): delta a `specs/areas/publicacion/spec.md` (PUB-04..10,
+- [x] T10 — Archivar (`/sdd-archivar 015`): delta a `specs/areas/publicacion/spec.md` (PUB-04..10,
   PUB-01..03 retirados, propósito, casos límite, fuera de alcance, decisiones), estado `Hecha`,
   archivo, `pendientes.md`. Commit: «SDD: archiva la propuesta 015 (migración a Astro)».
 - [ ] T11 — Documentación: `README.md`, `CLAUDE.md`, `specs/README.md` y skills `sdd-*`. Commit:

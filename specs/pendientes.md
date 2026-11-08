@@ -7,7 +7,7 @@ Lo que se ha hablado pero todavía no está decidido. Cuando algo se decide, pas
 
 Las ideas de la auditoría inicial ya son propuestas en `Borrador`, cada una con sus preguntas
 abiertas. Ya están hechas la 006 (guardar y cargar un proyecto), la 007 (enlace para compartir), la
-008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 013 (versionar por la caché) y la 014 (ficha en fondo claro). El
+008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 013 (versionar por la caché), la 014 (ficha en fondo claro) y la 015 (migración a Astro). El
 siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
 - `011-varios-materiales` — varios materiales por forma (área MAT).
@@ -15,7 +15,8 @@ siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
 ## Ideas sin propuesta
 
-- **Enlace pegado en la misma pestaña:** con la app ya abierta, pegar un enlace compartido en la barra
-  no lo aplica (no se escucha `hashchange`).
-- **Fuentes de Google:** la constitución dice «sin red», pero `index.html` carga fuentes de Google (sin
-  conexión se usan las del sistema). Decidir si se incluyen en el repositorio o se ajusta el texto.
+- **Migración a TypeScript, módulo a módulo:** los módulos ya son ES, pero conservan el objeto de espacio de
+  nombres y el envoltorio de función (`export const Formas = (() => {…})()`). Pasarlos a `.ts` con
+  exportaciones con nombre y tipos, de uno en uno y sin cambiar comportamiento; `astro check` ya está listo.
+- **Enlace pegado en la misma pestaña (`hashchange`):** con la app ya abierta, pegar un enlace compartido en
+  la barra no lo aplica (no se escucha `hashchange`).

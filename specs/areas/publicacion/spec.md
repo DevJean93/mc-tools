@@ -4,9 +4,10 @@ Código: `PUB`
 
 ## Propósito
 
-Cubre cómo llega a las personas lo que se despliega: que un navegador que ya tenía la app guardada
-reciba la versión nueva en cuanto se publica, y que las herramientas de desarrollo que lo garantizan
-no cambien cómo se usa la app (sigue abriéndose con doble clic, sin instalación).
+Cubre cómo se construye, se versiona y se despliega el sitio, y cómo llega a las personas: que un
+navegador que ya tenía la app guardada reciba la versión nueva en cuanto se publica, que lo publicado
+no dependa de otros dominios y que lo guardado por versiones anteriores siga abriéndose. El sitio se
+construye y se despliega solo; se abre desde la web o con `npm run dev` (ya no con doble clic).
 
 ## Requisitos
 
@@ -25,20 +26,76 @@ no se reutiliza.
 (retirado en cambio 015) La prueba de «index.html al día»: sin el paso manual no tiene sentido. El ID no se
 reutiliza.
 
+### PUB-04
+
+El sitio se construye con Astro y publica una portada en la raíz y cada herramienta en su propia ruta:
+Formas MC queda en `/formas/`. La portada lista las herramientas disponibles, con un enlace a cada una
+(objetivo táctil de 44 px como mínimo), el aviso de que el proyecto no es oficial de Mojang y el pie con la
+versión.
+
+Ejemplo: `https://devjean93.github.io/mc-tools/` (portada) y `…/mc-tools/formas/` (Formas MC).
+
+### PUB-05
+
+Cada archivo generado (script, hoja de estilos, fuente) lleva en su nombre una huella de su contenido,
+calculada por el build, así que un navegador que tenía la app guardada descarga lo nuevo sin pasos
+manuales. Las páginas HTML pueden tardar hasta unos 10 minutos en actualizarse (límite de GitHub Pages).
+
+Ejemplo: `/mc-tools/_astro/estilos.CZ-QhePy.css`.
+
+### PUB-06
+
+El pie de cada página muestra la versión: el commit corto (7 caracteres) desde el que se construyó el
+sitio en GitHub Actions, o `dev` en local.
+
+Ejemplo: «Versión 8b03d4e» en la web publicada, «Versión dev» con `npm run dev`.
+
+### PUB-07
+
+Al subir a `main`, GitHub Actions construye y despliega el sitio. Antes de publicar se ejecutan la
+comprobación de tipos (`npm run check`), las pruebas (`npm test`) y el build; si cualquiera falla, no se
+publica nada. Las acciones del flujo llevan una versión exacta. [verificación manual: el flujo solo se
+puede ejecutar en GitHub; los tests comprueban su forma (disparador, orden, dependencia y versiones) y la
+prueba real es el primer push a `main`.]
+
+### PUB-08
+
+Los enlaces para compartir creados antes de la migración (la raíz de la web con `#forma=…`) siguen
+abriendo la forma: la portada redirige a `/formas/` conservando el fragmento. La portada sin fragmento
+no redirige.
+
+### PUB-09
+
+Los datos guardados en el navegador (`mc-formas-v1*`, con la forma, las marcas y su firma) y los archivos de
+proyecto de versiones anteriores se cargan igual tras la migración. Las claves y el formato no cambian.
+
+### PUB-10
+
+Las fuentes de la app (IBM Plex Sans en 400, 500 y 600; JetBrains Mono en 400 y 600, subconjuntos latin y
+latin-ext) se sirven desde el propio sitio, no desde Google: con o sin conexión el texto y las cifras se ven
+con la misma tipografía, y la app no hace ninguna petición a otros dominios.
+
+
 ## Casos límite
 
-- Mismos archivos con saltos de línea CRLF (Windows) o LF (git, GitHub): misma huella.
-- Cambiar solo el texto del pie o un `?v=` a mano no cambia la huella, pero sí hace fallar la prueba
-  por versión distinta.
-- `index.html` en sí no lleva versión: tras desplegar, un navegador con la página guardada puede
-  tardar hasta unos 10 minutos en verlo (límite de GitHub Pages, no configurable). En cuanto lo ve,
-  el resto llega al instante.
+- La portada con un fragmento cualquiera (también uno que no es de forma, como `#hola`) redirige a
+  `/formas/` con ese fragmento; la app ignora el que no reconoce, igual que antes.
+- Una web construida en local (sin `GITHUB_SHA`) muestra `dev`; un valor que no parece un commit tampoco
+  se muestra.
+- Las páginas HTML no llevan huella en su nombre: tras desplegar, un navegador con la página guardada puede
+  tardar hasta unos 10 minutos en verla (límite de GitHub Pages, no configurable). En cuanto la ve, el
+  resto llega al instante.
+- Abrir `index.html` con doble clic (`file://`) ya no funciona: los scripts son módulos y el sitio vive
+  bajo `/mc-tools/`.
+- El origen no cambia (`devjean93.github.io`), así que el `localStorage` de antes sigue siendo el mismo
+  aunque la ruta pase a `/formas/`. En local, `localhost:4321` es otro origen y no ve lo guardado en la web.
 
 ## Fuera de alcance
 
 - Qué hace la app una vez cargada (áreas de formas, marcas, interfaz…).
 - El alojamiento en sí (GitHub Pages) y su configuración de caché, que no se puede cambiar desde el
-  repositorio.
+  repositorio. Cambiar Pages a «GitHub Actions» en Ajustes es un paso manual del propietario.
+- La migración a TypeScript (propuestas posteriores, módulo a módulo).
 
 ## Decisiones
 
@@ -62,3 +119,24 @@ reutiliza.
   ganchos de git: lo mínimo que cumple la spec.
 - 2026-11-08: la huella se fijó con una cadena de referencia calculada aparte, a mano, para que un
   cambio de algoritmo sea visible en los tests.
+- 2026-11-08 (cambio 015): se migra a Astro estático, sin framework de interfaz. Se retiran PUB-01, PUB-02
+  y PUB-03 (las direcciones `?v=`, la huella de `index.html`, `npm run versionar` y su prueba): el build
+  pone la huella en cada archivo (PUB-05) y ya no hay paso manual. Sus IDs no se reutilizan. Se descartaron
+  Vite a secas (menos estructura para varias herramientas) y SvelteKit, Next o React (obligan a reescribir
+  el lienzo y el DOM imperativo sin beneficio).
+- 2026-11-08 (cambio 015): Formas MC pasa a `/formas/` y la raíz es una portada; los enlaces antiguos
+  redirigen conservando la forma (PUB-08). Se descartó dejarla en la raíz hasta tener otra herramienta:
+  habría que mover los enlaces después, con más gente usándolos.
+- 2026-11-08 (cambio 015): la versión del pie (PUB-06) es el commit corto de `GITHUB_SHA`, sin llamar a git
+  en el build: en local siempre es `dev`, que basta para distinguirlo de lo publicado.
+- 2026-11-08 (cambio 015): las fuentes se autoalojan (PUB-10) con `@fontsource-variable`: las estáticas
+  (`@fontsource`) daban de 6 a 73 píxeles distintos por imagen frente a Google, que sirve fuentes
+  variables; con las variables la comparación da 0. Se declaran por peso y subconjunto en
+  `src/compartido/fuentes.css` porque el CSS por subconjunto de fontsource no trae `unicode-range`.
+- 2026-11-08 (cambio 015): las pruebas pasan a Vitest, con los mismos nombres e IDs. Se descartó conservar
+  `node --test` porque no entiende los alias ni las utilidades de Vite. Los módulos conservan el objeto
+  de espacio de nombres (`Formas.registrar`…) con su envoltorio de función, ahora como `export const`;
+  desenvolverlos va con la migración a TypeScript.
+- 2026-11-08 (cambio 015): el despliegue (PUB-07) usa `withastro/action` y `actions/deploy-pages` con
+  versiones exactas, y `npm run check` (`astro check`) y `npm test` antes del build. Se borra
+  `_config.yml` (Jekyll ya no aplica).

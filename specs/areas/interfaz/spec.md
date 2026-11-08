@@ -79,8 +79,8 @@ la pantalla, y dura 15 s para dar tiempo a copiarlo a mano.
 
 ### INT-11
 
-El pie de la app muestra la versión («Versión 8edada70»), la misma que llevan las direcciones de los
-archivos (PUB-01), en la fuente monoespaciada de las cifras y sin partirse en dos líneas, con el color
+El pie de la app muestra la versión («Versión 8b03d4e», o «Versión dev» en local), el commit desde el que
+se construyó el sitio (PUB-06), en la fuente monoespaciada de las cifras y sin partirse en dos líneas, con el color
 atenuado del pie, que tiene contraste suficiente sobre el fondo. Sirve para comprobar en cualquier
 dispositivo qué versión se está ejecutando.
 
