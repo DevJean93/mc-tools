@@ -613,6 +613,19 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`location.pathname`) === '/mc-tools/formas/', 'PUB-04: Formas MC vive en /formas/');
   await cargar();
 
+  // PUB-08: un enlace antiguo (la raiz de la web con #forma=...) redirige a /formas/ y abre la misma forma.
+  await ev(`localStorage.clear()`);
+  await send('Page.navigate', { url: 'about:blank' }); await esperar(250);
+  await send('Page.navigate', { url: URL_PORTADA + '#forma=circulo&w=30&h=30&igualar=1&modo=hueco&grosor=2&esfera=esfera&orient=plano&capa=0' }); await esperar(1800);
+  const enlaceViejo = await ev(`(() => { const v = id => (document.getElementById(id) || {}).value; return { ruta: location.pathname, hash: location.hash, forma: v('forma'), w: +v('w'),
+    modo: v('modo'), grosor: +v('grosor') }; })()`);
+  ok(enlaceViejo.ruta === "/mc-tools/formas/" && enlaceViejo.forma === "circulo" && enlaceViejo.w === 30 && enlaceViejo.modo === "hueco" && enlaceViejo.grosor === 2 && enlaceViejo.hash === "",
+    `PUB-08: un enlace antiguo en la raiz redirige a /formas/ y abre la misma forma (${JSON.stringify(enlaceViejo)})`);
+  await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
+  ok(await ev(`location.pathname`) === '/mc-tools/', 'PUB-08: la portada sin fragmento no redirige');
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   // INT-11: el pie muestra la version, en la fuente de las cifras y sin partirse.
   const versiones = await ev(`(() => {
     const pie = document.getElementById('version');

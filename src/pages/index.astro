@@ -7,6 +7,10 @@ const herramientas = [
 ];
 ---
 <Base titulo="Herramientas MC" descripcion="Herramientas no oficiales para Minecraft: planificador de formas en bloques.">
+  <!-- Enlaces de antes de la migración: la raíz con #forma=… pasa a /formas/ conservando el fragmento (PUB-08). -->
+  <script is:inline define:vars={{ destino: `${base}/formas/` }}>
+    if (location.hash.length > 1) location.replace(destino + location.hash);
+  </script>
   <header class="cab">
     <h1>Herramientas MC</h1>
     <p>Herramientas no oficiales para Minecraft</p>

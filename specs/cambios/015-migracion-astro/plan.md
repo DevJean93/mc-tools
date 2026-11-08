@@ -154,7 +154,7 @@ autoalojadas y el despliegue.
   «Formas MC» que enlaza a `/formas/`, aviso Mojang y pie (rojo: 404). Cambio: `index.astro` con la
   skill `ui-ux-pro-max`, estilos compartidos mínimos. Hecho cuando: E2E verde y capturas en móvil y
   escritorio. Commit: «Portada con la lista de herramientas (015 T03, PUB-04)».
-- [ ] T04 — Enlaces antiguos (`PUB-08`). Test primero: E2E que abre `/mc-tools/#forma=…` (cadena de
+- [x] T04 — Enlaces antiguos (`PUB-08`). Test primero: E2E que abre `/mc-tools/#forma=…` (cadena de
   `aEnlace`) y espera estar en `/formas/` con la misma forma y el fragmento limpio (rojo: se queda en la
   portada). Cambio: script de redirección de la portada. Commit: «Los enlaces antiguos redirigen a
   /formas/ (015 T04, PUB-08)».
