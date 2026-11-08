@@ -2,7 +2,7 @@
 
 ## Estado
 
-En revisión
+Aprobada
 
 ## Motivo
 
@@ -30,8 +30,11 @@ paso de compilación; la app funciona sin ejecutarla.
 
 - `PUB-01`: cada hoja de estilos y cada script **locales** que carga `index.html` lleva en su
   dirección una versión (`?v=…`), la misma en todos. Los archivos externos (las fuentes de Google) no.
-- `PUB-02`: la versión es una huella del contenido de esos archivos locales (en el orden en que
-  `index.html` los carga): cambia sola si cambia alguno y no cambia si no cambia ninguno. Un comando
+- `PUB-02`: la versión es una huella del contenido de `index.html` y de esos archivos locales (en
+  el orden en que `index.html` los carga): cambia sola si cambia alguno y no cambia si no cambia
+  ninguno. En `index.html` se ignoran las propias marcas de versión, para que la huella no dependa
+  de sí misma. Los saltos de línea se normalizan antes de calcularla, así que da lo mismo en
+  Windows (CRLF) que en Linux o en GitHub (LF). Un comando
   de npm la calcula y la escribe de una vez en todas las direcciones y en el pie (`INT-11`). Es
   idempotente: ejecutarlo dos veces seguidas no cambia nada más.
   Ejemplo: `src/app.js?v=7f3a9c1e` en todos los archivos; si no se toca nada, el comando deja
@@ -58,6 +61,10 @@ Nada.
   (`PUB-01`, `PUB-02`, `INT-11`).
 - **Dado** el comando ya ejecutado, **cuando** se ejecuta otra vez sin cambios, **entonces**
   `index.html` queda idéntico (`PUB-02`).
+- **Dado** un cambio solo en el HTML de `index.html` (sin tocar `src/`), **cuando** se ejecuta el
+  comando, **entonces** la versión cambia (`PUB-02`).
+- **Dado** los mismos archivos con saltos de línea CRLF o LF, **cuando** se calcula la huella,
+  **entonces** es la misma (`PUB-02`).
 - **Dado** un archivo de `src/` cambiado sin ejecutar el comando, **cuando** se ejecuta `npm test`,
   **entonces** falla y dice que la versión no está al día (`PUB-03`).
 - **Dado** un script local de `index.html` sin `?v=` o con otra versión, **cuando** se ejecuta
@@ -84,6 +91,12 @@ Nada.
   que lo encadene: lo mínimo que cumple la spec. Como la prueba exige que esté al día, olvidarlo
   se detecta. Al planificar se fijará el nombre del comando; ojo, `version` es un gancho
   propio de `npm version` y conviene evitarlo.
+
+- 2026-11-08 (revisión antes de aprobar): la huella incluye `index.html` sin sus marcas de versión,
+  porque un cambio solo en el HTML también debe verse en el pie; y normaliza los saltos de línea,
+  porque git guarda LF y en Windows la copia de trabajo tiene CRLF: sin normalizar, la prueba «al
+  día» fallaría según el equipo.
+- 2026-11-08: aprobada por el usuario.
 
 ## Preguntas abiertas
 
