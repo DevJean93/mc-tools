@@ -13,6 +13,7 @@ siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 - `011-varios-materiales` — varios materiales por forma (área MAT).
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
 - `016-litematica` — exportar e importar archivos de Litematica (áreas MAT, FOR e INT).
+- `017-portada` — portada más completa: presentación, imagen de la herramienta y funciones (área PUB).
 
 ## Ideas sin propuesta
 
