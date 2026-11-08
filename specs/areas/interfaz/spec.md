@@ -65,9 +65,17 @@ ocupa como mucho dos líneas.
 
 ### INT-09
 
-El menú tiene una sección «Proyecto» con dos botones, «Guardar proyecto» y «Cargar proyecto», con
+El menú tiene una sección «Proyecto» con los botones «Guardar proyecto» y «Cargar proyecto», con
 texto visible, nombre accesible y objetivo táctil de al menos 44 px en móvil. «Cargar proyecto» abre
 el selector de archivos del dispositivo; el selector en sí queda oculto.
+
+### INT-10
+
+La sección «Proyecto» tiene además un botón «Copiar enlace», de ancho completo debajo de los otros
+dos, con texto visible, nombre accesible y objetivo táctil de al menos 44 px en móvil. Copia el
+enlace de FOR-16 al portapapeles y avisa «Enlace copiado.». Si el navegador no deja usar el
+portapapeles, el aviso muestra el enlace entero, seleccionado y partido en líneas para que quepa en
+la pantalla, y dura 15 s para dar tiempo a copiarlo a mano.
 
 ## Casos límite
 
@@ -118,3 +126,11 @@ el selector de archivos del dispositivo; el selector en sí queda oculto.
   «Materiales»: guardar y cargar no son una opción de vista ni un cálculo. Reutiliza la rejilla de
   dos botones de los de exportar y los iconos de descarga y de subir, con una frase de ayuda que
   explica para qué sirve. La barra inferior del móvil no cambia: se llega desplazando el menú.
+- 2026-11-08: «Copiar enlace» ocupa las dos columnas de la rejilla porque es una acción distinta (no
+  descarga ni sube un archivo) y así los otros dos botones siguen siendo un par. La barra de
+  direcciones no se actualiza sola mientras se cambia la forma: en móvil está oculta y no sería
+  evidente cómo compartir. Se descartó el menú nativo de compartir para no tener dos caminos que
+  probar; puede ser otra propuesta.
+- 2026-11-08: el aviso de respaldo usa `overflow-wrap: anywhere` (en todos los avisos): una
+  dirección larga sin espacios no se partía y se salía de la pantalla, como mostró la captura en
+  móvil.

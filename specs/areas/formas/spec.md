@@ -99,12 +99,41 @@ aplica el mínimo ni cambia la forma; al teclear se aplica el valor escrito.
 
 Ejemplo: borrar el ancho y teclear «20» da 20, no 1 ni 2.
 
+### FOR-16
+
+La forma actual se puede expresar como un enlace: la dirección de la app con los parámetros de la
+forma en el fragmento (`#`): tipo, ancho, alto, proporción, modo, grosor, variante, orientación y
+capa actual. No lleva las marcas, el zoom ni las opciones de vista. Los booleanos van como `1` y `0`.
+
+Ejemplo: `…/mc-tools/#forma=circulo&w=30&h=30&igualar=1&modo=hueco&grosor=2&esfera=esfera&orient=plano&capa=0`.
+
+### FOR-17
+
+Al abrir la app con un enlace de forma, se abre esa forma. Los valores se validan con las mismas
+reglas que lo guardado en el navegador: los fuera de rango se recortan y los desconocidos caen en
+el valor por defecto de la app (no en lo que hubiera guardado). Un fragmento que no es de forma
+(vacío o sin ninguna de sus claves) se ignora y la app arranca como siempre, con el fragmento
+intacto. Tras aplicar un enlace, el fragmento se quita de la barra de direcciones para que recargar
+no pise los cambios posteriores.
+
+Ejemplo: `#forma=nada&w=999` abre el círculo por defecto con ancho 200.
+
+### FOR-18
+
+Si el enlace abre una forma con otra geometría que la guardada y había marcas, las marcas se borran
+como en cualquier cambio de geometría (MAR-05) y sale el aviso «Se abrió la forma del enlace. Tu
+progreso anterior se borró.» con «Deshacer», que devuelve de una vez la forma y las marcas
+anteriores. Si la geometría es la misma, las marcas se conservan y no hay aviso; si no había marcas,
+tampoco. Abrir un enlace ocupa un solo paso de historial, y uno que deja todo igual no ocupa ninguno.
+
 ## Casos límite
 
 - 2D en el máximo: círculo 200 → 31 428 bloques; hexágono 200 plano → 30 000.
 - 3D en el máximo: esfera Ø100 hueca con grosor 50 se genera en menos de 300 ms.
 - Rectángulo 10×10 hueco con grosor 1 → 36 bloques.
 - Grosor 50 en una forma pequeña se recorta al máximo real (7 en el círculo 16).
+- Un enlace con claves repetidas usa la primera; con texto mal codificado o con símbolos no falla y nunca se inserta como HTML.
+- Un enlace de una esfera con ancho 150 se recorta a 100.
 
 ## Fuera de alcance
 
@@ -126,3 +155,19 @@ Ejemplo: borrar el ancho y teclear «20» da 20, no 1 ni 2.
   se avisa, para que «hueco» nunca sea igual al sólido.
 - 2026-10-29: la cúpula se obtiene cortando las capas superiores de la esfera ya generada,
   no con una fórmula aparte.
+- 2026-11-08: el enlace lleva solo la forma, no las marcas: es corto y legible y no lo cortan los
+  chats. Lo construido se pasa con el archivo de proyecto (cambio 006).
+- 2026-11-08: abrir un enlace sustituye con aviso y «Deshacer», el mismo patrón que «Cargar
+  proyecto». Se descartó preguntar antes (interrumpe y exige un componente nuevo) y dar prioridad a
+  lo guardado (el enlace parecería no funcionar).
+- 2026-11-08: lo que falta en un enlace toma el valor por defecto de la app y no lo guardado, para
+  que el mismo enlace dé la misma forma en cualquier navegador.
+- 2026-11-08: la validación de la forma de un enlace y la de un archivo de proyecto es la misma
+  función (`formaValidada`, sobre `Estado.cargar`): ni el navegador, ni el archivo ni el enlace
+  pueden validar distinto.
+- 2026-11-08: el enlace se aplica después de generar lo guardado y no antes, para que haya un
+  estado anterior al que volver con «Deshacer». El coste es generar dos veces al arrancar, solo
+  cuando hay enlace.
+- 2026-11-08: el fragmento se quita tras aplicarlo para que recargar no deshaga el trabajo hecho
+  después. Un cambio de `#` con la app ya abierta (pegar un enlace en la misma pestaña) no recarga
+  la página y no se atiende: queda fuera de esta versión.

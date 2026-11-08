@@ -22,6 +22,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
 - **Zoom:** de 2 a 48 px por bloque con los botones −/+, el deslizador, `Ctrl` + rueda (hacia el puntero), pellizcando en pantallas táctiles o con `+`/`-` en el teclado. **Ajustar** (o `0`) encaja la capa entera en la ventana, y si la forma crece y deja de caber, el zoom se reduce solo. Con poco zoom se ocultan los números que no caben y la regla numera cada 2, 5, 10… bloques.
 - **En pantallas táctiles:** un toque corto marca el bloque, el toque en el número de una fila o columna de la regla la marca entera, arrastrar con un dedo mueve el dibujo (y la página cuando ya no cabe) y dos dedos hacen zoom.
 - **Proyecto:** «Guardar proyecto» descarga un archivo `.json` con la forma y lo construido, y «Cargar proyecto» lo recupera (con aviso y «Deshacer»). Sirve de copia de seguridad y para pasar la obra a otro dispositivo; funciona aunque el navegador no pueda guardar.
+- **Enlace para compartir:** «Copiar enlace» copia una dirección que abre la misma forma (tipo, tamaño, modo, grosor…) sin lo construido; para pasar también el progreso, guarda un proyecto.
 - **Exportar:** PNG de la capa actual o de todas las capas (una imagen por capa), con cabecera de forma, capa, bloques y fecha.
 
 Si cambias la geometría con bloques marcados, las marcas se limpian y aparece un aviso con **Deshacer**.
@@ -42,6 +43,8 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 - El progreso se guarda solo en el `localStorage` de ese navegador y equipo; borrar los datos del sitio lo elimina. Para no perderlo, guarda un proyecto en un archivo.
 - Las imágenes muy grandes (zoom alto + forma grande) pueden fallar al exportar: reduce el zoom.
 - Un solo material por forma.
+- El enlace no lleva las marcas. Abierta la app con doble clic, el enlace apunta al archivo de tu equipo: para compartirlo con otros hay que usar la web publicada.
+- Pegar un enlace en una pestaña con la app ya abierta no lo aplica: ábrelo en una pestaña nueva.
 
 ## Estructura
 
