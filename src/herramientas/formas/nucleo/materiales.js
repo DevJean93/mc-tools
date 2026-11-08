@@ -4,6 +4,20 @@ export const Materiales = (() => {
   const SHULKER = 27 * STACK;      // 1728
   const COFRE_DOBLE = 54 * STACK;  // 3456
 
+  // Bloques que se pueden elegir para el esquema de Litematica (MAT-17): lista corta con sus ID del juego.
+  // El primero es el de por defecto.
+  const BLOQUES = [
+    { id: 'minecraft:stone', nombre: 'Piedra' },
+    { id: 'minecraft:stone_bricks', nombre: 'Ladrillos de piedra' },
+    { id: 'minecraft:bricks', nombre: 'Ladrillos' },
+    { id: 'minecraft:oak_planks', nombre: 'Tablones de roble' },
+    { id: 'minecraft:glass', nombre: 'Cristal' },
+    { id: 'minecraft:white_wool', nombre: 'Lana blanca' },
+    { id: 'minecraft:white_concrete', nombre: 'Hormigón blanco' },
+    { id: 'minecraft:smooth_stone', nombre: 'Piedra lisa' },
+  ];
+  const BLOQUE_DEFECTO = BLOQUES[0].id;
+
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const fmtStacks = n => `${Math.floor(n / STACK)} × ${STACK}${n % STACK ? ' + ' + (n % STACK) : ''}`;
   const unidades = (n, porCaja) => ({ valor: n / porCaja, cajas: Math.ceil(n / porCaja) });
@@ -58,5 +72,5 @@ export const Materiales = (() => {
     return txt;
   }
 
-  return { STACK, SHULKER, COFRE_DOBLE, resumen, textoResumenCentro, pct, fmtStacks };
+  return { STACK, SHULKER, COFRE_DOBLE, BLOQUES, BLOQUE_DEFECTO, resumen, textoResumenCentro, pct, fmtStacks };
 })();
