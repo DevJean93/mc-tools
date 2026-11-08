@@ -392,6 +392,75 @@ test('NUM-17: las guias son una opcion de vista: no entran en la geometria, la f
   assert.equal(Estado.aArchivo(con, Estado.firma(con), new Set()), Estado.aArchivo(base, Estado.firma(base), new Set()));
 });
 
+// Altura Y de la base (cambio 009): una opcion de vista que da la altura de cada capa en las formas 3D.
+const forma3D = (extra = {}) => ({ ...Estado.DEFAULTS, forma: 'esfera', w: 11, h: 11, ...extra });
+
+test('NUM-19: por defecto no hay altura de la base', () => {
+  assert.equal(Estado.cargar(Almacen.memoria()).baseY, null);
+  assert.equal(Estado.DEFAULTS.baseY, null);
+});
+
+test('NUM-19: un estado guardado antes de este cambio carga igual y sin altura', () => {
+  // Cadena literal del formato anterior (con las guias de chunk de la 008, pero sin baseY).
+  const antiguo = '{"forma":"esfera","w":11,"h":11,"igualar":true,"modo":"relleno","grosor":1,"esfera":"cupula","orient":"plano","zoom":20,"rel":true,"tramos":true,"tramosDentro":false,"distEjes":true,"guiasChunk":false,"centroX":null,"centroZ":null,"capa":3}';
+  const st = Estado.cargar(conDatos('mc-formas-v1', antiguo));
+  assert.equal(st.forma, 'esfera'); assert.equal(st.w, 11); assert.equal(st.esfera, 'cupula'); assert.equal(st.capa, 3); assert.equal(st.zoom, 20);
+  assert.equal(st.baseY, null);
+});
+
+test('NUM-19: la altura se guarda y se recupera, tambien negativa y cero', () => {
+  for (const y of [64, -60, 0]) {
+    const almacen = Almacen.memoria();
+    const st = Estado.cargar(almacen);
+    st.baseY = y;
+    Estado.guardar(st, almacen);
+    assert.equal(Estado.cargar(almacen).baseY, y, String(y));
+  }
+});
+
+test('NUM-19: la altura se redondea, se recorta a +-30 000 000 y un texto o vacio es null', () => {
+  const con = obj => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(obj)));
+  assert.equal(con({ baseY: 63.6 }).baseY, 64);
+  assert.equal(con({ baseY: '-60' }).baseY, -60);
+  assert.equal(con({ baseY: 99999999999 }).baseY, 30000000);
+  assert.equal(con({ baseY: -99999999999 }).baseY, -30000000);
+  for (const malo of ['', 'alto', null, true, [], {}]) assert.equal(con({ baseY: malo }).baseY, null, JSON.stringify(malo));
+});
+
+test('NUM-19: la altura no entra en la geometria, la firma, el enlace ni el proyecto', () => {
+  assert.ok(!Estado.CLAVES_GEO.includes('baseY'));
+  const base = forma3D(), con = forma3D({ baseY: 64 });
+  assert.equal(Estado.firma(con), Estado.firma(base));
+  assert.equal(Estado.aEnlace(con), Estado.aEnlace(base));
+  assert.equal(Estado.aArchivo(con, Estado.firma(con), new Set()), Estado.aArchivo(base, Estado.firma(base), new Set()));
+});
+
+test('NUM-18: una esfera de 11 con la base en Y=64 tiene la capa 3 en Y=66 y la 11 en Y=74', () => {
+  const st = forma3D({ baseY: 64 });
+  assert.equal(Estado.alturaCapa(st, 0), 64);
+  assert.equal(Estado.alturaCapa(st, 2), 66);
+  assert.equal(Estado.alturaCapa(st, 10), 74);
+});
+
+test('NUM-18: en una cupula la base es su propia capa 1 (la que se apoya en el suelo)', () => {
+  const st = forma3D({ w: 16, h: 16, esfera: 'cupula', baseY: 70 });
+  assert.equal(Estado.alturaCapa(st, 0), 70);
+  assert.equal(Estado.alturaCapa(st, 7), 77);
+});
+
+test('NUM-18: con la base negativa la altura sigue contando hacia arriba', () => {
+  const st = forma3D({ baseY: -60 });
+  assert.equal(Estado.alturaCapa(st, 0), -60);
+  assert.equal(Estado.alturaCapa(st, 4), -56);
+  assert.equal(Estado.alturaCapa(st, 10), -50);
+});
+
+test('NUM-19: sin altura de la base, o en una forma 2D aunque haya una guardada, no hay altura de capa', () => {
+  assert.equal(Estado.alturaCapa(forma3D({ baseY: null }), 3), null);
+  assert.equal(Estado.alturaCapa({ ...Estado.DEFAULTS, forma: 'circulo', baseY: 64 }, 0), null);
+  assert.equal(Estado.alturaCapa({ ...Estado.DEFAULTS, forma: 'hexagono', baseY: 64 }, 0), null);
+});
+
 test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);

@@ -42,7 +42,7 @@ const Estado = (() => {
   const DEFAULTS = {
     forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1,
     esfera: variantes()[0] || '', orient: orientaciones()[0] || '', zoom: 26, rel: true, tramos: true,
-    tramosDentro: false, distEjes: true, guiasChunk: false, centroX: null, centroZ: null, capa: 0,
+    tramosDentro: false, distEjes: true, guiasChunk: false, centroX: null, centroZ: null, baseY: null, capa: 0,
   };
 
   const num = (v, min, max, def) => {
@@ -93,6 +93,7 @@ const Estado = (() => {
     st.capa = num(raw.capa, 0, 999, 0);
     st.centroX = coordenada(raw.centroX);
     st.centroZ = coordenada(raw.centroZ);
+    st.baseY = coordenada(raw.baseY);   // altura Y de la capa 1 (solo formas 3D), opcional
     for (const k of BOOLEANOS) if (typeof raw[k] === 'boolean') st[k] = raw[k];
     return st;
   }
@@ -215,6 +216,14 @@ const Estado = (() => {
     return Object.keys(crudo).length ? formaValidada(crudo) : null;
   }
 
+  // Altura Y de la capa i (0 = la base, la capa 1 que muestra la app, tambien en la cupula): la Y de la
+  // base mas i. Es null si la forma no es 3D o no hay Y de la base. No es geometria: no entra en la
+  // firma, el enlace ni el archivo de proyecto.
+  function alturaCapa(st, i) {
+    const def = Formas.obtener(st.forma) || {};
+    return def.es3D && st.baseY !== null && st.baseY !== undefined ? st.baseY + i : null;
+  }
+
   // formas-mc-circulo-30x30.json, formas-mc-esfera-11.json, formas-mc-cupula-16.json
   function nombreArchivoProyecto(st) {
     const def = Formas.obtener(st.forma) || {};
@@ -223,7 +232,7 @@ const Estado = (() => {
   }
 
   return {
-    LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp, coordenada,
+    LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp, coordenada, alturaCapa,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
     VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace,
   };
