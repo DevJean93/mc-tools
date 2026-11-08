@@ -5,6 +5,7 @@ import { Estado } from './nucleo/estado.js';
 import { Formas } from './nucleo/formas.js';
 import { Documento } from './nucleo/documento.js';
 import { Materiales } from './nucleo/materiales.js';
+import { Litematica } from './nucleo/litematica.js';
 import { Avisos } from './interfaz/avisos.js';
 import { Panel } from './interfaz/panel.js';
 import { VistaMateriales } from './interfaz/vista-materiales.js';
@@ -281,6 +282,26 @@ globalThis.Render = Render;
     try { doc.cargarProyecto(await archivo.text()); }
     catch (e) { avisos.avisar('No se pudo leer el archivo.'); }
     archivoProyecto.value = '';   // permite elegir otra vez el mismo archivo
+  });
+
+  // Litematica: la forma entera como esquema (sin las marcas) con el bloque elegido, y la vuelta: solo se
+  // importan los esquemas que descargo Formas MC. El archivo es binario, asi que se lee como bytes.
+  const archivoLitematica = $('archivoLitematica');
+  al('descargarLitematica', 'click', async () => {
+    try {
+      const nombre = Litematica.nombreArchivo(st);
+      const bytes = await Litematica.exportar({ st, capas: doc.capas(), bloque: st.bloque, ahora: Date.now() });
+      Exportar.descargar(new Blob([bytes], { type: 'application/octet-stream' }), nombre);
+      avisos.avisar(`Esquema descargado: ${nombre}`);
+    } catch (e) { avisos.mostrarError(`No se pudo crear el esquema (${e.message}).`); }
+  });
+  al('importarLitematica', 'click', () => archivoLitematica.click());
+  archivoLitematica.addEventListener('change', async () => {
+    const archivo = archivoLitematica.files[0];
+    if (!archivo) return;
+    try { doc.importarEsquema(await Litematica.leer(new Uint8Array(await archivo.arrayBuffer()))); }
+    catch (e) { avisos.avisar('No se pudo leer el archivo.'); }
+    archivoLitematica.value = '';   // permite elegir otra vez el mismo archivo
   });
 
   // Enlace para compartir: copia la direccion de la app con la forma actual. Si el navegador no deja

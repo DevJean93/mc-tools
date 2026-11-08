@@ -1695,6 +1695,147 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await ev(`document.getElementById('bloque').value === 'minecraft:stone'`), 'MAT-17: un bloque desconocido guardado vuelve a la piedra');
   await ev(`localStorage.clear()`); await cargar();
 
+  // MAT-15, MAT-16, FOR-19, INT-15: descargar e importar un esquema de Litematica.
+  const { pathToFileURL } = require('url');
+  const zlib = require('zlib');
+  const modulo = f => import(pathToFileURL(path.join(RAIZ, 'src', 'herramientas', 'formas', 'nucleo', f)).href);
+  const { Litematica } = await modulo('litematica.js');
+  const { Nbt } = await modulo('nbt.js');
+  const esquemasGuardados = () => fs.readdirSync(OUT).filter(f => /\.litematic$/.test(f));
+  const borrarEsquemas = () => { for (const f of esquemasGuardados()) fs.unlinkSync(path.join(OUT, f)); };
+  const esperarEsquema = async () => { for (let i = 0; i < 30 && !esquemasGuardados().length; i++) await esperar(150); await esperar(200); return esquemasGuardados(); };
+  // Descarga el esquema con el boton y devuelve { nombre, bytes, nbt } (el NBT ya leido), o null si no llego.
+  const descargarEsquema = async () => {
+    borrarEsquemas();
+    await ev(`document.getElementById('descargarLitematica').click()`);
+    const [nombre] = await esperarEsquema();
+    if (!nombre) return null;
+    const bytes = fs.readFileSync(path.join(OUT, nombre));
+    return { nombre, bytes, nbt: Nbt.leer(zlib.gunzipSync(bytes)) };
+  };
+  const regionEsq = e => e.nbt.v.Regions.v['Formas MC'].v;
+  const tamEsq = e => ['x', 'y', 'z'].map(k => regionEsq(e).Size.v[k].v);
+  // Bloques de cada capa (y) del esquema.
+  const porCapaEsq = e => {
+    const reg = regionEsq(e), [X, Y, Z] = tamEsq(e);
+    const idx = Litematica.desempaquetar(reg.BlockStates.v, Litematica.bitsPaleta(reg.BlockStatePalette.v.length), X * Y * Z);
+    return Array.from({ length: Y }, (_, y) => idx.slice(y * Z * X, (y + 1) * Z * X).filter(Boolean).length);
+  };
+  // Elige un archivo en el selector de importar, como si lo hubiera elegido el usuario.
+  const importarArchivo = bytes => ev(`(() => {
+    const b = Uint8Array.from(atob('${Buffer.from(bytes).toString('base64')}'), c => c.charCodeAt(0));
+    const i = document.getElementById('archivoLitematica'), dt = new DataTransfer();
+    dt.items.add(new File([b], 'esquema.litematic', { type: 'application/octet-stream' }));
+    i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`).then(() => esperar(500));
+  const elegirBloque = id => ev(`(() => { const b = document.getElementById('bloque'); b.value = '${id}'; b.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+
+  await ev(`localStorage.clear()`); await cargar(); borrarEsquemas();
+  const secLit = await ev(`(() => {
+    const s = document.getElementById('secProyecto'), d = document.getElementById('descargarLitematica'), i = document.getElementById('importarLitematica');
+    const b = document.getElementById('bloque'), f = document.getElementById('archivoLitematica'), c = document.getElementById('copiarEnlace');
+    if (!d || !i || !b || !f) return null;
+    const tieneIcono = e => !!e.querySelector('svg.ico use');
+    const etiqueta = b.closest('label');
+    return { dentro: [d, i, b, f].every(e => s.contains(e)), tras: !!(c.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING),
+      textoD: d.textContent.trim(), textoI: i.textContent.trim(), iconos: tieneIcono(d) && tieneIcono(i), tipos: d.type + i.type,
+      etiqueta: !!etiqueta && etiqueta.textContent.replace(/\\s+/g, ' ').trim().startsWith('Bloque del esquema de Litematica'),
+      ocultoYAccept: f.hidden && f.accept === '.litematic' };
+  })()`);
+  ok(secLit && secLit.dentro && secLit.tras && secLit.textoD === 'Descargar para Litematica' && secLit.textoI === 'Importar de Litematica' && secLit.iconos &&
+    secLit.etiqueta && secLit.ocultoYAccept, `INT-15: «Proyecto» tiene los botones de Litematica con icono y texto, el selector con etiqueta y el selector de archivos oculto (${JSON.stringify(secLit)})`);
+  const abreLit = await ev(`(() => { const i = document.getElementById('archivoLitematica'); window.__abrioLit = 0;
+    i.addEventListener('click', e => { e.preventDefault(); window.__abrioLit++; }); document.getElementById('importarLitematica').click(); return window.__abrioLit; })()`);
+  ok(abreLit === 1, 'INT-15: «Importar de Litematica» abre el selector de archivos del dispositivo');
+
+  // MAT-15, MAT-16: un círculo de 16 con una fila marcada; el esquema lleva la forma entera.
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  ok((await prog()).startsWith('Construidos: 16/208'), 'MAT-16: preparado un círculo de 16 con 16 marcas (' + await prog() + ')');
+  const marcasAntesEsq = await ev(`localStorage.getItem('mc-formas-v1:marcas')`), estadoAntesEsq = await ev(`localStorage.getItem('mc-formas-v1')`);
+  const circuloEsq = await descargarEsquema();
+  ok(circuloEsq && circuloEsq.nombre === 'circulo-16x16.litematic' && tamEsq(circuloEsq).join() === '16,1,16' && porCapaEsq(circuloEsq).join() === '208' &&
+    circuloEsq.nbt.v.Metadata.v.TotalBlocks.v === 208 && circuloEsq.nbt.v.Metadata.v.Name.v === 'Círculo / Óvalo 16×16' &&
+    regionEsq(circuloEsq).BlockStatePalette.v[1].Name.v === 'minecraft:stone',
+  `MAT-15: «Descargar para Litematica» baja ${circuloEsq && circuloEsq.nombre}: 16 × 1 × 16 con 208 bloques de piedra`);
+  ok(circuloEsq && circuloEsq.bytes[0] === 0x1f && circuloEsq.bytes[1] === 0x8b, 'MAT-15: el archivo es gzip (NBT comprimido)');
+  ok((await prog()).startsWith('Construidos: 16/208') && await ev(`localStorage.getItem('mc-formas-v1:marcas')`) === marcasAntesEsq &&
+    await ev(`localStorage.getItem('mc-formas-v1')`) === estadoAntesEsq && await ev(`document.getElementById('forma').value === 'circulo'`),
+  'MAT-16: descargar el esquema no cambia la forma, las marcas ni las opciones guardadas (' + await prog() + ')');
+  ok((await aviso()).texto.includes('circulo-16x16.litematic'), 'MAT-15: al descargar sale un aviso con el nombre del archivo (' + (await aviso()).texto + ')');
+
+  // MAT-15, MAT-17: una esfera de 11 con ladrillos; cada capa lleva los bloques que dice la app.
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input')); })()`); await esperar(300);
+  await ponerCampo('w', '11'); await esperar(500);
+  await elegirBloque('minecraft:bricks'); await esperar(200);
+  const totalesEsfera = await ev(`Formas.generar({ forma: 'esfera', w: 11, h: 11, modo: 'relleno', grosor: 1, esfera: 'esfera' }).totales`);
+  const esferaEsq = await descargarEsquema();
+  ok(esferaEsq && esferaEsq.nombre === 'esfera-11.litematic' && tamEsq(esferaEsq).join() === '11,11,11' && porCapaEsq(esferaEsq).join() === totalesEsfera.join() &&
+    regionEsq(esferaEsq).BlockStatePalette.v[1].Name.v === 'minecraft:bricks',
+  `MAT-15: una esfera de 11 baja 11 capas con los mismos bloques por capa que la app (${esferaEsq && porCapaEsq(esferaEsq).join(',')}) y el bloque elegido (ladrillos)`);
+
+  // FOR-19: importar lo descargado devuelve la misma forma y el mismo bloque (con aviso y Deshacer si se pierden marcas).
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input')); })()`); await esperar(300);
+  await ponerCampo('w', '16'); await esperar(500);
+  await elegirBloque('minecraft:glass'); await esperar(200);
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  ok((await prog()).startsWith('Construidos: 16/208') && await ev(`document.getElementById('bloque').value === 'minecraft:glass'`), 'FOR-19: preparado un círculo con marcas y cristal (' + await prog() + ')');
+  const marcasCirculo = await ev(`localStorage.getItem('mc-formas-v1:marcas')`);
+  await importarArchivo(esferaEsq.bytes);
+  const trasImportar = await aviso();
+  ok(await ev(`document.getElementById('forma').value === 'esfera' && document.getElementById('w').value === '11' && document.getElementById('bloque').value === 'minecraft:bricks'`) &&
+    (await prog()).startsWith('Capa: 0/') && trasImportar.accion && trasImportar.texto === 'Se importó la forma del esquema. Tu progreso anterior se borró.',
+  `FOR-19: importar el esquema de la esfera devuelve la misma forma y el mismo bloque, con aviso y Deshacer (${trasImportar.texto})`);
+  await ev(`document.getElementById('avisoAccion').click()`); await esperar(300);
+  ok(await ev(`document.getElementById('forma').value === 'circulo'`) && (await prog()).startsWith('Construidos: 16/') && await ev(`localStorage.getItem('mc-formas-v1:marcas')`) === marcasCirculo,
+    'FOR-19: «Deshacer» devuelve la forma y las marcas de antes de importar');
+  await shot('13-importar-esquema.png');
+
+  // FOR-19: lo que no es un esquema de Formas MC no cambia nada y dice por qué.
+  const intacto = async () => ({ f: await ev(`document.getElementById('forma').value + document.getElementById('w').value`), p: await prog(), b: await ev(`document.getElementById('bloque').value`) });
+  const antesInvalido = await intacto();
+  await importarArchivo(Buffer.from('{"app":"formas-mc","version":1}'));
+  const noEsq = await aviso();
+  ok(noEsq.texto === 'Este archivo no es un esquema de Litematica o está dañado.' && !noEsq.accion && JSON.stringify(await intacto()) === JSON.stringify(antesInvalido),
+    `FOR-19: un archivo que no es de Litematica se rechaza y no cambia nada (${noEsq.texto})`);
+  await importarArchivo(circuloEsq.bytes.subarray(0, 60));
+  ok((await aviso()).texto === 'Este archivo no es un esquema de Litematica o está dañado.' && JSON.stringify(await intacto()) === JSON.stringify(antesInvalido),
+    'FOR-19: un archivo dañado (gzip cortado) se rechaza y no cambia nada');
+  const esqAjeno = zlib.gzipSync(Buffer.from(Nbt.escribir(Nbt.compound({ Version: Nbt.int(6), Regions: Nbt.compound({}), Metadata: Nbt.compound({ Author: Nbt.string('Alex') }) }))));
+  await importarArchivo(esqAjeno);
+  const trasAjeno = await aviso();
+  ok(trasAjeno.texto === 'Este esquema no lo hizo Formas MC: solo se pueden importar los descargados desde aquí.' && JSON.stringify(await intacto()) === JSON.stringify(antesInvalido),
+    `FOR-19: un esquema de otro programa se rechaza con el motivo y no cambia nada (${trasAjeno.texto})`);
+  await shot('14-esquema-ajeno.png');
+  borrarEsquemas();
+  await ev(`localStorage.clear()`); await cargar();
+
+  // INT-15 en móvil: los botones y el selector caben, miden al menos 44 px y responden a un toque real.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  await cargar(); await esperar(300);
+  await ev(`document.getElementById('verMenu').click()`); await esperar(300);
+  await ev(`document.getElementById('descargarLitematica') && document.getElementById('descargarLitematica').scrollIntoView({ block: 'center' })`); await esperar(500);
+  const movilLit = await ev(`(() => {
+    const vw = document.documentElement.clientWidth, nav = document.querySelector('.navmovil').getBoundingClientRect();
+    const caja = id => { const e = document.getElementById(id); if (!e) return null; const r = e.getBoundingClientRect();
+      return { izq: Math.round(r.left), der: Math.round(r.right), alto: Math.round(r.height), abajo: Math.round(r.bottom), fuente: parseFloat(getComputedStyle(e).fontSize) }; };
+    return { d: caja('descargarLitematica'), i: caja('importarLitematica'), b: caja('bloque'), vw, nav: Math.round(nav.top), scroll: document.documentElement.scrollWidth };
+  })()`);
+  const cabeLit = c => c && c.alto >= 44 && c.izq >= 0 && c.der <= movilLit.vw && c.abajo <= movilLit.nav;
+  ok(cabeLit(movilLit.d) && cabeLit(movilLit.i) && cabeLit(movilLit.b) && movilLit.b.fuente >= 16 && movilLit.scroll <= movilLit.vw,
+    `INT-15: a 390 px los botones de Litematica y el selector caben, miden al menos 44 px y el selector tiene 16 px (${JSON.stringify(movilLit)})`);
+  await shot('15-litematica-movil.png');
+  borrarEsquemas();
+  const [bx, by] = await ev(`(() => { const r = document.getElementById('descargarLitematica').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bx, y: by, id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  ok((await esperarEsquema()).length === 1, 'INT-15: un toque real en «Descargar para Litematica» descarga el esquema en móvil');
+  borrarEsquemas();
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await ev(`localStorage.clear()`); await cargar();
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
 })().catch(e => { console.error(e); cerrar(); process.exit(1); });
