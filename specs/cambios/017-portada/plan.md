@@ -99,7 +99,7 @@ el JS de la app no se tocan). Lo nuevo:
 
 ## Tareas
 
-- [ ] T01 — Tests en rojo de `SIT-03` (funciones puras) y `SIT-01` (sin enlaces externos), luego
+- [x] T01 — Tests en rojo de `SIT-03` (funciones puras) y `SIT-01` (sin enlaces externos), luego
   `src/compartido/dibujoVivo.js`. Archivos: `src/compartido/dibujoVivo.js`, `tests/unit/portada.test.js`.
   Hecho cuando: pasan los tests nuevos. Commit: «SIT-03: dibujo en vivo de la portada (lógica y módulo)».
 - [ ] T02 — Tests E2E en rojo de `SIT-01..05` (y re-etiquetado de `PUB-04` a `SIT-01`), luego la portada
