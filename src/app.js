@@ -256,6 +256,22 @@
     archivoProyecto.value = '';   // permite elegir otra vez el mismo archivo
   });
 
+  // Enlace para compartir: copia la direccion de la app con la forma actual. Si el navegador no deja
+  // usar el portapapeles, el aviso muestra el enlace entero seleccionado para copiarlo a mano.
+  al('copiarEnlace', 'click', async () => {
+    const url = `${location.href.split('#')[0]}#${doc.enlace()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      avisos.avisar('Enlace copiado.');
+    } catch (e) {
+      const prefijo = 'Copia el enlace: ';
+      avisos.avisar(prefijo + url, null, 15000);
+      const texto = $('avisoTxt').firstChild, rango = document.createRange();
+      rango.setStart(texto, prefijo.length); rango.setEnd(texto, texto.length);
+      const seleccion = getSelection(); seleccion.removeAllRanges(); seleccion.addRange(rango);
+    }
+  });
+
   Menu.crear({
     panel: $('panel'), boton: $('verMenu'), botonTexto: $('verMenuTxt'), cerrar: $('cerrarMenu'),
     nav: document.querySelectorAll('.navmovil a'), main: document.querySelector('main'),
@@ -265,5 +281,8 @@
   // --- arranque ---------------------------------------------------------------------
   panel.poner(doc.grosorMax());
   doc.regenerar();
+  // Un enlace con la forma se abre despues de generar lo guardado, para poder deshacerlo; el
+  // fragmento se quita de la direccion para que recargar no pise lo que se haga despues.
+  if (doc.abrirEnlace(location.hash)) history.replaceState(null, '', location.pathname + location.search);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(dibujar);
 })();

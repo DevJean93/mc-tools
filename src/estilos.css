@@ -70,6 +70,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 button.icono { padding: 6px; min-width: 36px; }
 .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .botones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.botones .ancho { grid-column: 1 / -1; }
 
 :is(button, input, select, canvas, a):focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 

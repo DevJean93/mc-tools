@@ -6,13 +6,14 @@ const Avisos = (() => {
 
     function ocultar() { caja.hidden = true; }
 
-    function avisar(msg, accion) {
+    // `ms` cambia cuanto dura el aviso (p. ej. un enlace que hay que dar tiempo a copiar a mano).
+    function avisar(msg, accion, ms) {
       texto.textContent = msg;
       boton.hidden = !accion;
       boton.onclick = accion ? () => { ocultar(); accion(); } : null;
       caja.hidden = false;
       clearTimeout(temporizador);
-      temporizador = setTimeout(ocultar, accion ? 8000 : 5000);
+      temporizador = setTimeout(ocultar, ms || (accion ? 8000 : 5000));
     }
 
     function mostrarError(msg) { error.textContent = msg; error.hidden = false; }

@@ -577,6 +577,79 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // FOR-16, FOR-17, FOR-18, INT-10: enlace para compartir una forma (escritorio).
+  // Para abrir un enlace hay que salir de la pagina: navegar solo cambiando el # no la recarga.
+  const abrirEnlace = async fragmento => {
+    await send('Page.navigate', { url: 'about:blank' }); await esperar(250);
+    await send('Page.navigate', { url: URL_APP + (fragmento ? '#' + fragmento : '') }); await esperar(1500);
+  };
+  const formaVista = () => ev(`(() => ({ forma: document.getElementById('forma').value, w: +document.getElementById('w').value,
+    modo: document.getElementById('modo').value, grosor: +document.getElementById('grosor').value, hash: location.hash, href: location.href }))()`);
+  const sustituirPortapapeles = escribir => ev(`(() => { window.__copiado = null;
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: ${escribir} } }); })()`);
+  await ev(`localStorage.clear()`);
+
+  // FOR-17: abrir un enlace muestra esa forma y quita el # de la barra de direcciones.
+  await abrirEnlace('forma=circulo&w=30&modo=hueco&grosor=2');
+  const conEnlace = await formaVista();
+  ok(conEnlace.forma === 'circulo' && conEnlace.w === 30 && conEnlace.modo === 'hueco' && conEnlace.grosor === 2 && conEnlace.hash === '' && !conEnlace.href.includes('#'),
+    `FOR-17: abrir un enlace muestra la forma del enlace y deja la direccion sin # (${JSON.stringify(conEnlace)})`);
+  ok(await ev(`document.getElementById('lienzo').getBoundingClientRect().width > 0`) && (await prog()).startsWith('Construidos: 0/'), 'FOR-17: la forma del enlace se dibuja');
+
+  // INT-10, FOR-16: «Copiar enlace» deja la direccion con la forma actual y lo avisa.
+  const botonEnlace = await ev(`(() => { const b = document.getElementById('copiarEnlace'); if (!b) return null;
+    const s = document.getElementById('secProyecto'); return { texto: b.textContent.trim(), enSeccion: s.contains(b), oculto: b.hidden }; })()`);
+  ok(botonEnlace && botonEnlace.texto === 'Copiar enlace' && botonEnlace.enSeccion && !botonEnlace.oculto,
+    `INT-10: la seccion «Proyecto» tiene el boton «Copiar enlace» (${JSON.stringify(botonEnlace)})`);
+  await sustituirPortapapeles(`t => { window.__copiado = t; return Promise.resolve(); }`);
+  await ev(`document.getElementById('copiarEnlace').click()`); await esperar(300);
+  const copiado = await ev(`window.__copiado`);
+  ok(copiado === URL_APP + '#forma=circulo&w=30&h=30&igualar=1&modo=hueco&grosor=2&esfera=esfera&orient=plano&capa=0',
+    'FOR-16: «Copiar enlace» copia la direccion de la app con la forma actual -> ' + copiado);
+  ok((await aviso()).texto === 'Enlace copiado.', 'INT-10: al copiar sale «Enlace copiado.» -> ' + (await aviso()).texto);
+
+  // INT-10: sin portapapeles el aviso muestra el enlace entero, seleccionado.
+  await sustituirPortapapeles(`() => Promise.reject(new Error('sin permiso'))`);
+  await ev(`document.getElementById('copiarEnlace').click()`); await esperar(300);
+  const aMano = await ev(`(() => ({ aviso: document.getElementById('avisoTxt').textContent, seleccion: String(getSelection()),
+    visible: !document.getElementById('aviso').hidden }))()`);
+  ok(aMano.visible && aMano.aviso.includes(copiado) && aMano.seleccion.includes(copiado),
+    `INT-10: sin portapapeles el aviso muestra el enlace y lo deja seleccionado (${aMano.aviso.slice(0, 60)}…)`);
+  await shot('08-enlace-a-mano.png');
+
+  // FOR-17: valores no validos y fragmentos ajenos.
+  await ev(`localStorage.clear()`);
+  await abrirEnlace('forma=nada&w=999&grosor=-3');
+  const invalido = await formaVista();
+  ok(invalido.forma === 'circulo' && invalido.w === 200 && invalido.hash === '',
+    `FOR-17: un enlace con valores no validos arranca con valores validos (${JSON.stringify(invalido)})`);
+  await ev(`localStorage.clear()`);
+  await abrirEnlace('forma=rombo&w=12');
+  await abrirEnlace('hola');
+  const ajeno = await formaVista();
+  ok(ajeno.forma === 'rombo' && ajeno.w === 12 && ajeno.hash === '#hola',
+    `FOR-17: un fragmento que no es de forma se ignora: arranca con lo guardado y no lo quita (${JSON.stringify(ajeno)})`);
+
+  // FOR-18: con marcas y otra geometria, aviso con Deshacer que devuelve forma y marcas.
+  await ev(`localStorage.clear()`);
+  await abrirEnlace('forma=circulo&w=16&modo=relleno');
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(250);
+  ok((await prog()).startsWith('Construidos: 16/208'), 'FOR-18: preparado un circulo de 16 con una fila marcada -> ' + await prog());
+  await abrirEnlace('forma=circulo&w=16&modo=relleno&capa=0');
+  ok((await prog()).startsWith('Construidos: 16/208') && !(await aviso()).visible,
+    'FOR-18: con la misma geometria las marcas siguen y no sale ningun aviso -> ' + await prog());
+  await abrirEnlace('forma=rombo&w=20');
+  const trasEnlace = await aviso();
+  ok((await formaVista()).forma === 'rombo' && (await prog()).startsWith('Construidos: 0/') &&
+    trasEnlace.texto === 'Se abrió la forma del enlace. Tu progreso anterior se borró.' && trasEnlace.accion,
+  `FOR-18: con otra geometria se borran las marcas y sale el aviso con Deshacer (${trasEnlace.texto})`);
+  await ev(`document.getElementById('avisoAccion').click()`); await esperar(300);
+  ok((await formaVista()).forma === 'circulo' && (await prog()).startsWith('Construidos: 16/208'),
+    'FOR-18: «Deshacer» devuelve el circulo y sus marcas -> ' + await prog());
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');
@@ -606,6 +679,10 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     botonesProyecto.guardar.alto >= 44 && botonesProyecto.cargar.alto >= 44 &&
     botonesProyecto.guardar.izq >= 0 && botonesProyecto.cargar.der <= botonesProyecto.vw && botonesProyecto.bajoNav === false,
   `INT-09: en movil los botones de Proyecto se ven, caben y miden al menos 44 px (${JSON.stringify(botonesProyecto)})`);
+  const botonEnlaceMovil = await ev(`(() => { const b = document.getElementById('copiarEnlace'); if (!b) return null;
+    const r = b.getBoundingClientRect(), vw = document.documentElement.clientWidth; return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right), vw }; })()`);
+  ok(botonEnlaceMovil && botonEnlaceMovil.alto >= 44 && botonEnlaceMovil.izq >= 0 && botonEnlaceMovil.der <= botonEnlaceMovil.vw,
+    `INT-10: en movil «Copiar enlace» cabe y mide al menos 44 px (${JSON.stringify(botonEnlaceMovil)})`);
   await shot('06-proyecto-movil.png');
   await ev(`document.getElementById('cerrarMenu').click()`); await esperar(300);
 
