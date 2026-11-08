@@ -12,6 +12,7 @@ siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
 - `011-varios-materiales` — varios materiales por forma (área MAT).
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
+- `014-ficha-en-fondo-claro` — dibujos de la ficha imprimible en paleta para papel (área MAT).
 
 ## Por decidir
 
