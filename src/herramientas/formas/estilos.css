@@ -21,6 +21,7 @@
   --sel-fondo: rgba(34, 197, 94, .18);
   --sombra: rgba(0, 0, 0, .5);
   --borde-marca: #000;
+  --grilla: rgba(248, 250, 252, .05);   /* rejilla de bloques del fondo de la portada (SIT-05) */
 
   /* canvas */
   --lienzo: #0B1222;
@@ -64,6 +65,7 @@
   --sel-fondo: rgba(21, 128, 61, .16);
   --sombra: rgba(15, 23, 42, .25);
   --borde-marca: #475569;
+  --grilla: rgba(15, 23, 42, .06);
 
   --lienzo: #E2E8F0;
   --vacia: #FFFFFF;

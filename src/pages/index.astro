@@ -2,14 +2,32 @@
 import Base from '../layouts/Base.astro';
 import BotonTema from '../compartido/BotonTema.astro';
 import '../herramientas/formas/estilos.css';
+import { DibujoVivo } from '../compartido/dibujoVivo.js';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const rutaFormas = `${base}/formas/`;
+// Solo las herramientas que existen (SIT-01).
 const herramientas = [
-  { nombre: 'Formas MC', texto: 'Círculos, esferas, cúpulas y más en bloques, con numeración, marcas de construcción y lista de materiales.', ruta: `${base}/formas/` },
+  { nombre: 'Formas MC', texto: 'Círculos, esferas, cúpulas y más en bloques, con numeración, marcas de construcción y lista de materiales.', ruta: rutaFormas },
+];
+// Funciones de Formas MC (SIT-04): el icono es el contorno del mismo estilo que los de la app.
+const funciones = [
+  { titulo: 'Formas 2D y 3D', texto: 'Círculos, rectángulos, triángulos, rombos, hexágonos, esferas y cúpulas, con el tamaño que quieras.',
+    icono: '<rect x="3" y="3" width="8" height="8" rx="1"/><circle cx="17" cy="7" r="4"/><path d="m7 14 4 7H3z"/><path d="m17 13 4 4-4 4-4-4z"/>' },
+  { titulo: 'Numeración de bloques', texto: 'Cada tramo con su cifra y reglas desde el centro, para contar sin perderte.',
+    icono: '<path d="M4 9h16"/><path d="M4 15h16"/><path d="m10 3-2 18"/><path d="m16 3-2 18"/>' },
+  { titulo: 'Marcar lo construido', texto: 'Toca los bloques que ya has puesto: tu avance se guarda en tu navegador.',
+    icono: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>' },
+  { titulo: 'Lista de materiales', texto: 'Cuántos bloques lleva cada capa y la forma entera, en stacks, shulkers y cofres.',
+    icono: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>' },
+  { titulo: 'Exportar PNG', texto: 'Descarga el dibujo de una capa, o de todas, como imagen.',
+    icono: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>' },
+  { titulo: 'Imprimir ficha', texto: 'Una ficha en papel con todas las capas, lista para construir sin pantalla.',
+    icono: '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/>' },
 ];
 ---
 <Base titulo="Herramientas MC" descripcion="Herramientas no oficiales para Minecraft: planificador de formas en bloques.">
   <!-- Enlaces de antes de la migración: la raíz con #forma=… pasa a /formas/ conservando el fragmento (PUB-08). -->
-  <script is:inline define:vars={{ destino: `${base}/formas/` }}>
+  <script is:inline define:vars={{ destino: rutaFormas }}>
     if (location.hash.length > 1) location.replace(destino + location.hash);
   </script>
   <header class="cab">
@@ -18,25 +36,91 @@ const herramientas = [
     <div class="cab-acciones"><BotonTema /></div>
   </header>
   <main class="portada">
-    <h2>Herramientas</h2>
-    <ul class="herramientas">
-      {herramientas.map(h => (
-        <li>
-          <a class="tarjeta" href={h.ruta}>
-            <strong>{h.nombre}</strong>
-            <span>{h.texto}</span>
-            <span class="abrir">Abrir →</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+    <section class="hero" aria-labelledby="hero-titulo">
+      <div class="hero-texto">
+        <h2 id="hero-titulo">Planifica tus formas en bloques, capa a capa</h2>
+        <p class="hero-frase">Para quien construye en Minecraft y quiere saber qué bloque va en cada sitio: círculos, esferas y cúpulas listos para seguir y marcar mientras construyes.</p>
+        <a class="boton-principal" href={rutaFormas}>Abrir Formas MC
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </a>
+      </div>
+      <figure class="hero-dibujo">
+        <div class="dibujo-caja" id="dibujoCaja">
+          <canvas id="dibujoVivo" role="img" aria-label={DibujoVivo.TEXTO_ALTERNO} width="338" height="330"></canvas>
+        </div>
+        <figcaption id="dibujoPie" aria-hidden="true">Esfera de 11 · Capa 1 de 11</figcaption>
+      </figure>
+    </section>
+
+    <section aria-labelledby="t-funciones">
+      <h2 id="t-funciones">Qué puedes hacer</h2>
+      <ul class="funciones">
+        {funciones.map(f => (
+          <li>
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true" set:html={f.icono}></svg>
+            <h3>{f.titulo}</h3>
+            <p>{f.texto}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section aria-labelledby="t-herramientas">
+      <h2 id="t-herramientas">Herramientas</h2>
+      <ul class="herramientas">
+        {herramientas.map(h => (
+          <li>
+            <a class="tarjeta" href={h.ruta}>
+              <strong>{h.nombre}</strong>
+              <span>{h.texto}</span>
+              <span class="abrir">Abrir →</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   </main>
 </Base>
 
+<script>
+  import { DibujoVivo } from '../compartido/dibujoVivo.js';
+
+  const canvas = document.getElementById('dibujoVivo') as HTMLCanvasElement | null;
+  const caja = document.getElementById('dibujoCaja');
+  if (canvas && caja) DibujoVivo.iniciar({ canvas, contenedor: caja, pie: document.getElementById('dibujoPie') });
+</script>
+
 <style is:global>
-  main.portada { display: block; max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+  /* SIT-05: rejilla de bloques de fondo (solo CSS), de un 5–6 % de opacidad para no competir con el texto. */
+  body:has(.portada) {
+    background-image: linear-gradient(var(--grilla) 1px, transparent 1px), linear-gradient(90deg, var(--grilla) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+  main.portada { display: flex; flex-direction: column; gap: 48px; max-width: 1120px; margin: 0 auto; padding: 24px 16px 40px; }
   .portada h2 { margin: 0 0 12px; }
-  .herramientas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: center; }
+  .hero-texto { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+  .portada .hero h2 { margin: 0; font-size: clamp(26px, 6vw, 40px); line-height: 1.15; text-transform: none; letter-spacing: 0; text-wrap: balance; color: var(--fg); }
+  .hero-frase { margin: 0; max-width: 52ch; font-size: 17px; color: var(--fg-mut); }
+  .boton-principal { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 24px; background: var(--accent); color: var(--on-accent); font-family: var(--mono); font-weight: 700; font-size: 16px; text-decoration: none; border-radius: var(--radio); }
+  .boton-principal:hover { filter: brightness(1.1); }
+  .boton-principal:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+  .boton-principal .ico { width: 20px; height: 20px; stroke-width: 2.5; }
+
+  .hero-dibujo { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radio); }
+  .dibujo-caja { width: 100%; display: flex; justify-content: center; }
+  .dibujo-caja canvas { display: block; max-width: 100%; }
+  .hero-dibujo figcaption { font-family: var(--mono); font-size: 13px; color: var(--fg-mut); }
+
+  .funciones, .herramientas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .funciones { grid-template-columns: minmax(0, 1fr); }
+  .funciones li { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; row-gap: 2px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radio); }
+  .funciones .ico { grid-row: 1 / span 2; width: 24px; height: 24px; margin-top: 2px; color: var(--accent); }
+  .funciones h3 { margin: 0; font-family: var(--mono); font-size: 15px; }
+  .funciones p { margin: 0; color: var(--fg-mut); font-size: 14px; }
+
   .tarjeta { display: flex; flex-direction: column; gap: 4px; min-height: 44px; padding: 16px; color: var(--fg); text-decoration: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radio); }
   .tarjeta strong { font-family: var(--mono); font-size: 18px; }
   .tarjeta span { color: var(--fg-mut); }
@@ -44,4 +128,12 @@ const herramientas = [
   @media (prefers-reduced-motion: no-preference) { .tarjeta { transition: border-color var(--t-rapida) ease-out; } }
   .tarjeta:hover { border-color: var(--accent); }
   .tarjeta:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+
+  @media (min-width: 640px) { .funciones { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 900px) {
+    main.portada { gap: 64px; padding: 48px 32px 64px; }
+    .hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; }
+    .hero-frase { font-size: 19px; }
+    .funciones { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
 </style>

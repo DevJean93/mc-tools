@@ -31,7 +31,7 @@ export const DibujoVivo = (() => {
       celda = celdaPara(contenedor.clientWidth || anchoDe(CELDA_MAX));
       Render.dibujar(canvas, { g: capas[capa], capa, hechos: new Set(), s: celda, op: OPCIONES, dpr: window.devicePixelRatio || 1 });
       canvas.dataset.capa = String(capa);
-      if (pie) pie.textContent = `Capa ${capa + 1} de ${N}`;
+      if (pie) pie.textContent = `Esfera de ${N} · Capa ${capa + 1} de ${N}`;
     }
 
     const debeMoverse = () => !reducido.matches && visible && !document.hidden;

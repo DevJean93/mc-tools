@@ -615,7 +615,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev('localStorage.clear()');
   await cargar();
 
-  // PUB-04: la portada (raiz del sitio) lista Formas MC y enlaza a /formas/.
+  // SIT-01: la portada (raiz del sitio) lista Formas MC y enlaza a /formas/.
   await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
   const portada = await ev(`(() => {
     const a = document.querySelector('a[href$="/formas/"]'); if (!a) return null;
@@ -624,7 +624,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
       mojang: document.body.textContent.includes('No está afiliado a Mojang'), pie: /Versión \\S+/.test(document.querySelector('.pie').textContent) };
   })()`);
   ok(portada && portada.titulo === 'Herramientas MC' && /Formas MC/.test(portada.tarjeta) && portada.href === '/mc-tools/formas/' && portada.alto >= 44 && portada.mojang && portada.pie,
-    `PUB-04: la portada lista Formas MC con un enlace a /formas/, el aviso de Mojang y el pie (${JSON.stringify(portada)})`);
+    `SIT-01: la portada lista Formas MC con un enlace a /formas/, el aviso de Mojang y el pie (${JSON.stringify(portada)})`);
   await send('Page.navigate', { url: URL_PORTADA + 'formas/' }); await esperar(500);
   ok(await ev(`location.pathname`) === '/mc-tools/formas/', 'PUB-04: Formas MC vive en /formas/');
   await cargar();
@@ -639,6 +639,101 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     `PUB-08: un enlace antiguo en la raiz redirige a /formas/ y abre la misma forma (${JSON.stringify(enlaceViejo)})`);
   await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
   ok(await ev(`location.pathname`) === '/mc-tools/', 'PUB-08: la portada sin fragmento no redirige');
+  await ev(`localStorage.clear()`);
+  await cargar();
+
+  // SIT-01..05: la portada nueva (presentacion, dibujo en vivo, funciones, estilo).
+  const emular = (color, movimiento) => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: color }, { name: 'prefers-reduced-motion', value: movimiento }] });
+  const vista = async (w, h, movil) => {
+    await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: movil });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: movil });
+  };
+  const abrirPortada = async () => { await send('Page.navigate', { url: URL_PORTADA }); await esperar(1000); };
+  const medirPortada = () => ev(`(() => {
+    const r = s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { x: Math.round(b.left), y: Math.round(b.top), r: Math.round(b.right), b: Math.round(b.bottom), w: Math.round(b.width), h: Math.round(b.height) }; };
+    return { vh: innerHeight, vw: document.documentElement.clientWidth, h1: r('h1'), frase: r('.hero-frase'), boton: r('.boton-principal'),
+      canvas: r('#dibujoVivo'), texto: r('.hero-texto'), main: r('main.portada'),
+      scrollX: document.documentElement.scrollWidth > document.documentElement.clientWidth };
+  })()`);
+  const temaDe = () => ev(`document.documentElement.dataset.tema`);
+  const capaDibujo = () => ev(`document.getElementById('dibujoVivo').dataset.capa`);
+  for (const [nombre, w, h, movil] of [['movil', 390, 844, true], ['escritorio', 1280, 800, false]]) {
+    await vista(w, h, movil); await abrirPortada();
+    const m = await medirPortada();
+    ok(m.h1 && m.frase && m.boton && m.h1.b <= m.vh && m.frase.b <= m.vh && m.boton.b <= m.vh && m.boton.h >= 44,
+      `SIT-02: en ${nombre} (${w}x${h}) el nombre, la frase y el botón principal se ven sin desplazarse (${JSON.stringify(m)})`);
+    ok(!m.scrollX, `SIT-05: en ${nombre} no hay desplazamiento horizontal`);
+    ok(m.canvas && m.canvas.r <= m.vw && m.canvas.x >= 0, `SIT-03: en ${nombre} el dibujo cabe en la ventana (${JSON.stringify(m.canvas)})`);
+    if (!movil) ok(m.main.w >= 1000 && m.canvas.x > m.texto.r - 20 && m.canvas.r > m.vw * 0.6,
+      `SIT-05: en escritorio el contenido ocupa la pantalla: texto a la izquierda y dibujo a la derecha (${JSON.stringify({ main: m.main, texto: m.texto, canvas: m.canvas })})`);
+    await shot(`17-portada-${nombre}-oscuro.png`);
+  }
+  await vista(1280, 800, false); await abrirPortada();
+
+  // SIT-02: el botón principal lleva a /formas/.
+  await ev(`document.querySelector('.boton-principal').click()`); await esperar(800);
+  ok(await ev(`location.pathname`) === '/mc-tools/formas/', 'SIT-02: el botón principal abre /formas/');
+  await abrirPortada();
+
+  // SIT-03: el dibujo cambia de capa solo, con el aspecto de la esfera de 11.
+  const capasVistas = new Set();
+  for (let i = 0; i < 8; i++) { capasVistas.add(await capaDibujo()); await esperar(500); }
+  ok(capasVistas.size >= 4, `SIT-03: la capa del dibujo cambia sola (${[...capasVistas].join(',')})`);
+  ok(await ev(`(() => { const c = document.getElementById('dibujoVivo'); return c.getAttribute('role') === 'img' && /esfera de 11/i.test(c.getAttribute('aria-label')) && !c.hasAttribute('tabindex'); })()`),
+    'SIT-03: el dibujo tiene role="img", texto alternativo y no es interactivo');
+  // Se detiene con la pestaña oculta.
+  await ev(`Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange'))`);
+  const ocultaA = await capaDibujo(); await esperar(2200);
+  ok(await capaDibujo() === ocultaA, 'SIT-03: con la pestaña oculta el dibujo no avanza');
+  await ev(`delete document.hidden; document.dispatchEvent(new Event('visibilitychange'))`); await esperar(2200);
+  ok(await capaDibujo() !== ocultaA, 'SIT-03: al volver a verse la pestaña el dibujo sigue avanzando');
+  // Colores del dibujo según el tema y repintado al cambiar de tema.
+  const pixeles = () => ev(`(() => { const c = document.getElementById('dibujoVivo'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; const o = { fondo: [d[0], d[1], d[2]].join(), bloque: false };
+    for (let i = 0; i < d.length; i += 4) { const k = d[i] + ',' + d[i + 1] + ',' + d[i + 2]; if (k === '34,197,94' || k === '74,222,128') { o.bloque = k; break; } } return o; })()`);
+  let px = await pixeles();
+  ok(await temaDe() === 'oscuro' && px.fondo === '11,18,34' && px.bloque === '34,197,94', `SIT-03: el dibujo usa los colores del tema oscuro (${JSON.stringify(px)})`);
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  px = await pixeles();
+  ok(await temaDe() === 'claro' && px.fondo === '226,232,240' && px.bloque === '74,222,128', `SIT-03: al cambiar a claro el dibujo se repinta con los colores claros (${JSON.stringify(px)})`);
+  await shot('17-portada-escritorio-claro.png');
+  // SIT-05: contraste del texto sobre la rejilla de fondo, en los dos temas.
+  const contrastes = () => ev(`(() => {
+    const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
+    const num = c => (c.match(/[0-9.]+/g) || []).map(Number);
+    const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const col = c => c[0] === '#' ? hex(c) : num(c);
+    const lum = c => { const [r, g, b] = c.map(x => { x /= 255; return x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126 * r + .7152 * g + .0722 * b; };
+    const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+    const bg = col(v('--bg')), g = num(v('--grilla')), a = g[3];
+    const sobre = bg.map((x, i) => x * (1 - a) + g[i] * a);   // el fondo en el punto de una linea de la rejilla
+    const el = document.body;
+    return { grilla: v('--grilla'), imagen: getComputedStyle(el).backgroundImage.includes('gradient'),
+      fg: cr(col(v('--fg')), sobre), mut: cr(col(v('--fg-mut')), sobre) };
+  })()`);
+  let cs = await contrastes();
+  ok(cs.imagen && cs.fg >= 4.5 && cs.mut >= 4.5, `SIT-05: tema claro: la rejilla de fondo no resta contraste al texto (${JSON.stringify(cs)})`);
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  cs = await contrastes();
+  ok(cs.imagen && cs.fg >= 4.5 && cs.mut >= 4.5, `SIT-05: tema oscuro: la rejilla de fondo no resta contraste al texto (${JSON.stringify(cs)})`);
+
+  // SIT-03: con prefers-reduced-motion la capa es fija y no se anima.
+  await emular('dark', 'reduce'); await abrirPortada();
+  const fijaA = await capaDibujo(); await esperar(2200);
+  ok(fijaA !== null && fijaA === await capaDibujo(), `SIT-03: con prefers-reduced-motion el dibujo muestra una capa fija (${fijaA})`);
+  await fijarTema('dark'); await abrirPortada();
+  const animadaA = await capaDibujo(); await esperar(2200);
+  ok(animadaA !== await capaDibujo(), 'SIT-03: sin la preferencia de movimiento reducido el dibujo se anima');
+
+  // SIT-04: las funciones principales, cada una con icono y texto.
+  const funciones = await ev(`[...document.querySelectorAll('.funciones li')].map(li => ({ icono: !!li.querySelector('svg'), titulo: (li.querySelector('h3') || {}).textContent, texto: li.querySelector('p') ? li.querySelector('p').textContent.length : 0 }))`);
+  ok(funciones.length === 6 && funciones.every(f => f.icono && f.titulo && f.texto > 10) &&
+    ['2D y 3D', 'Numeración', 'Marcar', 'materiales', 'Exportar', 'Imprimir'].every(t => funciones.some(f => f.titulo.includes(t))),
+    `SIT-04: la portada resume las funciones de Formas MC, cada una con icono y texto (${JSON.stringify(funciones.map(f => f.titulo))})`);
+  // SIT-01: ningun enlace sale del sitio, y los enlaces miden 44 px.
+  const enlaces = await ev(`[...document.querySelectorAll('a[href]')].map(a => ({ href: a.getAttribute('href'), propio: new URL(a.href).origin === location.origin, alto: Math.round(a.getBoundingClientRect().height) }))`);
+  ok(enlaces.length >= 2 && enlaces.every(e => e.propio && e.alto >= 44), `SIT-01: ningún enlace sale del sitio y todos miden 44 px (${JSON.stringify(enlaces)})`);
+  ok(await ev(`!!document.getElementById('botonTema') && document.querySelectorAll('.herramientas li').length === 1`), 'SIT-01: la portada lista solo las herramientas que existen');
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await ev(`localStorage.clear()`);
   await cargar();
 
@@ -1472,7 +1567,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(await progM() === 0, 'MAR-14: en movil, arrastrar desde la regla fija desplaza y no marca');
   await ev(`localStorage.clear()`);
 
-  // INT-16, INT-17, INT-18, MAT-07, PUB-04: tema claro y oscuro con selector.
+  // INT-16, INT-17, INT-18, MAT-07, SIT-01: tema claro y oscuro con selector.
   await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await ev(`localStorage.clear()`);
   // Espía: anota el tema en cuanto <html> lo recibe y si ya existía <body> (si existía, habría destello).
@@ -1542,15 +1637,15 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(pngClaro === '226,232,240', `MAT-07: con el tema claro el PNG sale con los colores claros (${pngClaro})`);
   await ev(`document.getElementById('botonTema').click()`); await esperar(300);   // de nuevo oscuro
 
-  // PUB-04, INT-17: la portada lleva el botón y respeta el tema elegido en la app.
+  // SIT-01, INT-17: la portada lleva el botón y respeta el tema elegido en la app.
   await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
   const antesPortada = await ev(`window.__tema`);
   const bp = await btnTema();
   ok(await tema() === 'oscuro' && antesPortada && antesPortada.cuerpo === false && bp && bp.dentroCab && bp.label === 'Cambiar a tema claro' && bp.pressed === 'true',
-    `PUB-04: la portada respeta el tema elegido (oscuro, sin destello) y lleva el botón en su cabecera (${JSON.stringify(bp)})`);
+    `SIT-01: la portada respeta el tema elegido (oscuro, sin destello) y lleva el botón en su cabecera (${JSON.stringify(bp)})`);
   await ev(`document.getElementById('botonTema').click()`); await esperar(300);
   ok(await tema() === 'claro' && claro(await ev(`getComputedStyle(document.body).backgroundColor.match(/[0-9]+/g).slice(0, 3).join()`)),
-    'PUB-04: el botón de la portada cambia al tema claro y la página se ve clara');
+    'SIT-01: el botón de la portada cambia al tema claro y la página se ve clara');
   await shot('12-portada-tema-claro.png');
   await send('Page.navigate', { url: URL_APP }); await esperar(1200);
   ok(await tema() === 'claro' && claro(await fondoLienzo()), 'INT-17: lo elegido en la portada manda también en la app');
@@ -1571,7 +1666,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await shot('12-tema-oscuro-movil.png');
   await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
   b = await btnTema();
-  ok(b && b.ancho >= 44 && b.alto >= 44 && b.der <= b.vw, `PUB-04, INT-16: en la portada a 390 px el botón de tema mide al menos 44 px y cabe (${JSON.stringify(b)})`);
+  ok(b && b.ancho >= 44 && b.alto >= 44 && b.der <= b.vw, `SIT-01, INT-16: en la portada a 390 px el botón de tema mide al menos 44 px y cabe (${JSON.stringify(b)})`);
   await shot('12-portada-movil.png');
 
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: espia.identifier });
