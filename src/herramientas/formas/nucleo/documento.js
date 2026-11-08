@@ -154,25 +154,44 @@ export const Documento = (() => {
     // La forma actual como fragmento de enlace (sin marcas, zoom ni vista).
     const enlace = () => Estado.aEnlace(st);
 
-    // Abre la forma de un enlace. Un fragmento que no es de forma no cambia nada (devuelve false). Uno
-    // valido sustituye la forma en un solo paso de historial; si la geometria cambia y habia marcas,
-    // estas se borran con un aviso que ofrece Deshacer. Con la misma geometria las marcas siguen. El
-    // zoom y la vista no cambian.
-    function abrirEnlace(fragmento) {
-      const forma = Estado.desdeEnlace(fragmento);
-      if (!forma) return false;
+    // Aplica una forma ya validada (de un enlace o de un esquema) en un solo paso de historial. Si la
+    // geometria cambia y habia marcas, estas se borran (el aviso lo da quien llama, con Deshacer). Con la
+    // misma geometria las marcas siguen. El zoom y la vista no cambian. Devuelve { cambio, perdio }: si algo
+    // cambio y si se perdieron marcas; una forma que deja todo igual no ocupa historial.
+    function aplicarForma(forma) {
       const antes = JSON.stringify(params()) + st.capa;
       const firmaAntes = firmaActual;
       const habiaMarcas = marcas.total() > 0;
       antesDeMarcar();
       Object.assign(st, forma);
       regenerar({ sinLeer: true, conservar: true });
-      // La geometria se compara ya normalizada (alto igualado, grosor recortado): un enlace que acaba
-      // en la misma forma no puede borrar las marcas.
+      // La geometria se compara ya normalizada (alto igualado, grosor recortado): una forma que acaba
+      // en la misma geometria no puede borrar las marcas.
       const cambiaGeo = firmaActual !== firmaAntes;
       if (cambiaGeo && habiaMarcas) { marcas.limpiar(); trasMarcar(); }
-      if (JSON.stringify(params()) + st.capa === antes) { descartarPaso(); return true; }
-      if (cambiaGeo && habiaMarcas) avisos.avisar('Se abrió la forma del enlace. Tu progreso anterior se borró.', deshacer);
+      if (JSON.stringify(params()) + st.capa === antes) { descartarPaso(); return { cambio: false, perdio: false }; }
+      return { cambio: true, perdio: cambiaGeo && habiaMarcas };
+    }
+
+    // Abre la forma de un enlace. Un fragmento que no es de forma no cambia nada (devuelve false).
+    function abrirEnlace(fragmento) {
+      const forma = Estado.desdeEnlace(fragmento);
+      if (!forma) return false;
+      const r = aplicarForma(forma);
+      if (r.perdio) avisos.avisar('Se abrió la forma del enlace. Tu progreso anterior se borró.', deshacer);
+      return true;
+    }
+
+    // Importa un esquema de Litematica ya leido (Litematica.leer): { ok, forma, bloque } o { ok: false,
+    // mensaje }. Uno no valido solo avisa del motivo. Uno valido pone la forma con la misma regla que un
+    // enlace y el bloque (una opcion de vista: no entra en el historial ni en las marcas).
+    function importarEsquema(r) {
+      if (!r.ok) { avisos.avisar(r.mensaje); return false; }
+      st.bloque = r.bloque;
+      const res = aplicarForma(r.forma);
+      guardarEstado();
+      if (res.perdio) avisos.avisar('Se importó la forma del esquema. Tu progreso anterior se borró.', deshacer);
+      else avisos.avisar('Esquema importado.', res.cambio ? deshacer : null);
       return true;
     }
 
@@ -180,7 +199,7 @@ export const Documento = (() => {
       capas: () => capas, capaActual, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
-      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace,
+      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace, importarEsquema,
       hechos: marcas.conjunto, porCapa: n => marcas.porCapa(n),
       puedeDeshacer: historial.puedeDeshacer, puedeRehacer: historial.puedeRehacer,
     };

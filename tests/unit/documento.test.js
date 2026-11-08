@@ -466,3 +466,88 @@ test('FOR-18: un enlace que acaba en la misma geometria tras normalizarla conser
   assert.equal(h.st.grosor, 7);
   assert.deepEqual(clavesHechas(h.doc), hechosHueco, 'grosor por encima del maximo');
 });
+
+// --- importar un esquema de Litematica (cambio 016) -----------------------------------------------
+const MSG_ESQUEMA_PIERDE = 'Se importó la forma del esquema. Tu progreso anterior se borró.';
+const esquema = (enlace, bloque = 'minecraft:stone') => ({ ok: true, forma: Estado.desdeEnlace(enlace), bloque });
+
+test('FOR-19: importar un esquema aplica la forma y el bloque y los guarda en el navegador', () => {
+  const d = montar(); d.doc.regenerar();
+  assert.equal(d.doc.importarEsquema(esquema('forma=rombo&w=20&modo=hueco&grosor=3', 'minecraft:glass')), true);
+  assert.deepEqual(forma(d), { forma: 'rombo', w: 20, h: 20, modo: 'hueco', grosor: 3, capa: 0 });
+  assert.equal(d.st.bloque, 'minecraft:glass');
+  const guardado = JSON.parse(d.almacen.leer('mc-formas-v1'));
+  assert.equal(guardado.forma, 'rombo');
+  assert.equal(guardado.bloque, 'minecraft:glass');
+  assert.equal(d.doc.capaActual().length, 20);
+});
+
+test('FOR-19: con marcas y otra geometria se borran y sale el aviso con Deshacer', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  assert.ok(d.doc.hechos().size > 0);
+  d.doc.importarEsquema(esquema('forma=rombo&w=20'));
+  assert.equal(d.doc.hechos().size, 0);
+  assert.equal(ultimoAviso(d), MSG_ESQUEMA_PIERDE);
+  assert.equal(typeof d.avisos.acciones[d.avisos.acciones.length - 1], 'function', 'el aviso ofrece Deshacer');
+});
+
+test('FOR-19: un solo Deshacer devuelve la forma y las marcas anteriores', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { f: forma(d), hechos: clavesHechas(d.doc) };
+  d.doc.importarEsquema(esquema('forma=rombo&w=20'));
+  d.avisos.acciones[d.avisos.acciones.length - 1]();
+  assert.deepEqual({ f: forma(d), hechos: clavesHechas(d.doc) }, antes);
+});
+
+test('FOR-19: importar ocupa un solo paso de historial', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const lleno = d.doc.hechos().size;
+  d.doc.importarEsquema(esquema('forma=rombo&w=20'));
+  d.doc.deshacer();
+  assert.equal(d.st.forma, 'circulo');
+  assert.equal(d.doc.hechos().size, lleno);
+  d.doc.deshacer();   // el siguiente paso ya es de las marcas
+  assert.equal(d.doc.hechos().size, lleno - 1);
+});
+
+test('FOR-19: con la misma geometria las marcas se conservan y solo dice que se importo', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const hechos = clavesHechas(d.doc);
+  d.doc.importarEsquema(esquema('forma=circulo&w=16&h=16&igualar=1&modo=relleno&capa=0', 'minecraft:bricks'));
+  assert.deepEqual(clavesHechas(d.doc), hechos);
+  assert.equal(ultimoAviso(d), 'Esquema importado.');
+  assert.equal(d.st.bloque, 'minecraft:bricks');
+});
+
+test('FOR-19: sin marcas, cambiar de forma solo dice que se importo', () => {
+  const d = montar(); d.doc.regenerar();
+  d.doc.importarEsquema(esquema('forma=rombo&w=20'));
+  assert.equal(d.st.forma, 'rombo');
+  assert.equal(ultimoAviso(d), 'Esquema importado.');
+});
+
+test('FOR-19: importar no cambia el zoom ni las opciones de vista (salvo el bloque)', () => {
+  const d = montar(); d.doc.regenerar();
+  Object.assign(d.st, { zoom: 40, rel: false, tramos: false, distEjes: false });
+  d.doc.importarEsquema(esquema('forma=rombo&w=20'));
+  assert.deepEqual([d.st.zoom, d.st.rel, d.st.tramos, d.st.distEjes], [40, false, false, false]);
+});
+
+test('FOR-19: un esquema no valido avisa del motivo y no cambia nada', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { f: forma(d), hechos: clavesHechas(d.doc), bloque: d.st.bloque };
+  const pasos = () => { let n = 0; while (d.doc.puedeDeshacer()) { d.doc.deshacer(); n++; } while (d.doc.puedeRehacer()) d.doc.rehacer(); return n; };
+  const pasosAntes = pasos();
+  const r = d.doc.importarEsquema({ ok: false, mensaje: 'Este esquema no lo hizo Formas MC: solo se pueden importar los descargados desde aquí.' });
+  assert.equal(r, false);
+  assert.equal(ultimoAviso(d), 'Este esquema no lo hizo Formas MC: solo se pueden importar los descargados desde aquí.');
+  assert.deepEqual({ f: forma(d), hechos: clavesHechas(d.doc), bloque: d.st.bloque }, antes);
+  assert.equal(pasos(), pasosAntes);
+});
+
+test('MAT-16: pedir el esquema no toca las marcas ni el historial (el documento solo da las capas)', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { hechos: clavesHechas(d.doc), pasos: d.doc.puedeDeshacer(), avisos: d.avisos.dichos.length };
+  d.doc.capas(); d.doc.params();
+  assert.deepEqual({ hechos: clavesHechas(d.doc), pasos: d.doc.puedeDeshacer(), avisos: d.avisos.dichos.length }, antes);
+});
