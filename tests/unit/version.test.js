@@ -94,3 +94,11 @@ test('PUB-03: una version que no es la huella actual dice que hay que ejecutar n
   const problemas = Version.revisar(viejo, leer({ ...ARCHIVOS, 'src/a.js': 'var a = 9;\n' }));
   assert.ok(problemas.some(p => /no está al día/.test(p) && /npm run versionar/.test(p)), problemas.join(' | '));
 });
+
+test('PUB-03: el index.html del repositorio esta al dia (si falla, ejecuta npm run versionar)', () => {
+  const fs = require('fs'), path = require('path');
+  const raiz = path.join(__dirname, '..', '..');
+  const leerRepo = ruta => fs.readFileSync(path.join(raiz, ruta), 'utf8');
+  const problemas = Version.revisar(leerRepo('index.html'), leerRepo);
+  assert.deepEqual(problemas, [], problemas.join('\n'));
+});

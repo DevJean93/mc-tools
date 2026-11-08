@@ -577,6 +577,19 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // INT-11, PUB-01: el pie muestra la version y todas las direcciones locales la llevan.
+  const versiones = await ev(`(() => {
+    const locales = [...document.querySelectorAll('script[src], link[rel="stylesheet"]')]
+      .map(e => e.getAttribute('src') || e.getAttribute('href')).filter(d => !/^(https?:)?\\/\\//.test(d));
+    const pie = document.getElementById('version');
+    return { pie: pie ? pie.textContent : null, v: locales.map(d => new URLSearchParams(d.split('?')[1] || '').get('v')), n: locales.length,
+      cargado: typeof Estado === 'object' && typeof Documento === 'object' && !!document.getElementById('lienzo').width };
+  })()`);
+  const vApp = versiones.v[versiones.v.length - 1];
+  ok(versiones.n >= 19 && versiones.v.every(v => v && /^[0-9a-f]{8}$/.test(v) && v === vApp) && versiones.cargado,
+    `PUB-01: los ${versiones.n} archivos locales llevan la misma version (${vApp}) y la app carga con file://`);
+  ok(versiones.pie === `Versión ${vApp}`, `INT-11: el pie muestra la version de los archivos (${versiones.pie})`);
+
   // FOR-16, FOR-17, FOR-18, INT-10: enlace para compartir una forma (escritorio).
   // Para abrir un enlace hay que salir de la pagina: navegar solo cambiando el # no la recarga.
   const abrirEnlace = async fragmento => {
