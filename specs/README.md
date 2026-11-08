@@ -2,7 +2,7 @@
 
 Las specs son la fuente de verdad de **qué** hace la app y **por qué**, sin entrar en
 tecnología. El código y los tests las implementan. Están versionadas en git y se excluyen
-de GitHub Pages.
+de la web publicada.
 
 ## Dos piezas
 

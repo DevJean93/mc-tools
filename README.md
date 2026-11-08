@@ -4,7 +4,9 @@ Planificador de formas en bloques para Minecraft. Dibuja la forma en una rejilla
 
 ## Uso rápido
 
-Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin Internet se usan las fuentes del sistema).
+Abre la web publicada: <https://devjean93.github.io/mc-tools/> (portada) y <https://devjean93.github.io/mc-tools/formas/> (Formas MC). Una vez cargada no necesita conexión: las fuentes van con el propio sitio.
+
+En local: `npm install` y `npm run dev` (se abre en `http://localhost:4321/mc-tools/`). Ya no se abre con doble clic (`index.html` desapareció: es un sitio Astro).
 
 ## Funciones
 
@@ -45,50 +47,60 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 - El progreso se guarda solo en el `localStorage` de ese navegador y equipo; borrar los datos del sitio lo elimina. Para no perderlo, guarda un proyecto en un archivo.
 - Las imágenes muy grandes (zoom alto + forma grande) pueden fallar al exportar: reduce el zoom.
 - Un solo material por forma.
-- El enlace no lleva las marcas. Abierta la app con doble clic, el enlace apunta al archivo de tu equipo: para compartirlo con otros hay que usar la web publicada.
+- El enlace no lleva las marcas. Los enlaces de antes de la migración (`…/mc-tools/#forma=…`) siguen funcionando: la portada los redirige a `/formas/`. En local el enlace apunta a `localhost`: para compartirlo con otros hay que usar la web publicada.
 - Pegar un enlace en una pestaña con la app ya abierta no lo aplica: ábrelo en una pestaña nueva.
 - Tras publicar un cambio, un navegador que ya tenía la web puede tardar hasta unos 10 minutos en verlo (caché de GitHub Pages); recargar lo acelera. La versión del pie dice cuál se está ejecutando.
 
 ## Estructura
 
+Sitio estático con [Astro](https://astro.build) (sin framework de interfaz), publicado en GitHub Pages bajo `/mc-tools/`.
+
 | Archivo | Rol |
 |---|---|
-| `index.html` | Estructura del panel y del área de dibujo. |
-| `src/estilos.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
-| `src/nucleo/almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
-| `src/nucleo/formas.js` | Geometría pura y registro de formas, sin DOM; se prueba con Node. |
-| `src/nucleo/estado.js` | Valores por defecto, validación, persistencia y firma de geometría. |
-| `src/nucleo/historial.js` | Deshacer/rehacer con límite de pasos. |
-| `src/nucleo/marcas.js` | Bloques marcados como construidos. |
-| `src/nucleo/materiales.js` | Stacks, shulkers, cofres, porcentajes y resumen del centro. |
-| `src/dibujo/render.js` | Dibujo de una capa en canvas por capas encadenables (pantalla y exportación). |
-| `src/interfaz/avisos.js` | Avisos flotantes, errores y anuncios accesibles. |
-| `src/interfaz/vista-materiales.js` | Tabla de capas, totales y barra de progreso. |
-| `src/interfaz/panel.js` | Enlace entre el formulario y los parámetros. |
-| `src/dibujo/zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
-| `src/interfaz/exportar.js` | Exportación PNG de una capa o de todas y ficha imprimible. |
-| `src/interfaz/menu.js` | Menú plegable, hoja móvil y barra inferior. |
-| `src/entrada/raton.js` | Ratón y lápiz. |
-| `src/entrada/tactil.js` | Toques: marcar, desplazar y pellizcar. |
-| `src/entrada/teclado.js` | Cursor de celdas y atajos de teclado. |
-| `src/app.js` | Raíz de composición: crea los módulos, inyecta dependencias y conecta eventos. |
+| `astro.config.mjs` | `site` y `base` (`/mc-tools`) del sitio. |
+| `src/pages/index.astro` | Portada: lista de herramientas y redirección de los enlaces antiguos. |
+| `src/pages/formas/index.astro` | Formas MC: estructura del panel y del área de dibujo, y el script de la app. |
+| `src/layouts/Base.astro` | Cabecera del documento, aviso de Mojang y pie con la versión. |
+| `src/compartido/` | Lo que comparten las herramientas: versión del pie (`version.js`) y fuentes autoalojadas (`fuentes.css`). |
+| `src/herramientas/formas/estilos.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
+| `src/herramientas/formas/nucleo/almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
+| `src/herramientas/formas/nucleo/formas.js` | Geometría pura y registro de formas, sin DOM. |
+| `src/herramientas/formas/nucleo/estado.js` | Valores por defecto, validación, persistencia y firma de geometría. |
+| `src/herramientas/formas/nucleo/documento.js` | Forma, marcas, proyecto y enlace: la lógica del documento. |
+| `src/herramientas/formas/nucleo/historial.js` | Deshacer/rehacer con límite de pasos. |
+| `src/herramientas/formas/nucleo/marcas.js` | Bloques marcados como construidos. |
+| `src/herramientas/formas/nucleo/materiales.js` | Stacks, shulkers, cofres, porcentajes y resumen del centro. |
+| `src/herramientas/formas/dibujo/render.js` | Dibujo de una capa en canvas por capas encadenables (pantalla y exportación). |
+| `src/herramientas/formas/dibujo/zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
+| `src/herramientas/formas/interfaz/` | `avisos`, `vista-materiales`, `panel`, `exportar` (PNG y ficha) y `menu`. |
+| `src/herramientas/formas/entrada/` | `raton`, `tactil` y `teclado`. |
+| `src/herramientas/formas/app.js` | Raíz de composición: crea los módulos, inyecta dependencias y conecta eventos. |
 
-Los scripts son clásicos (sin módulos ES ni `fetch`) para que funcione con `file://`.
+Los scripts son módulos ES (`import`/`export`); Astro y Vite los empaquetan con una huella en el nombre de cada archivo.
 
-Las pruebas viven en `tests/unit/` (Node), `tests/e2e/` (Edge headless) y
-`tests/herramientas/` (sintaxis y validador). Las specs están en `specs/`: la constitución,
+Las pruebas viven en `tests/unit/` (Vitest), `tests/e2e/` (Edge headless contra `astro preview`) y
+`tests/herramientas/` (validador de specs). Las specs están en `specs/`: la constitución,
 las áreas vivas (`specs/areas/<área>/spec.md`) y las propuestas de cambio
-(`specs/cambios/`). Se versionan en git y no se publican en GitHub Pages.
+(`specs/cambios/`). Se versionan en git y no se publican.
 
 ## Desarrollo
 
 ```bash
-npm test           # tests unitarios, incluidos el validador de specs y la versión de index.html
-npm run check      # sintaxis de todos los scripts de src/ y tests/
-npm run e2e        # comprobaciones en Edge headless (móvil y escritorio)
+npm install        # una vez
+npm run dev        # servidor local en http://localhost:4321/mc-tools/
+npm run build      # construye el sitio en dist/
+npm run preview    # sirve dist/ (tras build)
+npm run check      # astro check: comprobación del proyecto
+npm test           # tests unitarios (Vitest), incluido el validador de specs
+npm run e2e        # construye, sirve y comprueba en Edge headless (móvil y escritorio)
 npm run specs      # valida las specs e imprime la cobertura requisito -> tests
-npm run versionar  # pone la huella del contenido en las direcciones y en el pie (antes de desplegar)
 ```
+
+## Publicación
+
+Al subir a `main`, GitHub Actions (`.github/workflows/deploy.yml`) ejecuta `check`, las pruebas y el build, y solo si
+todo pasa despliega `dist/` en GitHub Pages. En Ajustes > Pages del repositorio el origen debe ser **GitHub Actions**
+(ya no «Deploy from a branch»). El pie muestra el commit corto desplegado.
 
 ## Metodología (SDD)
 

@@ -183,5 +183,5 @@ autoalojadas y el despliegue.
 - [x] T10 — Archivar (`/sdd-archivar 015`): delta a `specs/areas/publicacion/spec.md` (PUB-04..10,
   PUB-01..03 retirados, propósito, casos límite, fuera de alcance, decisiones), estado `Hecha`,
   archivo, `pendientes.md`. Commit: «SDD: archiva la propuesta 015 (migración a Astro)».
-- [ ] T11 — Documentación: `README.md`, `CLAUDE.md`, `specs/README.md` y skills `sdd-*`. Commit:
+- [x] T11 — Documentación: `README.md`, `CLAUDE.md`, `specs/README.md` y skills `sdd-*`. Commit:
   «Docs: comandos y estructura tras la migración a Astro (015)».

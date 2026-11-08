@@ -1,28 +1,30 @@
 # Formas MC
 
-Planificador de formas en bloques para Minecraft. Se abre con doble clic en `index.html`:
-sin dependencias, sin build y sin red. Scripts clásicos (IIFE + espacio de nombres global)
-que también se exportan a Node para los tests. Todo en español.
+Planificador de formas en bloques para Minecraft. Sitio estático con Astro (sin framework de UI),
+módulos ES, pruebas con Vitest. Se usa desde la web publicada o con `npm run dev`; ya no se abre
+con doble clic. Todo en español.
 
 ## Comandos
 
 ```bash
-npm run check      # sintaxis de src/ y tests/ (recursivo)
-npm test           # tests unitarios (incluye el validador de specs y la versión de index.html)
-npm run e2e        # comprobaciones en Edge headless vía CDP
+npm run dev        # servidor local: http://localhost:4321/mc-tools/
+npm run build      # construye dist/
+npm run check      # astro check
+npm test           # Vitest: unitarios y validador de specs
+npm run e2e        # astro build + astro preview + Edge headless vía CDP
 npm run specs      # valida las specs e imprime la cobertura ID -> tests
-npm run versionar  # sella index.html con la huella de su contenido (?v= y pie)
 ```
 
 ## Estructura
 
-- `src/nucleo/` — lógica pura sin DOM (`formas`, `estado`, `documento`, `marcas`,
-  `historial`, `materiales`, `almacen`).
-- `src/dibujo/` — canvas (`render`, `zoom`).
-- `src/interfaz/` — DOM del panel, avisos, menú, exportación.
-- `src/entrada/` — ratón, táctil y teclado.
-- `src/app.js` — raíz de composición; no tiene reglas de negocio.
-- `tests/unit/`, `tests/e2e/`, `tests/herramientas/`.
+- `src/pages/` — `index.astro` (portada y redirección de enlaces antiguos) y `formas/index.astro`.
+- `src/layouts/Base.astro` — head, aviso de Mojang y pie con la versión.
+- `src/herramientas/formas/` — la app: `nucleo/` (lógica pura sin DOM: `formas`, `estado`, `documento`,
+  `marcas`, `historial`, `materiales`, `almacen`), `dibujo/` (canvas), `interfaz/` (DOM del panel, avisos,
+  menú, exportación), `entrada/` (ratón, táctil, teclado), `app.js` (raíz de composición, sin reglas de
+  negocio) y `estilos.css`.
+- `src/compartido/` — versión del pie y fuentes autoalojadas; lo que compartan las herramientas.
+- `tests/unit/` (Vitest), `tests/e2e/`, `tests/herramientas/` (validador de specs).
 - `specs/` — constitución, áreas vivas y propuestas de cambio.
 
 ## Metodología (SDD)
@@ -43,22 +45,27 @@ Detalle y comandos: `specs/README.md`. Principios: `specs/constitucion.md`.
 - Cada requisito vigente tiene al menos un test que cita su ID (`NUM-07: …`). Solo se
   admite `[verificación manual]`, con motivo, en lo puramente visual.
 - Test primero: rojo y luego verde. Un bug se corrige con un test de regresión con ID.
-- Tras cambiar `index.html` o algo de `src/`, ejecutar `npm run versionar`: si no, `npm test`
-  falla («no está al día»). Va en el mismo commit que el cambio.
+- No hay paso de versión: el build pone la huella en cada archivo y el pie muestra el commit.
 - No se tocan las claves `mc-formas-v1*` ni la firma de las marcas sin migración y test.
 - En tareas de interfaz se usa la skill `ui-ux-pro-max` y se valida con capturas reales
   (móvil 390×844 con toques reales y escritorio).
-- Lo mínimo que cumple la spec. Una dependencia nueva exige enmendar la constitución.
+- Lo mínimo que cumple la spec. Una dependencia nueva exige enmendar la constitución (vigentes: `astro`,
+  `vitest`, `typescript`, `@astrojs/check`, `@fontsource-variable/*`; versiones exactas, sin `^`).
 - Commits en español y **sin push** salvo que el usuario lo pida.
 
 ## Trampas conocidas
 
+- **E2E:** el arnés ejecuta `astro build`, arranca `astro preview` (puerto 4321) y navega a
+  `http://localhost:4321/mc-tools/formas/`; lo cierra al terminar. Ya no hay `file://`: el origen es
+  `localhost:4321` y se limpia `localStorage` entre escenarios.
 - **E2E con Edge headless:** `edge.kill()` no cierra el navegador en Windows. Si hay
   `msedge.exe --headless` huérfanos en el puerto 9333, la siguiente ejecución se conecta al
   navegador viejo (con su emulación móvil) y falla en masa. El arnés cierra por carpeta de
   perfil; si hace falta, matar los procesos a mano.
-- **`file://`:** todas las páginas locales comparten el mismo `localStorage`. Los E2E lo
-  limpian entre escenarios.
+- **Módulos:** conservan el objeto de espacio de nombres (`export const Formas = (() => {…})()`). `Formas` y
+  `Render` también se exponen en `globalThis` desde `app.js` solo para el E2E.
+- **Fuentes:** `src/compartido/fuentes.css` usa las variables de `@fontsource-variable` (las estáticas daban
+  píxeles distintos a los de Google).
 - **Firma de marcas:** un cambio real de geometría borra las marcas. No ampliar la firma
   con zoom ni opciones de vista.
 - **Dibujo:** si un cambio no debe alterarlo, comprobar píxel a píxel contra la versión
@@ -70,11 +77,11 @@ Detalle y comandos: `specs/README.md`. Principios: `specs/constitucion.md`.
 
 ## Publicación
 
-GitHub Pages desde la rama `main`, carpeta raíz: `https://devjean93.github.io/mc-tools/`, sin
-dominio propio. `_config.yml` excluye de la web `specs/`, `.claude/`, `CLAUDE.md`, `tests/` y
-`package.json`; la app es `index.html` + `src/`. No se hace push sin que lo pida el usuario.
-Cada script y hoja de estilos locales lleva `?v=<huella>` para que el navegador descargue lo nuevo
-(área PUB); `index.html` puede tardar hasta unos 10 minutos en llegar (caché de Pages).
+GitHub Pages desde **GitHub Actions** (`.github/workflows/deploy.yml`, solo en push a `main`): corre
+`npm run check`, `npm test` y el build, y si fallan no se publica nada. URL:
+`https://devjean93.github.io/mc-tools/` (portada) y `…/formas/`. En Ajustes > Pages el origen debe ser
+«GitHub Actions». No se hace push sin que lo pida el usuario. Las páginas HTML pueden tardar hasta unos 10
+minutos en llegar (caché de Pages); el resto de archivos llevan huella en el nombre (área PUB).
 
 ## Dónde está cada cosa
 
