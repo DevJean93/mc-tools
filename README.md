@@ -9,7 +9,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
 ## Funciones
 
 - **Formas 2D:** círculo/óvalo, cuadrado/rectángulo, triángulo, rombo y hexágono (lado plano o punta arriba). Ancho y alto hasta 200; «Proporción 1:1» iguala el alto al ancho.
-- **Formas 3D:** esfera y cúpula (mitad superior), diámetro hasta 100. Se trabaja capa por capa (la capa 1 es la base).
+- **Formas 3D:** esfera y cúpula (mitad superior), diámetro hasta 100. Se trabaja capa por capa (la capa 1 es la base). Opcional: escribe la «Y de la base» y cada capa muestra su altura en el texto, la tabla y el PNG.
 - **Modo:** sólido o hueco. En hueco, el **grosor del borde** se limita automáticamente al máximo que aún deja interior; si pides más, se recorta y se avisa.
 - **Numeración:**
   - Regla 1..N en los bordes (cada 2 o 5 con poco zoom).

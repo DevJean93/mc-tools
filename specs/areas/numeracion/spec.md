@@ -137,6 +137,29 @@ opciones de vista; un estado guardado antes de existir las guías carga igual, c
 sin coordenadas. Las coordenadas son enteros de −30 000 000 a 30 000 000: se redondean, se recortan, y
 un texto o un campo vacío es «sin coordenada».
 
+### NUM-18
+
+En las formas 3D (esfera y cúpula), con la Y de la base escrita, cada capa muestra su altura: la Y de la
+base más el número de capa menos uno. La capa 1 es siempre la base, también en la cúpula (su capa 1 es
+la que se apoya en el suelo). La altura se ve en los tres sitios donde ya aparece el número de capa:
+el texto de la capa sobre el dibujo («Capa 3 de 11 · Y 66», «Capa 1 de 11 (base) · Y 64»), la tabla por
+capas, con una columna «Y» tras «Capa», y la cabecera del PNG exportado («Capa 3 de 11 · Y 66 · …»). La
+etiqueta accesible del dibujo la anuncia («Capa 3 de 11, altura Y 66: …»).
+
+Ejemplo: esfera de 11 con la base en Y = 64 → la capa 3 está en Y = 66 y la 11 en Y = 74; con la base en
+Y = −60, la capa 1 está en −60 y la 11 en −50.
+
+### NUM-19
+
+Con la Y de la base vacía todo se ve como antes: solo el número de capa, sin columna Y en la tabla y con
+la cabecera del PNG y la etiqueta accesible de siempre. En las formas 2D (una sola capa) no se muestra
+ninguna altura aunque haya una guardada. La Y de la base es una opción de vista: no cambia la forma, la
+firma de las marcas ni las marcas, cambiarla no saca avisos, y no viaja en el enlace (FOR-16) ni en el
+archivo de proyecto (MAR-19). Se guarda en el navegador con las demás opciones de vista; un estado
+guardado antes de existir la altura carga igual, sin ella. Es un entero de −30 000 000 a 30 000 000
+(mismas reglas que las coordenadas de las guías de chunk): se redondea, se recorta, y un texto o un
+campo vacío es «sin altura».
+
 ## Casos límite
 
 - Franja de 2 (tamaño par): centro 2×2 y la regla relativa muestra `1 | 1` en la franja.
@@ -146,6 +169,8 @@ un texto o un campo vacío es «sin coordenada».
 - Guías de chunk en un dibujo de 200: 13 guías por eje, de 16 en 16, ninguna en los bordes.
 - Una forma sin ninguna frontera de chunk dentro (p. ej. 10×10 con el centro en X = 5) o de un solo bloque no tiene guías ni falla.
 - Con coordenadas negativas las guías caen donde toca (X = −1 con centro 1×1: a la derecha del centro).
+- Una base negativa (Y = −60) sigue contando hacia arriba: la capa 5 está en −56.
+- Una forma 2D con una Y de la base guardada no muestra ni campo ni altura (la Y se conserva por si se vuelve a una forma 3D).
 
 ## Fuera de alcance
 
@@ -200,3 +225,16 @@ un texto o un campo vacío es «sin coordenada».
   no necesita un módulo positivo. Se descubrió al intentar una mutación que no se detectaba.
 - 2026-11-08: `fronterasChunk` es una función pura de `Render` y la capa se registra tras la rejilla;
   sin la opción o sin las dos coordenadas no pinta nada, así que el dibujo no cambia.
+- 2026-11-08: la Y de la base es un campo opcional; vacío, todo queda como antes. Se descartó que siempre
+  tuviera un valor: quien no la necesita vería una altura que no ha pedido y que puede estar mal.
+- 2026-11-08: la altura se ve en los tres sitios donde ya está el número de capa (texto, tabla y PNG),
+  sin sitios nuevos; el PNG es lo que se lleva al juego.
+- 2026-11-08: en la cúpula la base es su propia capa 1 (la que se apoya en el suelo), igual que en la
+  esfera. Se descartó pedir la base de la esfera completa: solo sirve para cúpulas sobre una esfera ya
+  hecha y confunde en el caso normal.
+- 2026-11-08: se guarda en el navegador como las coordenadas de las guías de chunk y no viaja en el
+  enlace ni en el archivo de proyecto: llevarla obligaría a una versión 2 del archivo con migración, y
+  entonces lo lógico sería llevar también la X y la Z de las guías. Podría ser otra propuesta.
+- 2026-11-08: `Estado.alturaCapa(st, i)` es la única fuente de la altura y devuelve `null` sin Y o en
+  2D; el texto de la capa, la tabla, la cabecera del PNG y la etiqueta accesible la reciben como una
+  función y no calculan nada.

@@ -93,6 +93,14 @@ con ellas, recuerda la convención del centro 2×2 y el sentido de los ejes. La 
 muestra la guía solo cuando hay guías dibujadas. Al desactivar la casilla los campos se ocultan pero
 conservan su valor. La casilla y las coordenadas se recuerdan al recargar.
 
+### INT-13
+
+En «Forma», solo con esfera o cúpula, hay un campo numérico opcional «Y de la base», con etiqueta
+visible, texto de 16 px y objetivo táctil de 44 px en móvil, que admite enteros negativos. Una ayuda,
+enlazada al campo con `aria-describedby`, dice que es la altura de la capa 1 (la que se apoya en el
+suelo, la que se ve con F3) y que vacío solo se ve el número de capa. Al cambiarlo se actualizan el
+texto de la capa y la tabla sin repintar el dibujo. Se recuerda al recargar.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -158,3 +166,10 @@ conservan su valor. La casilla y las coordenadas se recuerdan al recargar.
   coordenadas pueden ser negativas. No se pisa el campo que se está tecleando al repintar el panel.
 - 2026-11-08: la entrada de la leyenda aparece solo con guías visibles, para que la leyenda no hable de
   algo que no se ve.
+- 2026-11-08: el campo va en «Forma», tras la variante, y solo con esfera o cúpula: con una sola capa
+  la altura no significa nada. Con una forma 2D se oculta pero la Y guardada se conserva.
+- 2026-11-08: `type="number"` sin `inputmode`, como las coordenadas de las guías: en iOS el teclado
+  numérico no tiene el signo menos y la Y llega a −64 en el juego. La etiqueta es visible (no solo un
+  marcador) y la ayuda va enlazada con `aria-describedby`.
+- 2026-11-08: `Panel` avisa con un callback propio, `alCambiarAltura`, y la app llama a `refrescar()`: a
+  diferencia de las demás opciones de vista, esta no cambia el lienzo sino el texto y la tabla.
