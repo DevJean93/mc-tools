@@ -344,3 +344,36 @@ test('NUM-17: los argumentos raros no hacen fallar a fronterasChunk', () => {
   assert.doesNotThrow(() => fronteras(16, 16, 30000000, -30000000));
   assert.deepEqual(fronteras(16, 16, 0, 0).cols.every(i => i >= 1 && i < 16), true);
 });
+
+// --- MAT-14: paleta para papel de la ficha imprimible ---------------------------------------------
+const hex = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+const luz = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+const contraste = (a, b) => { const x = luz(a), y = luz(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+// Color de `base` con la banda translucida `rgba(r,g,b,a)` encima.
+const velo = (base, rgba) => { const [r, g, b, a] = rgba.match(/[0-9.]+/g).map(Number); return base.map((v, i) => v * (1 - a) + [r, g, b][i] * a); };
+
+test('MAT-14: la paleta de papel tiene fondo blanco y celdas vacias sin relleno (blancas)', () => {
+  assert.ok(Render.PAPEL, 'Render.PAPEL existe');
+  assert.equal(Render.PAPEL.lienzo.toUpperCase(), '#FFFFFF');
+  assert.equal(Render.PAPEL.vacia.toUpperCase(), '#FFFFFF');
+});
+
+test('MAT-14: las cifras tienen al menos 4,5:1 sobre el bloque, sobre el bloque en un eje y sobre el fondo', () => {
+  const P = Render.PAPEL, bloque = hex(P.bloque), eje = velo(bloque, P.banda), ejeVacio = velo(hex(P.vacia), P.banda);
+  assert.ok(contraste(hex(P.sobreBloque), bloque) >= 4.5, 'cifra sobre bloque');
+  assert.ok(contraste(hex(P.sobreBloque), eje) >= 4.5, 'cifra sobre bloque en un eje');
+  for (const k of ['regla', 'tramo', 'texto', 'oro']) assert.ok(contraste(hex(P[k]), hex(P.lienzo)) >= 4.5, `${k} sobre el fondo`);
+  assert.ok(contraste(hex(P.regla), ejeVacio) >= 4.5, 'regla sobre un eje vacio');
+});
+
+test('MAT-14: vacia, bloque, bloque en eje y centro se distinguen en escala de grises', () => {
+  const P = Render.PAPEL, bloque = hex(P.bloque), eje = velo(bloque, P.banda);
+  const L = [luz(hex(P.vacia)), luz(bloque), luz(eje), luz(hex(P.oro))];
+  for (let i = 1; i < L.length; i++) assert.ok(L[i - 1] - L[i] >= 0.1, `escalon ${i}: ${L[i - 1].toFixed(2)} -> ${L[i].toFixed(2)}`);
+  assert.ok(Render.PAPEL.centroAncho > 2, 'el borde del centro es mas grueso que el de pantalla');
+});
+
+test('MAT-14: las guias de chunk son mas oscuras que la rejilla en papel', () => {
+  const P = Render.PAPEL;
+  assert.ok(luz(hex(P.guiaChunk)) < luz(hex(P.rejilla5)) && luz(hex(P.guiaChunk)) < luz(hex(P.rejilla)));
+});

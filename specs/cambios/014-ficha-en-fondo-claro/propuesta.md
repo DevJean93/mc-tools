@@ -2,7 +2,7 @@
 
 ## Estado
 
-Aprobada
+En curso
 
 ## Motivo
 

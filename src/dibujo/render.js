@@ -21,10 +21,21 @@ const Render = (() => {
       lienzo: v('--lienzo'), vacia: v('--vacia'), bloque: v('--bloque'), hecho: v('--hecho'),
       banda: v('--centro-banda'), oro: v('--oro'), regla: v('--regla'), tramo: v('--tramo'),
       sobreBloque: v('--sobre-bloque'), rejilla: v('--rejilla'), rejilla5: v('--rejilla-5'), texto: v('--fg'),
-      guiaChunk: v('--guia-chunk'),
+      guiaChunk: v('--guia-chunk'), centroAncho: 2,
     };
     return PAL;
   }
+
+  // Paleta para papel (la ficha imprimible, MAT-14): se pasa en la opcion `paleta` de dibujar y se mezcla
+  // sobre la de la app. Fondo blanco, celdas vacias sin relleno, bloques en verde muy suave (la rejilla es
+  // su borde fino), tinta oscura para cifras y cabecera, ejes con un velo oscuro y el centro con un borde
+  // grueso: en escala de grises se distinguen por luminancia, no por el color.
+  const PAPEL = {
+    lienzo: '#FFFFFF', vacia: '#FFFFFF', bloque: '#BBF7D0', hecho: '#BBF7D0',
+    banda: 'rgba(15, 23, 42, .16)', oro: '#0F172A', regla: '#334155', tramo: '#334155',
+    sobreBloque: '#0F172A', rejilla: '#CBD5E1', rejilla5: '#94A3B8', texto: '#0F172A',
+    guiaChunk: '#6B21A8', centroAncho: 4,
+  };
 
   function tramos(arr) {
     const r = []; let ini = -1;
@@ -199,8 +210,9 @@ const Render = (() => {
 
   const capaCentro = (ctx, m, o, P) => {
     const [cx0, cx1, cy0, cy1] = franjas(m);
-    ctx.strokeStyle = P.oro; ctx.lineWidth = 2;
-    ctx.strokeRect(m.L + cx0 * m.s + 1, m.T + cy0 * m.s + 1, (cx1 - cx0 + 1) * m.s - 2, (cy1 - cy0 + 1) * m.s - 2);
+    const a = P.centroAncho;
+    ctx.strokeStyle = P.oro; ctx.lineWidth = a;
+    ctx.strokeRect(m.L + cx0 * m.s + a / 2, m.T + cy0 * m.s + a / 2, (cx1 - cx0 + 1) * m.s - a, (cy1 - cy0 + 1) * m.s - a);
   };
 
   // Reglas: numeracion 1..N y, opcionalmente, relativa al centro. Cada una se pinta por separado
@@ -374,12 +386,13 @@ const Render = (() => {
    * @param {HTMLCanvasElement} cv
    * @param {{ g: boolean[][], capa: number, hechos: Set<string>, s: number,
    *           op: {rel:boolean, tramos:boolean, tramosDentro:boolean, distEjes:boolean},
-   *           cursor?: {x:number,y:number}|null, cabecera?: string[], dpr?: number }} o
+   *           cursor?: {x:number,y:number}|null, cabecera?: string[], dpr?: number,
+   *           paleta?: object }} o   paleta: colores que sustituyen a los de la app (la ficha pasa PAPEL)
    * @returns {{L:number, T:number, s:number, w:number, h:number, ocultos:boolean}}
    */
   function dibujar(cv, o) {
     const { g, s, op } = o;
-    const P = paleta();
+    const P = o.paleta ? { ...paleta(), ...o.paleta } : paleta();
     const ctx = cv.getContext('2d');
     const cab = o.cabecera || [];
     const m = medidas(ctx, g, s, op, cab);
@@ -476,7 +489,7 @@ const Render = (() => {
   }
 
   return {
-    dibujar, medir, reglaRelativa, cifrasReglaRelativa, textoRelativo, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
+    dibujar, PAPEL, medir, reglaRelativa, cifrasReglaRelativa, textoRelativo, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
     fronterasChunk, zonaRegla, zonaCelda, dibujarReglasFijas,
   };
 })();

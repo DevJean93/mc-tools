@@ -108,7 +108,7 @@ const Exportar = (() => {
 
     async function imagenCapa(d, c, aux) {
       const lineas = cabecera(d, c, { construidos: false });
-      render.dibujar(aux, { g: d.capas[c], capa: c, hechos: new Set(), s: CELDA_FICHA, op: d.op, dpr: 1, cabecera: lineas });
+      render.dibujar(aux, { g: d.capas[c], capa: c, hechos: new Set(), s: CELDA_FICHA, op: d.op, dpr: 1, cabecera: lineas, paleta: render.PAPEL });   // siempre en papel (MAT-14)
       const url = URL.createObjectURL(await aBlob(aux));
       urls.push(url);
       const img = crearEl('img');

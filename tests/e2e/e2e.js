@@ -885,6 +885,27 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     `MAT-11, MAT-12: la primera página lleva la tabla por capas con la columna Y y sin «Hechos» (${f3D && f3D.cabTabla})`);
   ok(f3D && /Capa 3 de 11 · Y 66 · /.test(f3D.alts[2]) && !/Construidos|Faltan/.test(f3D.texto),
     'MAT-11: la cabecera de la capa 3 dice «Y 66» -> ' + (f3D && f3D.alts[2]));
+  // MAT-14: los dibujos de la ficha van en fondo blanco, con los bloques en verde claro; la pantalla sigue oscura.
+  const pix = await ev(`(async () => {
+    const out = [];
+    for (const im of [...document.querySelectorAll('#ficha img')].slice(0, 11)) {
+      const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data; let blanco = 0, oscuro = 0, verde = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { n++;
+        if (d[i] > 245 && d[i + 1] > 245 && d[i + 2] > 245) blanco++;
+        if (d[i] + d[i + 1] + d[i + 2] < 240) oscuro++;
+        if (d[i + 1] > d[i] + 20 && d[i + 1] > d[i + 2] + 10 && d[i] > 150) verde++;
+      }
+      out.push({ esquina: [...x.getImageData(0, 0, 1, 1).data].slice(0, 3).join(), blanco: blanco / n, oscuro: oscuro / n, verde: verde / n });
+    }
+    const l = document.getElementById('lienzo'), p = l.getContext('2d').getImageData(0, 0, 1, 1).data;
+    return { imgs: out, lienzo: [p[0], p[1], p[2]] };
+  })()`);
+  ok(pix.imgs.length === 11 && pix.imgs.every(p => p.esquina === '255,255,255' && p.blanco > 0.3 && p.oscuro < 0.15),
+    `MAT-14: el fondo de cada dibujo de la ficha es blanco y sin zonas grandes oscuras (${JSON.stringify(pix.imgs[5])})`);
+  ok(pix.imgs.slice(1, 10).every(p => p.verde > 0.05), 'MAT-14: los bloques de la forma van en verde claro, las celdas vacías en blanco');
+  ok(pix.lienzo.every(v => v < 60), `MAT-14: el lienzo de pantalla sigue con el fondo oscuro (${pix.lienzo})`);
   const encaja = await enImpresion(() => ev(`(() => { const im = [...document.querySelectorAll('#ficha .ficha-pag img')];
     return im.length === 11 && im.every(i => getComputedStyle(i).objectFit === 'contain' && getComputedStyle(i).maxWidth !== 'none' && getComputedStyle(i).maxHeight !== 'none'); })()`));
   ok(encaja, 'MAT-12: cada dibujo se ajusta a la página sin deformarse (object-fit: contain con ancho y alto máximos)');
