@@ -105,11 +105,12 @@
   const textoModo = () => (st.modo === 'hueco' ? `hueco, grosor ${st.grosor}` : 'sólido');
 
   // --- vista ------------------------------------------------------------------------
+  const alturaDeCapa = i => Estado.alturaCapa(st, i);   // Y de la capa i, o null si no hay
   function refrescar() {
     const n = doc.capas().length, capa = doc.capa();
     $('selCapa').hidden = n < 2;
     $('capa').max = n - 1; $('capa').value = capa;
-    const y = Estado.alturaCapa(st, capa);   // null sin Y de la base o en 2D
+    const y = alturaDeCapa(capa);
     $('capaTxt').textContent = `Capa ${capa + 1} de ${n}` + (capa === 0 ? ' (base)' : '') + (y === null ? '' : ` · Y ${y}`);
     for (const id of ['marcarCapa', 'desmarcarCapa']) $(id).hidden = n < 2;
     $('deshacer').disabled = !doc.puedeDeshacer();
@@ -117,7 +118,7 @@
     dibujar();
 
     const r = Materiales.resumen(doc.totales(), doc.porCapa(n), capa);
-    vista.pintar(r, capa, { nombre: nombreForma(), dimensiones: dimensiones(), modo: textoModo() });
+    vista.pintar(r, capa, { nombre: nombreForma(), dimensiones: dimensiones(), modo: textoModo(), altura: alturaDeCapa });
     $('resumen').textContent = Materiales.textoResumenCentro(doc.capaActual(), Render.centro);
   }
 
@@ -209,7 +210,7 @@
     render: Render, descargar: Exportar.descargar, avisos,
     contexto: () => ({
       capas: doc.capas(), totales: doc.totales(), hechos: doc.hechos(), op: st, zoom: st.zoom,
-      nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(),
+      nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(), altura: alturaDeCapa,
       variante: doc.definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: doc.es3D(),
       w: st.w, h: st.h, porCapa: doc.porCapa(doc.capas().length), stacks: Materiales.fmtStacks,
     }),

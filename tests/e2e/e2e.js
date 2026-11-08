@@ -785,6 +785,38 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // NUM-18, NUM-19: la altura en la tabla por capas, en la cabecera del PNG y en la etiqueta accesible.
+  await ev(`localStorage.clear()`); await cargar();
+  await ponerCampo('forma', 'esfera'); await ponerCampo('w', '11'); await ponerCampo('baseY', '64'); await irCapaN(2); await esperar(500);
+  const tabla = () => ev(`(() => { const t = document.querySelector('#tablaCapas table'); if (!t) return null;
+    return { cab: [...t.querySelectorAll('thead th')].map(h => h.textContent), filas: [...t.querySelectorAll('tbody tr')].map(r => [...r.cells].map(c => c.textContent)) }; })()`);
+  // Cabecera que se pasa a Render al exportar la capa actual (sin esperar a la descarga).
+  const cabeceraPng = async () => {
+    await ev(`(() => { window.__cab = null; if (!window.__dibujarOrig) { window.__dibujarOrig = Render.dibujar; Render.dibujar = (cv, o) => { if (o.cabecera) window.__cab = o.cabecera; return window.__dibujarOrig(cv, o); }; } })()`);
+    await ev(`document.getElementById('exportar').click()`); await esperar(700);
+    return ev(`window.__cab`);
+  };
+
+  const conY = await tabla();
+  ok(conY && conY.cab.join('|') === 'Capa|Y|Bloques|Stacks|Hechos' && conY.filas.length === 11 && conY.filas[0][1] === '64' && conY.filas[2][1] === '66' && conY.filas[10][1] === '74',
+    `NUM-18: con la base en Y=64 la tabla por capas tiene la columna Y con 64 ... 74 (${conY && conY.cab.join('|')} · ${conY && conY.filas.map(f => f[1]).join(',')})`);
+  const cabY = await cabeceraPng();
+  ok(cabY && cabY[1].startsWith('Capa 3 de 11 · Y 66 · '), 'NUM-18: la cabecera del PNG de la capa 3 lleva «Y 66» -> ' + (cabY && cabY[1]));
+  const etiqueta = await ev(`document.getElementById('lienzo').getAttribute('aria-label')`);
+  ok(/^Dibujo de .*Capa 3 de 11, altura Y 66: /.test(etiqueta), 'NUM-18: la etiqueta accesible del dibujo anuncia la altura -> ' + etiqueta);
+
+  // NUM-19: sin Y, la tabla, la cabecera y la etiqueta son las de siempre.
+  await ponerCampo('baseY', ''); await esperar(400);
+  const sinY = await tabla();
+  ok(sinY && sinY.cab.join('|') === 'Capa|Bloques|Stacks|Hechos' && sinY.filas.every(f => f.length === 4) && sinY.filas[2][0] === '3',
+    `NUM-19: sin Y la tabla no tiene la columna Y (${sinY && sinY.cab.join('|')})`);
+  const cabSin = await cabeceraPng();
+  ok(cabSin && /^Capa 3 de 11 · [0-9]+ bloques/.test(cabSin[1]) && !/Y -?[0-9]/.test(cabSin[1]), 'NUM-19: sin Y la cabecera del PNG es la de siempre -> ' + (cabSin && cabSin[1]));
+  const etiquetaSin = await ev(`document.getElementById('lienzo').getAttribute('aria-label')`);
+  ok(/Capa 3 de 11: /.test(etiquetaSin) && !/altura/.test(etiquetaSin), 'NUM-19: sin Y la etiqueta accesible es la de siempre -> ' + etiquetaSin);
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');

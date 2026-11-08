@@ -25,7 +25,7 @@ const Exportar = (() => {
             g: d.capas[c], capa: c, hechos: d.hechos, s: d.zoom, op: d.op, dpr: 1,
             cabecera: [
               `${d.nombre} ${d.dimensiones} · ${d.modoTexto}`,
-              `Capa ${c + 1} de ${d.capas.length} · ${d.totales[c]} bloques (${d.stacks(d.totales[c])}) · construidos ${d.porCapa[c]}`,
+              `Capa ${c + 1} de ${d.capas.length}${d.altura && d.altura(c) !== null ? ` · Y ${d.altura(c)}` : ''} · ${d.totales[c]} bloques (${d.stacks(d.totales[c])}) · construidos ${d.porCapa[c]}`,
               `Formas MC · ${new Date().toLocaleDateString('es')}`,
             ],
           });
