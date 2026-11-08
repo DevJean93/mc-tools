@@ -6,6 +6,7 @@ const Panel = (() => {
   const TOGGLES = Estado.VISTA;
   const CAMPOS = ['w', 'h', 'grosor'];
   const SELECTS = ['forma', 'igualar', 'modo', 'esfera', 'orient'];
+  const COORDS = ['centroX', 'centroZ'];   // coordenadas del bloque central en el mundo (guias de chunk)
 
   function crear({ st, limites, es3D }) {
     const $ = id => document.getElementById(id);
@@ -30,6 +31,20 @@ const Panel = (() => {
       leerPropios();
       st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
+      for (const id of COORDS) st[id] = Estado.coordenada($(id).value);   // vacio -> sin coordenada
+      ponerGuias();
+    }
+
+    // Guias de chunk: los campos y la ayuda solo se ven con la casilla activada; sin las dos coordenadas
+    // la ayuda las pide, y la leyenda solo aparece cuando de verdad hay guias dibujadas.
+    function ponerGuias() {
+      const sinCoords = st.centroX === null || st.centroZ === null;
+      $('filaCentroMundo').hidden = !st.guiasChunk;
+      $('ayudaGuias').hidden = !st.guiasChunk;
+      $('ayudaGuias').textContent = sinCoords
+        ? 'Escribe la X y la Z del bloque central (las ves con F3 en el juego) para ver las guías.'
+        : 'Coordenadas del bloque central; si el centro es de 2×2, las del bloque de arriba a la izquierda. La X crece hacia la derecha y la Z hacia abajo.';
+      $('leyendaGuias').hidden = !(st.guiasChunk && !sinCoords);
     }
 
     // El selector de formas sale del registro: una forma registrada aparece sin tocar el HTML.
@@ -86,6 +101,9 @@ const Panel = (() => {
       $('igualar').checked = st.igualar; $('modo').value = st.modo;
       ponerPropios(); $('zoom').value = st.zoom;
       for (const k of TOGGLES) $(k).checked = st[k];
+      // No se pisa un campo mientras se teclea en el (un "-" a medias se perderia).
+      for (const id of COORDS) if (document.activeElement !== $(id)) $(id).value = st[id] === null ? '' : st[id];
+      ponerGuias();
       $('h').disabled = st.igualar;
       $('rowH').hidden = es3D();
       $('filaDims').classList.toggle('solo', es3D());
@@ -105,6 +123,7 @@ const Panel = (() => {
       }
       for (const id of SELECTS) $(id).addEventListener('input', () => alCambiarGeo({ diferido: false }));
       for (const k of TOGGLES) $(k).addEventListener('input', () => alCambiarVista());
+      for (const id of COORDS) $(id).addEventListener('input', () => alCambiarVista());
     }
 
     return { leer, poner, conectar };

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="src/estilos.css?v=81c837a7">
+<link rel="stylesheet" href="src/estilos.css?v=44238335">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -82,6 +82,14 @@
       <label class="chk"><input type="checkbox" id="tramos"> Tramos por fila y columna</label>
       <label class="chk"><input type="checkbox" id="tramosDentro"> Tramos dentro del dibujo</label>
       <label class="chk"><input type="checkbox" id="distEjes"> Distancia al centro en los ejes</label>
+      <label class="chk"><input type="checkbox" id="guiasChunk"> Guías de chunk</label>
+      <div class="fila2" id="filaCentroMundo" hidden>
+        <label><span>X del centro</span>
+          <input type="number" id="centroX" min="-30000000" max="30000000" step="1"></label>
+        <label><span>Z del centro</span>
+          <input type="number" id="centroZ" min="-30000000" max="30000000" step="1"></label>
+      </div>
+      <p class="ayuda" id="ayudaGuias" hidden></p>
       <div class="botones">
         <button type="button" id="exportar"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>PNG de la capa</button>
         <button type="button" id="exportarTodas"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>Todas las capas</button>
@@ -153,6 +161,7 @@
       <li><span class="m bloque" aria-hidden="true"></span>Bloque</li>
       <li><span class="m hecho" aria-hidden="true"></span>Construido (esquina blanca)</li>
       <li><span class="m centro" aria-hidden="true"></span>Franjas del centro; el recuadro dorado es el bloque central (1×1 o 2×2)</li>
+      <li id="leyendaGuias" hidden><span class="m guia" aria-hidden="true"></span>Guía de chunk: frontera cada 16 bloques del mundo</li>
     </ul>
   </section>
 </main>
@@ -167,25 +176,25 @@
   <a href="#secForma"><svg class="ico" aria-hidden="true"><use href="#i-forma"/></svg>Forma</a>
   <a href="#secMat"><svg class="ico" aria-hidden="true"><use href="#i-cajas"/></svg>Materiales</a>
 </nav>
-<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión 81c837a7</span></footer>
+<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión 44238335</span></footer>
 
-<script src="src/nucleo/almacen.js?v=81c837a7"></script>
-<script src="src/nucleo/formas.js?v=81c837a7"></script>
-<script src="src/nucleo/estado.js?v=81c837a7"></script>
-<script src="src/nucleo/historial.js?v=81c837a7"></script>
-<script src="src/nucleo/marcas.js?v=81c837a7"></script>
-<script src="src/nucleo/materiales.js?v=81c837a7"></script>
-<script src="src/interfaz/avisos.js?v=81c837a7"></script>
-<script src="src/interfaz/vista-materiales.js?v=81c837a7"></script>
-<script src="src/interfaz/panel.js?v=81c837a7"></script>
-<script src="src/nucleo/documento.js?v=81c837a7"></script>
-<script src="src/dibujo/render.js?v=81c837a7"></script>
-<script src="src/dibujo/zoom.js?v=81c837a7"></script>
-<script src="src/interfaz/exportar.js?v=81c837a7"></script>
-<script src="src/interfaz/menu.js?v=81c837a7"></script>
-<script src="src/entrada/raton.js?v=81c837a7"></script>
-<script src="src/entrada/tactil.js?v=81c837a7"></script>
-<script src="src/entrada/teclado.js?v=81c837a7"></script>
-<script src="src/app.js?v=81c837a7"></script>
+<script src="src/nucleo/almacen.js?v=44238335"></script>
+<script src="src/nucleo/formas.js?v=44238335"></script>
+<script src="src/nucleo/estado.js?v=44238335"></script>
+<script src="src/nucleo/historial.js?v=44238335"></script>
+<script src="src/nucleo/marcas.js?v=44238335"></script>
+<script src="src/nucleo/materiales.js?v=44238335"></script>
+<script src="src/interfaz/avisos.js?v=44238335"></script>
+<script src="src/interfaz/vista-materiales.js?v=44238335"></script>
+<script src="src/interfaz/panel.js?v=44238335"></script>
+<script src="src/nucleo/documento.js?v=44238335"></script>
+<script src="src/dibujo/render.js?v=44238335"></script>
+<script src="src/dibujo/zoom.js?v=44238335"></script>
+<script src="src/interfaz/exportar.js?v=44238335"></script>
+<script src="src/interfaz/menu.js?v=44238335"></script>
+<script src="src/entrada/raton.js?v=44238335"></script>
+<script src="src/entrada/tactil.js?v=44238335"></script>
+<script src="src/entrada/teclado.js?v=44238335"></script>
+<script src="src/app.js?v=44238335"></script>
 </body>
 </html>

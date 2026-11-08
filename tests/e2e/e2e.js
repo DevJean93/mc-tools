@@ -663,6 +663,77 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // INT-12, NUM-16, NUM-17: guias de chunk (escritorio). Circulo de 16 a 26 px: L = 80, T = 42.
+  await ev(`localStorage.clear()`); await cargar();
+  const lienzoImg = () => ev(`document.getElementById('lienzo').toDataURL()`);
+  const escribir = (id, v) => ev(`(() => { const e = document.getElementById('${id}'); e.value = '${v}'; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  const casilla = (id, v) => ev(`(() => { const e = document.getElementById('${id}'); e.checked = ${v}; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  // Posiciones (en px del lienzo) con el color de la guia (#E879F9) a lo largo de una fila o columna.
+  const guiasEn = (eje, fijo) => ev(`(() => { const c = document.getElementById('lienzo'), d = window.devicePixelRatio || 1, x = c.getContext('2d');
+    const w = c.width, h = c.height, n = '${eje}' === 'fila' ? w : h;
+    const datos = '${eje}' === 'fila' ? x.getImageData(0, Math.round(${fijo} * d), w, 1).data : x.getImageData(Math.round(${fijo} * d), 0, 1, h).data;
+    const r = []; for (let i = 0; i < n; i++) { const p = i * 4; if (Math.abs(datos[p] - 232) < 12 && Math.abs(datos[p + 1] - 121) < 12 && Math.abs(datos[p + 2] - 249) < 12) r.push(Math.round(i / d)); }
+    return r; })()`);
+  const filaCoords = () => ev(`(() => { const f = document.getElementById('filaCentroMundo'), x = document.getElementById('centroX'), z = document.getElementById('centroZ');
+    return f ? { visible: !f.hidden, x: x.value, z: z.value, etX: x.closest('label').textContent.trim(), etZ: z.closest('label').textContent.trim(),
+      ayuda: document.getElementById('ayudaGuias').textContent, leyenda: !document.getElementById('leyendaGuias').hidden } : null; })()`);
+
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(250);
+  const trasMarcar = await aviso();
+  const imgBase = await lienzoImg();
+  const ini = await ev(`(() => { const c = document.getElementById('guiasChunk'); const f = document.getElementById('filaCentroMundo');
+    return c ? { marcada: c.checked, enVista: !!c.closest('section') && c.closest('section').querySelector('h2').textContent === 'Vista', fila: f ? f.hidden : null } : null; })()`);
+  ok(ini && ini.enVista && !ini.marcada && ini.fila === true, `INT-12: «Guias de chunk» esta en «Vista», apagada y sin los campos (${JSON.stringify(ini)})`);
+
+  // NUM-17: activada sin coordenadas, el panel las pide y el dibujo no cambia.
+  await casilla('guiasChunk', true); await esperar(250);
+  const sinCoords = await filaCoords();
+  ok(sinCoords && sinCoords.visible && sinCoords.etX.includes('X del centro') && sinCoords.etZ.includes('Z del centro') && sinCoords.x === '' && sinCoords.z === '' &&
+    /Escribe la X y la Z del bloque central/.test(sinCoords.ayuda) && !sinCoords.leyenda,
+  `INT-12: al activarla aparecen X y Z del centro y el panel pide las coordenadas (${JSON.stringify(sinCoords)})`);
+  ok(await lienzoImg() === imgBase, 'NUM-17: con la opcion activada pero sin coordenadas el dibujo no cambia');
+
+  // NUM-16: con X = 100 y Z = -40 hay una guia entre las columnas 2 y 3 (x = 80 + 3 * 26) y otra entre las filas 14 y 15 (y = 42 + 15 * 26).
+  await escribir('centroX', '100'); await escribir('centroZ', '-40'); await esperar(300);
+  const vert = await guiasEn('fila', 42 + 7 * 26 + 13), horiz = await guiasEn('columna', 80 + 100);
+  ok(vert.length >= 1 && vert.every(x => Math.abs(x - 158) <= 1) && horiz.length >= 1 && horiz.every(y => Math.abs(y - 432) <= 1),
+    `NUM-16: con X=100 y Z=-40 hay una sola guia vertical en x=158 y una horizontal en y=432 (verticales ${JSON.stringify(vert)}, horizontales ${JSON.stringify(horiz)})`);
+  ok(vert.length === 2 && horiz.length === 2, `NUM-16: la guia mide 2 px de grosor (${vert.length} x ${horiz.length})`);
+  const conGuias = await filaCoords();
+  ok(conGuias.leyenda && /frontera/i.test(await ev(`document.getElementById('leyendaGuias').textContent`)) && !/Escribe la X y la Z/.test(conGuias.ayuda),
+    'NUM-16: con guias visibles la leyenda las explica y la ayuda cambia');
+  ok((await prog()).startsWith('Construidos: 16/208') && (await aviso()).texto === trasMarcar.texto,
+    'NUM-17: cambiar las coordenadas no toca las marcas ni saca ningun aviso -> ' + await prog());
+
+  // NUM-16: tambien salen en el PNG exportado.
+  await ev(`(() => { const o = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function (cb, t, q) { window.__png = this; return o.call(this, cb, t, q); }; })()`);
+  await ev(`document.getElementById('exportar').click()`); await esperar(700);
+  const enPng = await ev(`(() => { const c = window.__png; if (!c) return -1; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 232) < 12 && Math.abs(d[i + 1] - 121) < 12 && Math.abs(d[i + 2] - 249) < 12) n++; return n; })()`);
+  ok(enPng > 100, `NUM-16: el PNG exportado lleva las guias (${enPng} pixeles del color de la guia)`);
+
+  // INT-12: apagar las guias oculta los campos pero conserva los valores, y el dibujo vuelve a ser el de antes.
+  await casilla('guiasChunk', false); await esperar(250);
+  const apagada = await filaCoords();
+  ok(!apagada.visible && apagada.x === '100' && apagada.z === '-40' && !apagada.leyenda, `INT-12: al apagarla se ocultan los campos y se conservan los valores (${JSON.stringify(apagada)})`);
+  ok(await lienzoImg() === imgBase, 'NUM-17: con la opcion apagada el dibujo es identico al de antes, pixel a pixel');
+
+  // INT-12: la casilla y las coordenadas se recuerdan al recargar.
+  await casilla('guiasChunk', true); await esperar(250);
+  await cargar();
+  const recargada = await filaCoords();
+  ok(await ev(`document.getElementById('guiasChunk').checked`) && recargada.visible && recargada.x === '100' && recargada.z === '-40' && (await guiasEn('fila', 42 + 7 * 26 + 13)).length === 2,
+    `INT-12: al recargar siguen la casilla, las coordenadas y las guias (${JSON.stringify(recargada)})`);
+
+  // NUM-17: un estado guardado antes de este cambio (sin las claves nuevas) arranca bien con las guias apagadas.
+  await ev(`localStorage.setItem('mc-formas-v1', '{"forma":"rombo","w":20,"h":20,"igualar":true,"modo":"relleno","grosor":1,"esfera":"esfera","orient":"plano","zoom":26,"rel":true,"tramos":true,"tramosDentro":false,"distEjes":true,"capa":0}')`);
+  await cargar();
+  const antiguo = await ev(`({ forma: document.getElementById('forma').value, guias: document.getElementById('guiasChunk').checked, x: document.getElementById('centroX').value })`);
+  ok(antiguo.forma === 'rombo' && antiguo.guias === false && antiguo.x === '', `NUM-17: un estado guardado antes de las guias carga igual y las deja apagadas (${JSON.stringify(antiguo)})`);
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');
@@ -706,6 +777,17 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(avisoLargo.texto > 60 && !avisoLargo.desborda && avisoLargo.izq >= 0 && avisoLargo.der >= 0,
     `INT-10: en movil el enlace del aviso de respaldo se parte en lineas y no se sale de la pantalla (${JSON.stringify(avisoLargo)})`);
   await shot('09-enlace-a-mano-movil.png');
+  // INT-12 en movil: los campos de coordenadas aparecen, caben, tienen etiqueta y miden al menos 44 px.
+  await ev(`(() => { const c = document.getElementById('guiasChunk'); c.checked = true; c.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  await ev(`document.getElementById('centroX') && document.getElementById('centroX').scrollIntoView({ block: 'center' })`); await esperar(300);
+  const camposMovil = await ev(`(() => { const vw = document.documentElement.clientWidth;
+    const medir = id => { const e = document.getElementById(id); if (!e) return null; const r = e.getBoundingClientRect(); return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right), etiqueta: e.closest('label').textContent.trim(), fuente: parseFloat(getComputedStyle(e).fontSize) }; };
+    return { x: medir('centroX'), z: medir('centroZ'), vw }; })()`);
+  ok(camposMovil.x && camposMovil.z && camposMovil.x.alto >= 44 && camposMovil.z.alto >= 44 && camposMovil.x.izq >= 0 && camposMovil.z.der <= camposMovil.vw &&
+    camposMovil.x.etiqueta.includes('X del centro') && camposMovil.z.etiqueta.includes('Z del centro') && camposMovil.x.fuente >= 16,
+  `INT-12: en movil «X del centro» y «Z del centro» caben, tienen etiqueta, 16 px y al menos 44 px (${JSON.stringify(camposMovil)})`);
+  await shot('10-guias-movil.png');
+  await ev(`(() => { const c = document.getElementById('guiasChunk'); c.checked = false; c.dispatchEvent(new Event('input', { bubbles: true })); })()`);
   await shot('06-proyecto-movil.png');
   await ev(`document.getElementById('cerrarMenu').click()`); await esperar(300);
 

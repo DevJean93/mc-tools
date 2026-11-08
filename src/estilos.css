@@ -104,6 +104,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .leyenda .bloque { background: var(--bloque); }
 .leyenda .hecho { background: linear-gradient(225deg, var(--fg) 30%, var(--hecho) 30%); }
 .leyenda .centro { background: var(--centro-banda); border-color: var(--oro); }
+.leyenda .guia { background: var(--guia-chunk); }
 
 .tot { font-size: 24px; font-weight: 600; }
 .tot small { font-family: var(--fuente); font-size: 13px; }
