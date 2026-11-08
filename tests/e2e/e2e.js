@@ -683,6 +683,16 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     const r = b.getBoundingClientRect(), vw = document.documentElement.clientWidth; return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right), vw }; })()`);
   ok(botonEnlaceMovil && botonEnlaceMovil.alto >= 44 && botonEnlaceMovil.izq >= 0 && botonEnlaceMovil.der <= botonEnlaceMovil.vw,
     `INT-10: en movil «Copiar enlace» cabe y mide al menos 44 px (${JSON.stringify(botonEnlaceMovil)})`);
+  // INT-10: la direccion larga del aviso de respaldo se parte en lineas y cabe en la pantalla.
+  await sustituirPortapapeles(`() => Promise.reject(new Error('sin permiso'))`);
+  await ev(`document.getElementById('copiarEnlace').click()`); await esperar(300);
+  const avisoLargo = await ev(`(() => { const t = document.getElementById('avisoTxt'), a = document.getElementById('aviso').getBoundingClientRect();
+    const r = document.createRange(); r.selectNodeContents(t);
+    const derTexto = Math.max(...[...r.getClientRects()].map(c => c.right));
+    return { desborda: derTexto > a.right + 1, izq: Math.round(a.left), der: Math.round(document.documentElement.clientWidth - a.right), texto: t.textContent.length }; })()`);
+  ok(avisoLargo.texto > 60 && !avisoLargo.desborda && avisoLargo.izq >= 0 && avisoLargo.der >= 0,
+    `INT-10: en movil el enlace del aviso de respaldo se parte en lineas y no se sale de la pantalla (${JSON.stringify(avisoLargo)})`);
+  await shot('09-enlace-a-mano-movil.png');
   await shot('06-proyecto-movil.png');
   await ev(`document.getElementById('cerrarMenu').click()`); await esperar(300);
 

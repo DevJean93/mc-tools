@@ -126,7 +126,7 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 .nota .ico { color: var(--oro); margin-top: 2px; }
 /* Anclado a los dos lados y centrado con margen automatico: con left: 50% + translate el navegador
    solo le dejaba la mitad derecha de la pantalla y en movil el texto se partia en muchas lineas. */
-.aviso { position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content; bottom: 20px; display: flex; align-items: center; gap: 12px; max-width: min(calc(100% - 32px), 60ch); background: var(--card); border: 1px solid var(--oro); border-radius: var(--radio); padding: 10px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 20; }
+.aviso { position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content; bottom: 20px; display: flex; align-items: center; gap: 12px; max-width: min(calc(100% - 32px), 60ch); background: var(--card); border: 1px solid var(--oro); border-radius: var(--radio); padding: 10px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 20; overflow-wrap: anywhere; }
 .aviso button { border-color: var(--oro); }
 .pie { padding: 8px 16px 24px; color: var(--fg-mut); font-size: 12px; }
 
