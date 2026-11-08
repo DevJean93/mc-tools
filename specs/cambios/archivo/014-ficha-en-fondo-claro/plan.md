@@ -40,7 +40,6 @@ En escala de grises: vacía 1,00 > bloque 0,82 > bloque en eje 0,57 > centro (bo
 - `src/dibujo/render.js`: `PAPEL`, opción `paleta` en `dibujar`, `centroAncho` en `capaCentro`.
 - `src/interfaz/exportar.js`: `imagenCapa` pasa `paleta: render.PAPEL`.
 - `tests/unit/render.test.js`: `MAT-14` (contrastes, escala de grises, `centroAncho` por defecto).
-- `tests/unit/exportar.test.js`: `MAT-14` (la ficha pasa la paleta de papel; el PNG no).
 - `tests/e2e/e2e.js`: `MAT-14` en el bloque de la ficha (píxeles de la ficha; lienzo oscuro).
 - `specs/areas/materiales/spec.md`: delta al archivar (MAT-14 nuevo, MAT-11 modificado, Decisiones; se
   corrige la decisión que dice que el dibujo conserva la paleta oscura).
@@ -94,6 +93,6 @@ anterior y la nueva; `canvas.toDataURL` del lienzo y del PNG exportado de cada f
 
 ## Tareas
 
-- [x] T01 — Tests en rojo de `MAT-14`: unitarios (paleta de papel: contrastes, escala de grises, `centroAncho`; la ficha pasa `paleta: PAPEL` y el PNG no) y E2E (ficha en fondo blanco, bloques verdes claros, lienzo de pantalla oscuro). Después `Render.PAPEL`, la opción `paleta` en `dibujar`, `centroAncho` en `capaCentro` y `imagenCapa` pasando `PAPEL`. Archivos: `src/dibujo/render.js`, `src/interfaz/exportar.js`, `tests/unit/render.test.js`, `tests/unit/exportar.test.js`, `tests/e2e/e2e.js`. Hecho cuando: pasan los tests nuevos, `npm test` en verde salvo el huérfano esperado, `npm run e2e` en verde y la comparación píxel a píxel de pantalla y PNG da 0 píxeles distintos. Commit: «MAT-14, MAT-11: la ficha dibuja con la paleta para papel» (con `npm run versionar`).
-- [ ] T02 — Validación visual: capturas en color y en grises, escritorio y móvil, consola limpia; retoques de color si hacen falta (con `npm run versionar`). Commit: solo si hay cambios.
-- [ ] T03 — Archivar: `MAT-14` y `MAT-11` al área de materiales con sus decisiones, `README.md`, `pendientes.md`, propuesta a `Hecha` y moverla al archivo. Hecho cuando: el validador está en verde con todos los IDs cubiertos. Commit: «SDD: archiva la propuesta 014 (ficha en fondo claro)».
+- [x] T01 — Tests en rojo de `MAT-14`: unitarios (paleta de papel: contrastes, escala de grises, `centroAncho`; la ficha pasando la paleta se comprueba por píxeles en el E2E, y el PNG sin cambios por la comparación píxel a píxel) y E2E (ficha en fondo blanco, bloques verdes claros, lienzo de pantalla oscuro). Después `Render.PAPEL`, la opción `paleta` en `dibujar`, `centroAncho` en `capaCentro` y `imagenCapa` pasando `PAPEL`. Archivos: `src/dibujo/render.js`, `src/interfaz/exportar.js`, `tests/unit/render.test.js`, `tests/unit/exportar.test.js`, `tests/e2e/e2e.js`. Hecho cuando: pasan los tests nuevos, `npm test` en verde salvo el huérfano esperado, `npm run e2e` en verde y la comparación píxel a píxel de pantalla y PNG da 0 píxeles distintos. Commit: «MAT-14, MAT-11: la ficha dibuja con la paleta para papel» (con `npm run versionar`).
+- [x] T02 — Validación visual: capturas en color y en grises, escritorio y móvil, consola limpia; retoques de color si hacen falta (con `npm run versionar`). Commit: solo si hay cambios (no hubo retoques: sin commit).
+- [x] T03 — Archivar: `MAT-14` y `MAT-11` al área de materiales con sus decisiones, `README.md`, `pendientes.md`, propuesta a `Hecha` y moverla al archivo. Hecho cuando: el validador está en verde con todos los IDs cubiertos. Commit: «SDD: archiva la propuesta 014 (ficha en fondo claro)».

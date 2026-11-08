@@ -79,8 +79,8 @@ papel: en pantalla la app no cambia y en el papel no salen los controles. La pri
 nombre, las dimensiones y el modo de la forma y sus materiales (bloques, stacks, shulker boxes y
 cofres dobles); en 3D, además, la tabla por capas, con la columna Y si hay Y de la base (NUM-18).
 Después hay una página por capa con su dibujo numerado y su cabecera, la misma que el PNG (capa, Y si
-la hay y bloques). En 2D todo cabe en una página. El dibujo usa las opciones de vista actuales
-(reglas, tramos, guías de chunk…), igual que el PNG. Desde el diálogo se puede imprimir o elegir
+la hay y bloques). En 2D todo cabe en una página. El dibujo usa las mismas opciones de vista
+actuales (reglas, tramos, guías de chunk…) que el PNG, pero con la paleta para papel de MAT-14. Desde el diálogo se puede imprimir o elegir
 «Guardar como PDF».
 
 Ejemplo: círculo → 1 página; esfera de 11 → 12 páginas (la forma y 11 capas); con la base en Y = 64,
@@ -99,6 +99,23 @@ ficha se imprime igual, pero en un A4 sus cifras no se leerán (quedarían menos
 para imprimir legible, mejor el PNG por capa.
 
 Ejemplo: círculo de 120 → aviso; círculo de 60 → sin aviso.
+
+### MAT-14
+
+Los dibujos de la ficha imprimible usan siempre una paleta para papel, sin opción para elegir otra:
+
+- fondo blanco y celdas vacías sin relleno, con una rejilla fina gris;
+- bloques de la forma en verde muy suave, con la rejilla como borde fino;
+- cifras, reglas y cabecera en tinta oscura (contraste de al menos 4,5:1 sobre su fondo, también sobre
+  un bloque en un eje), legibles en una impresora en blanco y negro;
+- ejes resaltados con un velo oscuro, en un tono más oscuro que los bloques normales;
+- bloque central con un borde grueso oscuro;
+- el centro, los ejes, los bloques normales y las celdas vacías se distinguen también en escala de
+  grises (luminancias separadas), sin tapar las cifras;
+- tramos y guías de chunk siguen apareciendo si están activados; las guías son líneas de 2 px más
+  oscuras que la rejilla.
+
+En pantalla y en el PNG se sigue dibujando con la paleta oscura de siempre (MAT-07 a MAT-09).
 
 ## Casos límite
 
@@ -146,4 +163,18 @@ Ejemplo: círculo de 120 → aviso; círculo de 60 → sin aviso.
   lo demás; cada capa es una imagen (blob URL, no `toDataURL`) dibujada con celdas de 20 px,
   independiente del zoom de pantalla, para que las cifras salgan nítidas al encogerse. Los blobs se
   revocan al regenerar y tras `afterprint`. `VistaMateriales` pinta la página de resumen con una
-  opción `sinMarcas`. El dibujo conserva la paleta oscura de la app, igual que el PNG.
+  opción `sinMarcas`. (La paleta del dibujo cambió en el cambio 014: ver abajo.)
+- 2026-11-08 (cambio 014): modifica MAT-11. Antes: «el dibujo usa las opciones de vista actuales, igual
+  que el PNG»; ahora: las mismas opciones, pero con la paleta para papel de MAT-14. La ficha es solo
+  para papel: con la paleta oscura gastaba mucha tinta, tardaba en imprimirse y en una impresora en
+  blanco y negro las cifras sobre los bloques se leían peor. Sin interruptor: quien quiera la imagen
+  como en pantalla ya tiene el PNG (se descartó una casilla «Fondo oscuro», que tocaría la interfaz
+  y añadiría otra opción guardada para un caso raro).
+- 2026-11-08 (cambio 014): bloques en verde muy suave (`#BBF7D0`) con la rejilla como borde fino:
+  recuerda a la app, gasta poca tinta y en blanco y negro sale un gris claro bajo las cifras. Se
+  descartaron el gris claro (pierde el parecido con la app) y el solo borde (cuesta ver la forma).
+- 2026-11-08 (cambio 014): ejes con un velo oscuro translúcido y centro con borde grueso (4 px) para
+  distinguirlos en gris sin depender del color. Se descartaron los grises solos (centro y ejes se
+  confundirían) y el rayado (estorba a las cifras). Implementación: `Render.PAPEL` y una opción
+  `paleta` de `Render.dibujar` que se mezcla sobre la de la app; `centroAncho` vale 2 en pantalla.
+  Pantalla y PNG quedan idénticos byte a byte a los de antes.

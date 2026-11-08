@@ -7,12 +7,11 @@ Lo que se ha hablado pero todavía no está decidido. Cuando algo se decide, pas
 
 Las ideas de la auditoría inicial ya son propuestas en `Borrador`, cada una con sus preguntas
 abiertas. Ya están hechas la 006 (guardar y cargar un proyecto), la 007 (enlace para compartir), la
-008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible) y la 013 (versionar por la caché). El
+008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 013 (versionar por la caché) y la 014 (ficha en fondo claro). El
 siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
 - `011-varios-materiales` — varios materiales por forma (área MAT).
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
-- `014-ficha-en-fondo-claro` — dibujos de la ficha imprimible en paleta para papel (área MAT).
 
 ## Por decidir
 
