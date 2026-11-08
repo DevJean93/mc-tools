@@ -109,3 +109,8 @@ Cada requisito vigente tiene al menos un test que cita su ID (`NUM-07: …`). So
 ## Aviso
 
 Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft.
+
+## Licencia
+
+© 2026 DevJean93. Todos los derechos reservados. Puedes usar la app en la web y leer el código,
+pero no copiarlo, modificarlo ni redistribuirlo sin permiso.

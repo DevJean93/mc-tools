@@ -13,6 +13,9 @@ siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 - `011-varios-materiales` — varios materiales por forma (área MAT).
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
 
-## Por decidir
+## Ideas sin propuesta
 
-- **Licencia** (`LICENSE`): depende de si el proyecto se publica para que otros lo usen.
+- **Enlace pegado en la misma pestaña:** con la app ya abierta, pegar un enlace compartido en la barra
+  no lo aplica (no se escucha `hashchange`).
+- **Fuentes de Google:** la constitución dice «sin red», pero `index.html` carga fuentes de Google (sin
+  conexión se usan las del sistema). Decidir si se incluyen en el repositorio o se ajusta el texto.

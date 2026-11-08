@@ -1,6 +1,7 @@
 {
   "name": "formas-mc",
   "private": true,
+  "license": "UNLICENSED",
   "version": "0.2.0",
   "description": "Planificador de formas en bloques para Minecraft, sin dependencias.",
   "scripts": {
