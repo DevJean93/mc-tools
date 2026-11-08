@@ -3,12 +3,14 @@
 const VistaMateriales = (() => {
   function crear({ materiales, tabla, barra, progreso, lienzo }) {
     function pintar(r, capa, textos = {}) {
+      // `textos.sinMarcas` (la ficha impresa) quita todo lo que habla de lo construido: solo el total.
+      const sinMarcas = !!textos.sinMarcas;
       materiales.innerHTML =
         `<div class="tot">${r.total} <small>bloques</small></div><div class="mat">` +
         `<span>Stacks</span><b>${r.stacks}</b>` +
         `<span>Shulker boxes</span><b>${r.shulkers.valor.toFixed(2)} → ${r.shulkers.cajas}</b>` +
         `<span>Cofres dobles</span><b>${r.cofres.valor.toFixed(2)} → ${r.cofres.cajas}</b>` +
-        `<span>Construidos</span><b>${r.marcados}</b><span>Faltan</span><b>${r.faltan}</b></div>` +
+        (sinMarcas ? '' : `<span>Construidos</span><b>${r.marcados}</b><span>Faltan</span><b>${r.faltan}</b>`) + '</div>' +
         `<p class="formula">1 stack = ${Materiales.STACK} · 1 shulker = 27 stacks = ${Materiales.SHULKER} · ` +
         `1 cofre doble = 54 stacks = ${Materiales.COFRE_DOBLE}</p>`;
 
@@ -18,11 +20,11 @@ const VistaMateriales = (() => {
       const conY = altura(0) !== null;
       if (r.capas.length > 1) {
         let t = '<table><thead><tr><th scope="col">Capa</th>' + (conY ? '<th scope="col">Y</th>' : '') +
-          '<th scope="col">Bloques</th><th scope="col">Stacks</th><th scope="col">Hechos</th></tr></thead><tbody>';
+          '<th scope="col">Bloques</th><th scope="col">Stacks</th>' + (sinMarcas ? '' : '<th scope="col">Hechos</th>') + '</tr></thead><tbody>';
         for (const c of r.capas) {
           const cls = [c.i === capa ? 'sel' : '', c.completa ? 'completa' : ''].join(' ');
           t += `<tr data-i="${c.i}" class="${cls}"${c.i === capa ? ' aria-current="true"' : ''}>` +
-            `<td>${c.i + 1}</td>${conY ? `<td>${altura(c.i)}</td>` : ''}<td>${c.total}</td><td>${Materiales.fmtStacks(c.total)}</td><td>${c.pct} %</td></tr>`;
+            `<td>${c.i + 1}</td>${conY ? `<td>${altura(c.i)}</td>` : ''}<td>${c.total}</td><td>${Materiales.fmtStacks(c.total)}</td>${sinMarcas ? '' : `<td>${c.pct} %</td>`}</tr>`;
         }
         tabla.innerHTML = t + '</tbody></table>';
       } else {

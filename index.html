@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
-<link rel="stylesheet" href="src/estilos.css?v=1649475c">
+<link rel="stylesheet" href="src/estilos.css?v=4eb0e9e7">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -19,6 +19,7 @@
   <symbol id="i-rehacer" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/></symbol>
   <symbol id="i-descargar" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
   <symbol id="i-subir" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-imprimir" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></symbol>
   <symbol id="i-enlace" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
@@ -98,6 +99,7 @@
       <div class="botones">
         <button type="button" id="exportar"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>PNG de la capa</button>
         <button type="button" id="exportarTodas"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>Todas las capas</button>
+        <button type="button" id="imprimirFicha" class="ancho"><svg class="ico" aria-hidden="true"><use href="#i-imprimir"/></svg>Imprimir ficha</button>
       </div>
     </section>
 
@@ -176,30 +178,31 @@
   <button type="button" id="avisoAccion" hidden>Deshacer</button>
 </div>
 <div id="anuncio" class="sr-only" aria-live="polite"></div>
+<div id="ficha" aria-hidden="true"></div>
 <nav class="navmovil" aria-label="Secciones">
   <a href="#secDibujo"><svg class="ico" aria-hidden="true"><use href="#i-rejilla"/></svg>Dibujo</a>
   <a href="#secForma"><svg class="ico" aria-hidden="true"><use href="#i-forma"/></svg>Forma</a>
   <a href="#secMat"><svg class="ico" aria-hidden="true"><use href="#i-cajas"/></svg>Materiales</a>
 </nav>
-<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión 1649475c</span></footer>
+<footer class="pie">Proyecto no oficial. No está afiliado a Mojang Studios ni a Microsoft. · <span id="version">Versión 4eb0e9e7</span></footer>
 
-<script src="src/nucleo/almacen.js?v=1649475c"></script>
-<script src="src/nucleo/formas.js?v=1649475c"></script>
-<script src="src/nucleo/estado.js?v=1649475c"></script>
-<script src="src/nucleo/historial.js?v=1649475c"></script>
-<script src="src/nucleo/marcas.js?v=1649475c"></script>
-<script src="src/nucleo/materiales.js?v=1649475c"></script>
-<script src="src/interfaz/avisos.js?v=1649475c"></script>
-<script src="src/interfaz/vista-materiales.js?v=1649475c"></script>
-<script src="src/interfaz/panel.js?v=1649475c"></script>
-<script src="src/nucleo/documento.js?v=1649475c"></script>
-<script src="src/dibujo/render.js?v=1649475c"></script>
-<script src="src/dibujo/zoom.js?v=1649475c"></script>
-<script src="src/interfaz/exportar.js?v=1649475c"></script>
-<script src="src/interfaz/menu.js?v=1649475c"></script>
-<script src="src/entrada/raton.js?v=1649475c"></script>
-<script src="src/entrada/tactil.js?v=1649475c"></script>
-<script src="src/entrada/teclado.js?v=1649475c"></script>
-<script src="src/app.js?v=1649475c"></script>
+<script src="src/nucleo/almacen.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/formas.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/estado.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/historial.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/marcas.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/materiales.js?v=4eb0e9e7"></script>
+<script src="src/interfaz/avisos.js?v=4eb0e9e7"></script>
+<script src="src/interfaz/vista-materiales.js?v=4eb0e9e7"></script>
+<script src="src/interfaz/panel.js?v=4eb0e9e7"></script>
+<script src="src/nucleo/documento.js?v=4eb0e9e7"></script>
+<script src="src/dibujo/render.js?v=4eb0e9e7"></script>
+<script src="src/dibujo/zoom.js?v=4eb0e9e7"></script>
+<script src="src/interfaz/exportar.js?v=4eb0e9e7"></script>
+<script src="src/interfaz/menu.js?v=4eb0e9e7"></script>
+<script src="src/entrada/raton.js?v=4eb0e9e7"></script>
+<script src="src/entrada/tactil.js?v=4eb0e9e7"></script>
+<script src="src/entrada/teclado.js?v=4eb0e9e7"></script>
+<script src="src/app.js?v=4eb0e9e7"></script>
 </body>
 </html>

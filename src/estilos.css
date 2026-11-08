@@ -231,3 +231,30 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Ficha imprimible (MAT-11, MAT-12): en pantalla no existe; al imprimir es lo unico que sale, en
+   blanco y negro, con una pagina de resumen y una por capa. Los dibujos se ajustan a la pagina que
+   se elija en el dialogo (ancho y alto maximos + object-fit), sin deformarse ni cortarse. */
+#ficha { display: none; }
+@media print {
+  @page { margin: 10mm; }
+  html, body { background: #fff !important; color: #000; }
+  body > *:not(#ficha) { display: none !important; }
+  #ficha {
+    display: block; --fg: #000; --fg-mut: #333; --muted: #bbb; --card: #fff;
+    font: 11pt/1.4 var(--fuente); color: #000;
+  }
+  .ficha-pag { break-after: page; break-inside: avoid; margin: 0; }
+  #ficha > :last-child { break-after: auto; }
+  #ficha h1 { font-size: 20pt; margin: 0 0 2mm; }
+  .ficha-datos { margin: 0 0 6mm; font-size: 12pt; color: #333; }
+  #ficha .tot { font-size: 20pt; margin-bottom: 2mm; }
+  #ficha .mat { font-size: 12pt; max-width: 110mm; margin-bottom: 2mm; }
+  #ficha table { margin-top: 6mm; font-size: 10pt; width: auto; min-width: 90mm; }
+  #ficha th { position: static; border-bottom: 1px solid #000; }
+  #ficha tbody tr { break-inside: avoid; }
+  .ficha-pie { margin: 6mm 0 0; font-size: 9pt; color: #555; }
+  #ficha figure { margin: 0; }
+  #ficha img { display: block; margin: 0 auto; max-width: 100%; max-height: calc(100vh - 1mm); object-fit: contain; }
+  #ficha .ficha-dibujo img { max-height: 60vh; margin: 6mm 0 0; }
+}

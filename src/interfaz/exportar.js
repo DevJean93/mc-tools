@@ -23,7 +23,10 @@ const Exportar = (() => {
   // ¿Alguna capa mide mas de `limite` bloques de ancho o de alto? (aviso de la ficha, MAT-13)
   const capaMasAnchaQue = (capas, limite) => capas.some(g => g.length > limite || (g[0] || []).length > limite);
 
-  function crear({ render, descargar: bajar, avisos, contexto }) {
+  const LIMITE_FICHA = 60;      // bloques de ancho o alto a partir de los que una capa no se lee en un A4
+  const CELDA_FICHA = 20;       // px por bloque en las imagenes de la ficha (independiente del zoom de pantalla)
+
+  function crear({ render, descargar: bajar, avisos, contexto, ficha, imprimir, vista, materiales }) {
     function nombreArchivo(c, d) {
       const hueco = d.modo === 'hueco' ? `-hueco-g${d.grosor}` : '';
       const capa = d.capas.length > 1 ? `-capas${d.capas.length}-capa${c + 1}` : '';
@@ -65,7 +68,87 @@ const Exportar = (() => {
       return true;
     }
 
-    return { capa, todas };
+    // --- ficha imprimible (MAT-11..13) ---------------------------------------------------
+    // La ficha es la forma limpia: sin marcas, materiales = total. Vive en `#ficha`, oculto en pantalla
+    // y visible solo al imprimir. Cada capa es una imagen (blob URL) con la cabecera del PNG; una esfera
+    // de 100 son 100 imagenes, asi que se generan una a una con un solo lienzo auxiliar y se revocan al
+    // regenerar la ficha o tras imprimir.
+    let ocupada = false;
+    const urls = [];
+
+    function limpiarFicha() {
+      if (!ficha) return;
+      ficha.textContent = '';
+      while (urls.length) URL.revokeObjectURL(urls.pop());
+    }
+
+    const crearEl = (tag, clase, texto) => {
+      const e = document.createElement(tag);
+      if (clase) e.className = clase;
+      if (texto !== undefined) e.textContent = texto;
+      return e;
+    };
+
+    function paginaResumen(d) {
+      const pag = crearEl('section', 'ficha-pag ficha-resumen');
+      pag.appendChild(crearEl('h1', '', d.nombre));
+      pag.appendChild(crearEl('p', 'ficha-datos', `${d.dimensiones} · ${d.modoTexto}`));
+      const mat = crearEl('div'), tabla = crearEl('div');
+      pag.append(mat, tabla);
+      const totales = d.totales;
+      vista.crear({ materiales: mat, tabla, barra: crearEl('div'), progreso: crearEl('span'), lienzo: null })
+        .pintar(materiales.resumen(totales, totales.map(() => 0), -1), -1, { altura: d.altura, sinMarcas: true });
+      pag.appendChild(crearEl('p', 'ficha-pie', `Formas MC · ${new Date().toLocaleDateString('es')}`));
+      return pag;
+    }
+
+    function aBlob(cv) {
+      return new Promise((resolve, reject) => cv.toBlob(b => (b ? resolve(b) : reject(new Error('demasiado grande'))), 'image/png'));
+    }
+
+    async function imagenCapa(d, c, aux) {
+      const lineas = cabecera(d, c, { construidos: false });
+      render.dibujar(aux, { g: d.capas[c], capa: c, hechos: new Set(), s: CELDA_FICHA, op: d.op, dpr: 1, cabecera: lineas });
+      const url = URL.createObjectURL(await aBlob(aux));
+      urls.push(url);
+      const img = crearEl('img');
+      img.alt = lineas.join(' — ');
+      img.src = url;
+      return img;
+    }
+
+    async function imprimirFicha() {
+      if (ocupada || !ficha) return false;
+      ocupada = true;
+      try {
+        const d = contexto();
+        if (capaMasAnchaQue(d.capas, LIMITE_FICHA)) {
+          avisos.avisar(`Alguna capa mide más de ${LIMITE_FICHA} bloques: en un A4 sus cifras no se leerán (menos de 3 mm por bloque). Para imprimir legible, mejor el PNG por capa.`, null, 9000);
+        }
+        limpiarFicha();
+        const resumen = paginaResumen(d), aux = document.createElement('canvas'), imgs = [];
+        ficha.appendChild(resumen);
+        for (let c = 0; c < d.capas.length; c++) {
+          const img = await imagenCapa(d, c, aux);
+          imgs.push(img);
+          const fig = crearEl('figure', d.capas.length > 1 ? 'ficha-pag ficha-capa' : 'ficha-dibujo');
+          fig.appendChild(img);
+          if (d.capas.length > 1) ficha.appendChild(fig); else resumen.appendChild(fig);
+        }
+        await Promise.all(imgs.map(i => i.decode()));
+        await new Promise(r => setTimeout(r, 80));   // deja pintar el aviso antes de que el dialogo bloquee la pagina
+        imprimir();
+        return true;
+      } catch (e) {
+        limpiarFicha();
+        avisos.mostrarError(`No se pudo preparar la ficha (${e.message}).`);
+        return false;
+      } finally {
+        ocupada = false;
+      }
+    }
+
+    return { capa, todas, ficha: imprimirFicha, limpiarFicha };
   }
 
   return { crear, descargar, cabecera, capaMasAnchaQue };

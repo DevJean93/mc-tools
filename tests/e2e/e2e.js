@@ -817,6 +817,105 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // MAT-11, MAT-12, MAT-13, INT-14: ficha imprimible. window.print se sustituye por un contador: no se abre el diálogo.
+  await ev(`localStorage.clear()`); await cargar();
+  await ev(`window.__prints = 0; window.print = () => { window.__prints++; }`);
+  const prints = () => ev(`window.__prints`);
+  const pedirFicha = async () => { await ev(`document.getElementById('imprimirFicha').click()`); await esperar(1800); };
+  const fichaInfo = () => ev(`(() => { const f = document.getElementById('ficha'); return f ? {
+    paginas: f.querySelectorAll('.ficha-pag').length, alts: [...f.querySelectorAll('img')].map(i => i.alt),
+    cabTabla: [...f.querySelectorAll('thead th')].map(h => h.textContent).join('|'), texto: f.textContent,
+    cargadas: [...f.querySelectorAll('img')].every(i => i.complete && i.naturalWidth > 0) } : null; })()`);
+  const paginasPdf = async (extra = {}) => {
+    const r = await send('Page.printToPDF', { preferCSSPageSize: true, printBackground: true, ...extra });
+    return (Buffer.from(r.data, 'base64').toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+  };
+  const enImpresion = async fn => {
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    try { return await fn(); } finally { await send('Emulation.setEmulatedMedia', { media: '' }); }
+  };
+  const medidasLienzo = () => ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.width, r.height, document.documentElement.scrollHeight].join(); })()`);
+
+  // INT-14: el botón va en «Vista», a todo el ancho, tras los de PNG, con icono y texto.
+  const boton = await ev(`(() => { const b = document.getElementById('imprimirFicha'); if (!b) return null;
+    const hermanos = [...b.parentElement.children].map(e => e.id);
+    return { ancho: b.classList.contains('ancho'), texto: b.textContent.trim(), icono: (b.querySelector('use') || { getAttribute: () => '' }).getAttribute('href'),
+      ariaIcono: b.querySelector('svg') && b.querySelector('svg').getAttribute('aria-hidden'), hermanos, seccion: b.closest('section').getAttribute('aria-labelledby') }; })()`);
+  ok(boton && boton.ancho && boton.texto === 'Imprimir ficha' && boton.icono === '#i-imprimir' && boton.ariaIcono === 'true' && boton.seccion === 't-vista' &&
+    boton.hermanos.join() === 'exportar,exportarTodas,imprimirFicha', `INT-14: «Imprimir ficha» va en Vista, a todo el ancho, con icono y texto, tras los PNG (${JSON.stringify(boton)})`);
+
+  // MAT-11, MAT-12: círculo (2D) con una marca hecha: una página, sin lo construido, materiales = total.
+  await ev(`document.getElementById('marcarCapa').click()`); await esperar(200);
+  await ev(`(() => { window.__hechos = []; if (!window.__dibOrig2) { window.__dibOrig2 = Render.dibujar; Render.dibujar = (cv, o) => { if (o.cabecera) window.__hechos.push(o.hechos.size); return window.__dibOrig2(cv, o); }; } })()`);
+  const antesPantalla = await medidasLienzo();
+  await pedirFicha();
+  const f2D = await fichaInfo();
+  ok(f2D && f2D.paginas === 1 && f2D.alts.length === 1 && f2D.cargadas && await prints() === 1,
+    `MAT-11: un círculo da una sola página con su dibujo y abre la impresión una vez (${JSON.stringify(f2D && { p: f2D.paginas, a: f2D.alts.length })})`);
+  ok(f2D && f2D.texto.includes('208') && f2D.texto.includes('Stacks') && f2D.texto.includes('Shulker') && f2D.texto.includes('Cofres dobles'),
+    'MAT-11: la ficha trae el total de bloques, stacks, shulker boxes y cofres dobles');
+  ok(f2D && !/Construidos|Faltan|Hechos/.test(f2D.texto) && await ev(`window.__hechos.length === 1 && window.__hechos.every(n => n === 0)`),
+    'MAT-12: la ficha no lleva lo construido ni marcas en el dibujo, aunque haya marcas hechas');
+  ok(f2D && /Círculo|Circulo/i.test(f2D.alts[0]) && !/construidos/.test(f2D.alts[0]), 'MAT-11: la cabecera del dibujo de la ficha no habla de lo construido -> ' + (f2D && f2D.alts[0]));
+  ok(await ev(`getComputedStyle(document.getElementById('ficha')).display === 'none' && document.getElementById('ficha').getAttribute('aria-hidden') === 'true'`) &&
+    await medidasLienzo() === antesPantalla, 'MAT-11: en pantalla la ficha no se ve y la app no cambia');
+  const imp2D = await enImpresion(async () => ({
+    ficha: await ev(`getComputedStyle(document.getElementById('ficha')).display`),
+    ocultos: await ev(`['panel', 'lienzo', 'secDibujo', 'exportar', 'imprimirFicha', 'aviso'].every(id => document.getElementById(id).getClientRects().length === 0) && document.querySelector('.navmovil').getClientRects().length === 0`),
+    paginas: await paginasPdf(),
+  }));
+  ok(imp2D.ficha === 'block' && imp2D.ocultos, `MAT-11: al imprimir la ficha se ve y los controles no (${JSON.stringify(imp2D)})`);
+  ok(imp2D.paginas === 1, `MAT-11: el PDF del círculo tiene 1 página (${imp2D.paginas})`);
+
+  // MAT-11: esfera de 11 con la base en 64: 1 + 11 páginas, columna Y y «Y 66» en la capa 3.
+  await ev(`localStorage.clear()`); await cargar();
+  await ev(`window.__prints = 0; window.print = () => { window.__prints++; }`);
+  await ponerCampo('forma', 'esfera'); await ponerCampo('w', '11'); await ponerCampo('baseY', '64'); await esperar(500);
+  await ev(`window.confirm = () => true; document.getElementById('marcarTodo').click()`); await esperar(300);
+  await pedirFicha();
+  const f3D = await fichaInfo();
+  ok(f3D && f3D.paginas === 12 && f3D.alts.length === 11 && f3D.cargadas && await prints() === 1,
+    `MAT-11: una esfera de 11 da 12 páginas: la forma y una por capa (${f3D && f3D.paginas} páginas, ${f3D && f3D.alts.length} imágenes)`);
+  ok(f3D && f3D.cabTabla === 'Capa|Y|Bloques|Stacks' && f3D.texto.includes('Esfera'),
+    `MAT-11, MAT-12: la primera página lleva la tabla por capas con la columna Y y sin «Hechos» (${f3D && f3D.cabTabla})`);
+  ok(f3D && /Capa 3 de 11 · Y 66 · /.test(f3D.alts[2]) && !/Construidos|Faltan/.test(f3D.texto),
+    'MAT-11: la cabecera de la capa 3 dice «Y 66» -> ' + (f3D && f3D.alts[2]));
+  const encaja = await enImpresion(() => ev(`(() => { const im = [...document.querySelectorAll('#ficha .ficha-pag img')];
+    return im.length === 11 && im.every(i => getComputedStyle(i).objectFit === 'contain' && getComputedStyle(i).maxWidth !== 'none' && getComputedStyle(i).maxHeight !== 'none'); })()`));
+  ok(encaja, 'MAT-12: cada dibujo se ajusta a la página sin deformarse (object-fit: contain con ancho y alto máximos)');
+  // Tras imprimir (afterprint) la ficha se libera; para cada papel se vuelve a pedir.
+  const pdf3D = await enImpresion(paginasPdf);
+  ok(pdf3D === 12, `MAT-11, MAT-12: el PDF de la esfera tiene 12 páginas, una por dibujo sin cortarse (${pdf3D})`);
+  ok(await ev(`document.getElementById('ficha').children.length === 0`), 'MAT-11: tras imprimir (afterprint) la ficha se libera');
+  await pedirFicha();
+  const pdfCarta = await enImpresion(() => paginasPdf({ landscape: true, paperWidth: 11, paperHeight: 8.5 }));
+  ok(pdfCarta === 12, `MAT-12: en Carta horizontal también sale una página por dibujo (${pdfCarta})`);
+
+  // MAT-13: capas de más de 60 bloques avisan antes de imprimir; la ficha se genera igual.
+  await ev(`localStorage.clear()`); await cargar();
+  await ev(`window.__prints = 0; window.print = () => { window.__prints++; }`);
+  await ponerCampo('w', '120'); await ponerCampo('h', '120'); await esperar(600);
+  await ev(`document.getElementById('imprimirFicha').click()`); await esperar(2500);
+  const avGrande = await aviso();
+  ok(avGrande.visible && /60/.test(avGrande.texto) && await prints() === 1 && (await fichaInfo()).paginas === 1,
+    `MAT-13: un círculo de 120 avisa antes del diálogo y la ficha se genera igual (${avGrande.texto})`);
+  await ev(`localStorage.clear()`); await cargar();
+  await ev(`window.__prints = 0; window.print = () => { window.__prints++; }`);
+  await ponerCampo('w', '30'); await ponerCampo('h', '30'); await esperar(500);
+  await pedirFicha();
+  ok(!(await aviso()).visible && await prints() === 1, 'MAT-13: un círculo de 30 no avisa');
+
+  // INT-14: en móvil el botón cabe y mide 44 px.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await cargar(); await esperar(300);
+  await ev(`document.getElementById('verMenu').click()`); await esperar(300);
+  const movilBtn = await ev(`(() => { const b = document.getElementById('imprimirFicha'); b.scrollIntoView(); const r = b.getBoundingClientRect();
+    return { alto: r.height, izq: r.left, der: r.right, vw: document.documentElement.clientWidth }; })()`);
+  ok(movilBtn.alto >= 44 && movilBtn.izq >= 0 && movilBtn.der <= movilBtn.vw, `INT-14: a 390 px el botón cabe y mide al menos 44 px (${JSON.stringify(movilBtn)})`);
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');

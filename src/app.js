@@ -208,6 +208,7 @@
   // --- exportacion ------------------------------------------------------------------
   const exportador = Exportar.crear({
     render: Render, descargar: Exportar.descargar, avisos,
+    ficha: $('ficha'), imprimir: () => window.print(), vista: VistaMateriales, materiales: Materiales,
     contexto: () => ({
       capas: doc.capas(), totales: doc.totales(), hechos: doc.hechos(), op: st, zoom: st.zoom,
       nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(), altura: alturaDeCapa,
@@ -242,6 +243,8 @@
   al('limpiar', 'click', () => doc.marcarCapas(doc.todas(), false));
   al('exportar', 'click', () => exportador.capa(doc.capa()));
   al('exportarTodas', 'click', () => exportador.todas());
+  al('imprimirFicha', 'click', () => exportador.ficha());
+  window.addEventListener('afterprint', exportador.limpiarFicha);   // libera las imagenes de la ficha
 
   // Proyecto: guardar la forma y las marcas en un archivo y cargar uno guardado.
   const archivoProyecto = $('archivoProyecto');
