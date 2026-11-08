@@ -1,5 +1,6 @@
 ---
 // Estructura común de todas las páginas: cabecera del documento, aviso de Mojang y pie con la versión.
+import '../compartido/fuentes.css';
 import { versionDe } from '../compartido/version.js';
 
 interface Props { titulo: string; descripcion: string }
@@ -14,9 +15,6 @@ const version = versionDe(process.env);
 <meta name="theme-color" content="#1B2336">
 <meta name="description" content={descripcion}>
 <title>{titulo}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 </head>
 <body>
 <slot />

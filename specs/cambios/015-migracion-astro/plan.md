@@ -47,9 +47,13 @@ autoalojadas y el despliegue.
   El pie muestra `versionDe(env)`: pura, en `src/compartido/version.js`
   (`GITHUB_SHA` → 7 primeros caracteres; si no hay, `git rev-parse --short HEAD` solo en `build`; en
   `dev`, `dev`). `astro.config.mjs` la inyecta con `vite.define` (`__VERSION__`).
-- **Fuentes (PUB-10).** `@fontsource/ibm-plex-sans` (400, 500, 600) y `@fontsource/jetbrains-mono`
-  (400, 600), estáticas (no variables) para que los pesos sean exactamente los de hoy, solo los
-  subconjuntos `latin` y `latin-ext` (acentos y ñ). Se importan en `Base.astro`; Vite las copia a
+- **Fuentes (PUB-10).** `@fontsource-variable/ibm-plex-sans` (400, 500, 600) y `@fontsource-variable/jetbrains-mono`
+  (400, 600), solo los subconjuntos `latin` y `latin-ext` (acentos y ñ). **Corrección hecha al
+  implementar:** las estáticas (`@fontsource/*`) daban 6 a 73 píxeles distintos por imagen respecto a
+  Google, que sirve fuentes variables; con las variables la diferencia es 0. Como el CSS de fontsource
+  por subconjunto no trae `unicode-range` y las variables se llaman «… Variable», se escribe
+  `src/compartido/fuentes.css` con un `@font-face` por peso y subconjunto, con el nombre de familia de la
+  app y los `unicode-range` de fontsource. Se importa en `Base.astro`; Vite copia los `.woff2` a
   `_astro/` con huella. Los `<link>` a Google y los `preconnect` se quitan. Si la forma de letra
   difiere de la de Google, se corrige (no se acepta).
 - **Enlaces antiguos (PUB-08).** La portada lleva un script en línea que, si `location.hash` no está
@@ -162,9 +166,9 @@ autoalojadas y el despliegue.
   existe) y E2E del pie y de los nombres con huella. Cambio: `src/compartido/version.js`,
   `vite.define` en `astro.config.mjs`, pie en `Base.astro`. Commit: «Pie con el commit corto y archivos
   con huella (015 T05, PUB-05, PUB-06)».
-- [ ] T06 — Fuentes autoalojadas (`PUB-10`). Test primero: E2E sin peticiones a otros dominios y con
-  `document.fonts` de las dos familias (rojo: hoy pide a Google). Cambio: `@fontsource/ibm-plex-sans`
-  y `@fontsource/jetbrains-mono` (versiones exactas), importes en `Base.astro`, se quitan los `<link>`
+- [x] T06 — Fuentes autoalojadas (`PUB-10`). Test primero: E2E sin peticiones a otros dominios y con
+  `document.fonts` de las dos familias (rojo: hoy pide a Google). Cambio: `@fontsource-variable/ibm-plex-sans`
+  y `@fontsource-variable/jetbrains-mono` (versiones exactas), importes en `Base.astro`, se quitan los `<link>`
   de Google. Hecho cuando: E2E verde y comparación píxel a píxel = 0 (o diferencia explicada y
   corregida). Commit: «Fuentes autoalojadas con fontsource (015 T06, PUB-10)».
 - [ ] T07 — Datos antiguos (`PUB-09`). Test primero: cargar un estado guardado y un archivo de proyecto

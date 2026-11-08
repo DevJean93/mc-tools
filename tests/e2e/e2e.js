@@ -635,6 +635,20 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   ok(locales.length >= 2 && locales.every(d => /^\/mc-tools\/_astro\/[^?]*\.[A-Za-z0-9_-]{8}\.(js|css)$/.test(d)) && archivos.cargado,
     `PUB-05: los ${locales.length} archivos locales llevan huella en el nombre y la app carga (${locales.join(', ')})`);
 
+  // PUB-10: las fuentes salen del propio sitio: ninguna peticion a otros dominios y se usan las dos familias de siempre.
+  const peticiones = [];
+  const alPeticion = m => { const d = JSON.parse(m.data); if (d.method === 'Network.requestWillBeSent') peticiones.push(d.params.request.url); };
+  ws.addEventListener('message', alPeticion);
+  await send('Network.enable'); await send('Network.clearBrowserCache');
+  await cargar(); await ev('document.fonts.ready.then(() => 1)'); await esperar(500);
+  await send('Network.disable'); ws.removeEventListener('message', alPeticion);
+  const ajenas = peticiones.filter(u => !u.startsWith(ORIGEN + '/') && !/^(data|blob|about):/.test(u));
+  ok(peticiones.length > 0 && ajenas.length === 0, 'PUB-10: la app no pide nada a otros dominios (' + peticiones.length + ' peticiones, ajenas: ' + JSON.stringify(ajenas) + ')');
+  const tipos = await ev(`[...document.fonts].filter(f => f.status === 'loaded').map(f => f.family.replace(/"/g, '') + ' ' + f.weight)`);
+  const familias = [...new Set(tipos)].sort().join(', ');
+  ok(familias === 'IBM Plex Sans 400, IBM Plex Sans 500, JetBrains Mono 400, JetBrains Mono 600', 'PUB-10: se cargan las mismas fuentes de siempre (' + familias + ')');
+  ok(await ev("document.fonts.check('15px \"IBM Plex Sans\"') && document.fonts.check('600 15px \"JetBrains Mono\"')"), 'PUB-10: IBM Plex Sans y JetBrains Mono estan disponibles para el texto y las cifras');
+
   // INT-11, PUB-06: el pie muestra la version: el commit corto de la construccion (GITHUB_SHA) o «dev» en local.
   const pie = await ev(`(() => { const p = document.getElementById('version'); return p ? { texto: p.textContent, fuente: getComputedStyle(p).fontFamily, lineas: p.getClientRects().length } : null; })()`);
   const esperada = process.env.GITHUB_SHA ? process.env.GITHUB_SHA.slice(0, 7).toLowerCase() : 'dev';
