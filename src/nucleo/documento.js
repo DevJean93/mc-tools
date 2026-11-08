@@ -151,11 +151,33 @@ const Documento = (() => {
       return r;
     }
 
+    // La forma actual como fragmento de enlace (sin marcas, zoom ni vista).
+    const enlace = () => Estado.aEnlace(st);
+
+    // Abre la forma de un enlace. Un fragmento que no es de forma no cambia nada (devuelve false). Uno
+    // valido sustituye la forma en un solo paso de historial; si la geometria cambia y habia marcas,
+    // estas se borran con un aviso que ofrece Deshacer. Con la misma geometria las marcas siguen. El
+    // zoom y la vista no cambian.
+    function abrirEnlace(fragmento) {
+      const forma = Estado.desdeEnlace(fragmento);
+      if (!forma) return false;
+      const antes = JSON.stringify(params()) + st.capa;
+      const cambiaGeo = Estado.firma({ ...st, ...forma }) !== firmaActual;
+      const habiaMarcas = marcas.total() > 0;
+      antesDeMarcar();
+      Object.assign(st, forma);
+      if (cambiaGeo) marcas.limpiar();
+      regenerar({ sinLeer: true, conservar: true });
+      if (JSON.stringify(params()) + st.capa === antes) { descartarPaso(); return true; }
+      if (cambiaGeo && habiaMarcas) avisos.avisar('Se abrió la forma del enlace. Tu progreso anterior se borró.', deshacer);
+      return true;
+    }
+
     return {
       capas: () => capas, capaActual, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
-      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto,
+      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace,
       hechos: marcas.conjunto, porCapa: n => marcas.porCapa(n),
       puedeDeshacer: historial.puedeDeshacer, puedeRehacer: historial.puedeRehacer,
     };

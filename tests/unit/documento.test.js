@@ -351,3 +351,101 @@ test('MAR-22: guardar y cargar un proyecto funciona aunque el navegador no deje 
   assert.equal(d.avisos.notas.length, 1, 'la nota fija de almacenamiento sigue ahi, una sola vez');
   assert.ok(g.length > 0);
 });
+
+// --- enlace para compartir: abrir la forma de un enlace (cambio 007) ----------------------------
+const MSG_ENLACE = 'Se abrió la forma del enlace. Tu progreso anterior se borró.';
+const ultimoAviso = d => d.avisos.dichos[d.avisos.dichos.length - 1];
+const forma = d => ({ forma: d.st.forma, w: d.st.w, h: d.st.h, modo: d.st.modo, grosor: d.st.grosor, capa: d.st.capa });
+
+test('FOR-16: el documento da el enlace de su forma actual', () => {
+  const d = conMarcas({ forma: 'circulo', w: 30, h: 30, modo: 'hueco', grosor: 2 });
+  assert.equal(d.doc.enlace(), 'forma=circulo&w=30&h=30&igualar=1&modo=hueco&grosor=2&esfera=esfera&orient=plano&capa=0');
+});
+
+test('FOR-17: abrir un enlace aplica la forma y la guarda en el navegador', () => {
+  const d = montar(); d.doc.regenerar();
+  assert.equal(d.doc.abrirEnlace('forma=rombo&w=20&modo=hueco&grosor=3'), true);
+  assert.deepEqual(forma(d), { forma: 'rombo', w: 20, h: 20, modo: 'hueco', grosor: 3, capa: 0 });
+  assert.equal(JSON.parse(d.almacen.leer('mc-formas-v1')).forma, 'rombo');
+  assert.equal(d.doc.capaActual().length, 20);
+});
+
+test('FOR-17: los valores no validos del enlace se recortan y no fallan', () => {
+  const d = montar(); d.doc.regenerar();
+  assert.equal(d.doc.abrirEnlace('forma=nada&w=999&grosor=-3'), true);
+  assert.deepEqual(forma(d), { forma: 'circulo', w: 200, h: 200, modo: 'relleno', grosor: 1, capa: 0 });
+});
+
+test('FOR-17: abrir un enlace no toca el zoom ni las opciones de vista', () => {
+  const d = montar(); d.doc.regenerar();
+  Object.assign(d.st, { zoom: 40, rel: false, tramos: false, distEjes: false });
+  d.doc.abrirEnlace('forma=rombo&w=20&zoom=10&rel=1');
+  assert.deepEqual([d.st.zoom, d.st.rel, d.st.tramos, d.st.distEjes], [40, false, false, false]);
+});
+
+test('FOR-17: un fragmento que no es de forma no cambia nada, ni historial ni aviso', () => {
+  const d = conMarcas();
+  const antes = { f: forma(d), hechos: clavesHechas(d.doc), avisos: d.avisos.dichos.length };
+  const pasos = () => { let n = 0; while (d.doc.puedeDeshacer()) { d.doc.deshacer(); n++; } while (d.doc.puedeRehacer()) d.doc.rehacer(); return n; };
+  const pasosAntes = pasos();
+  for (const f of ['', 'hola', 'x=1']) assert.equal(d.doc.abrirEnlace(f), false, f);
+  assert.deepEqual({ f: forma(d), hechos: clavesHechas(d.doc) }, { f: antes.f, hechos: antes.hechos });
+  assert.equal(pasos(), pasosAntes, 'el historial queda igual');
+});
+
+test('FOR-18: con marcas y otra geometria, se borran y sale el aviso con Deshacer', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const total = d.doc.hechos().size;
+  assert.ok(total > 0);
+  d.doc.abrirEnlace('forma=rombo&w=20');
+  assert.equal(d.doc.hechos().size, 0);
+  assert.equal(ultimoAviso(d), MSG_ENLACE);
+  assert.equal(typeof d.avisos.acciones[d.avisos.acciones.length - 1], 'function', 'el aviso ofrece Deshacer');
+  assert.equal(JSON.parse(d.almacen.leer('mc-formas-v1:marcas')).firma, 'rombo|20|20|relleno|||');
+});
+
+test('FOR-18: un solo Deshacer devuelve la forma y las marcas anteriores', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { f: forma(d), hechos: clavesHechas(d.doc) };
+  d.doc.abrirEnlace('forma=rombo&w=20');
+  d.avisos.acciones[d.avisos.acciones.length - 1]();   // el boton «Deshacer» del aviso
+  assert.deepEqual({ f: forma(d), hechos: clavesHechas(d.doc) }, antes);
+  d.doc.rehacer();
+  assert.equal(d.st.forma, 'rombo');
+  assert.equal(d.doc.hechos().size, 0);
+});
+
+test('FOR-18: con la misma geometria las marcas se conservan y no hay aviso', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const hechos = clavesHechas(d.doc), avisos = d.avisos.dichos.length;
+  d.doc.abrirEnlace('forma=circulo&w=16&h=16&igualar=1&modo=relleno&capa=0');
+  assert.deepEqual(clavesHechas(d.doc), hechos);
+  assert.equal(d.avisos.dichos.length, avisos, 'no sale ningun aviso');
+});
+
+test('FOR-18: sin marcas no hay aviso al cambiar de forma', () => {
+  const d = montar(); d.doc.regenerar();
+  const avisos = d.avisos.dichos.length;
+  d.doc.abrirEnlace('forma=rombo&w=20');
+  assert.equal(d.st.forma, 'rombo');
+  assert.equal(d.avisos.dichos.length, avisos);
+});
+
+test('FOR-18: un enlace que deja todo igual no ocupa historial', () => {
+  const d = montar(); d.doc.regenerar();
+  assert.equal(d.doc.puedeDeshacer(), false);
+  d.doc.abrirEnlace(d.doc.enlace());
+  assert.equal(d.doc.puedeDeshacer(), false);
+});
+
+test('FOR-18: abrir el enlace ocupa un solo paso de historial', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const lleno = d.doc.hechos().size;
+  d.doc.abrirEnlace('forma=rombo&w=20');
+  d.doc.deshacer();
+  assert.equal(d.st.forma, 'circulo');
+  assert.equal(d.doc.hechos().size, lleno);
+  d.doc.deshacer();   // el siguiente paso ya es de las marcas, no de abrir el enlace
+  assert.equal(d.st.forma, 'circulo');
+  assert.equal(d.doc.hechos().size, lleno - 1);
+});
