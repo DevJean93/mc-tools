@@ -50,7 +50,8 @@ test('PUB-09: las claves del navegador y el formato de lo guardado no cambian', 
   Estado.guardar(st, almacen);
   Estado.guardarMarcas(Estado.firma(st), new Set(MARCADOS), almacen);
   assert.deepEqual(Object.keys(escrito).sort(), ['mc-formas-v1', 'mc-formas-v1:marcas']);
-  assert.equal(escrito['mc-formas-v1'], GUARDADO);
+  // Solo se añade la clave `bloque` (016, MAT-17), al final: todo lo anterior queda igual, byte a byte.
+  assert.equal(escrito['mc-formas-v1'], GUARDADO.replace(/}$/, ',"bloque":"minecraft:stone"}'));
   assert.equal(escrito['mc-formas-v1:marcas'], MARCAS);
 });
 

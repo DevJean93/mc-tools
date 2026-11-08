@@ -2,6 +2,7 @@
 // No decide nada mas: quien llama sabe cuando regenerar.
 import { Estado } from '../nucleo/estado.js';
 import { Formas } from '../nucleo/formas.js';
+import { Materiales } from '../nucleo/materiales.js';
 export const Panel = (() => {
   const TOGGLES = Estado.VISTA;
   const CAMPOS = ['w', 'h', 'grosor'];
@@ -31,6 +32,7 @@ export const Panel = (() => {
       leerPropios();
       st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
+      st.bloque = Materiales.BLOQUES.some(b => b.id === $('bloque').value) ? $('bloque').value : st.bloque;   // MAT-17
       for (const id of COORDS) st[id] = Estado.coordenada($(id).value);   // vacio -> sin coordenada
       st.baseY = Estado.coordenada($('baseY').value);                    // vacio -> sin altura
       ponerGuias();
@@ -92,6 +94,13 @@ export const Panel = (() => {
       }
     }
 
+    // Bloque del esquema de Litematica: las opciones salen de la lista corta, una sola vez.
+    function ponerBloque() {
+      const sel = $('bloque');
+      if (!sel.options.length) sel.innerHTML = Materiales.BLOQUES.map(b => `<option value="${b.id}">${b.nombre}</option>`).join('');
+      sel.value = st.bloque;
+    }
+
     function poner(grosorMax) {
       const maxW = es3D() ? limites.w3d : limites.w2d;
       ponerFormas();
@@ -102,6 +111,7 @@ export const Panel = (() => {
       $('igualar').checked = st.igualar; $('modo').value = st.modo;
       ponerPropios(); $('zoom').value = st.zoom;
       for (const k of TOGGLES) $(k).checked = st[k];
+      ponerBloque();
       // No se pisa un campo mientras se teclea en el (un "-" a medias se perderia).
       for (const id of COORDS) if (document.activeElement !== $(id)) $(id).value = st[id] === null ? '' : st[id];
       ponerGuias();
@@ -126,6 +136,7 @@ export const Panel = (() => {
       }
       for (const id of SELECTS) $(id).addEventListener('input', () => alCambiarGeo({ diferido: false }));
       for (const k of TOGGLES) $(k).addEventListener('input', () => alCambiarVista());
+      $('bloque').addEventListener('input', () => alCambiarVista());   // es solo de vista: no toca la forma ni las marcas
       for (const id of COORDS) $(id).addEventListener('input', () => alCambiarVista());
       $('baseY').addEventListener('input', () => alCambiarAltura());
     }

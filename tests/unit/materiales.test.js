@@ -84,3 +84,14 @@ test('MAT-06: las constantes de stack viven solo en materiales', () => {
   assert.equal(Materiales.SHULKER, 27 * 64);
   assert.equal(Materiales.COFRE_DOBLE, 54 * 64);
 });
+
+test('MAT-17: la lista de bloques del esquema es corta, con piedra primero y sus ID del juego', () => {
+  assert.deepEqual(Materiales.BLOQUES.map(b => b.id), [
+    'minecraft:stone', 'minecraft:stone_bricks', 'minecraft:bricks', 'minecraft:oak_planks',
+    'minecraft:glass', 'minecraft:white_wool', 'minecraft:white_concrete', 'minecraft:smooth_stone',
+  ]);
+  assert.deepEqual(Materiales.BLOQUES.map(b => b.nombre), [
+    'Piedra', 'Ladrillos de piedra', 'Ladrillos', 'Tablones de roble', 'Cristal', 'Lana blanca', 'Hormigón blanco', 'Piedra lisa',
+  ]);
+  assert.equal(Materiales.BLOQUE_DEFECTO, 'minecraft:stone');
+});

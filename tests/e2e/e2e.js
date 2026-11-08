@@ -1675,6 +1675,26 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Page.navigate', { url: URL_APP }); await esperar(800);
   await ev(`localStorage.clear()`);
 
+  // MAT-17: el bloque del esquema de Litematica se elige en una lista corta, se recuerda y no toca las marcas.
+  await ev(`localStorage.clear()`); await cargar();
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  const opcionesBloque = await ev(`[...document.getElementById('bloque').options].map(o => o.value + '|' + o.textContent).join(';')`);
+  ok(opcionesBloque === 'minecraft:stone|Piedra;minecraft:stone_bricks|Ladrillos de piedra;minecraft:bricks|Ladrillos;minecraft:oak_planks|Tablones de roble;minecraft:glass|Cristal;minecraft:white_wool|Lana blanca;minecraft:white_concrete|Hormigón blanco;minecraft:smooth_stone|Piedra lisa'
+    && await ev(`document.getElementById('bloque').value === 'minecraft:stone'`),
+  `MAT-17: el selector ofrece la lista corta y la piedra va por defecto (${opcionesBloque})`);
+  const marcasAntes = await ev(`localStorage.getItem('mc-formas-v1:marcas')`);
+  await ev(`(() => { const b = document.getElementById('bloque'); b.value = 'minecraft:bricks'; b.dispatchEvent(new Event('input', { bubbles: true })); })()`); await esperar(300);
+  ok(await prog() === 'Construidos: 16/208 (8 %)' && await ev(`localStorage.getItem('mc-formas-v1:marcas')`) === marcasAntes,
+    'MAT-17: cambiar el bloque no toca las marcas ni la forma (' + await prog() + ')');
+  await cargar();
+  ok(await ev(`document.getElementById('bloque').value === 'minecraft:bricks'`) && await prog() === 'Construidos: 16/208 (8 %)'
+    && await ev(`JSON.parse(localStorage.getItem('mc-formas-v1')).bloque === 'minecraft:bricks'`) && await ev(`location.hash === ''`),
+  'MAT-17: al recargar sigue elegido ladrillos y las marcas no cambian');
+  await ev(`localStorage.setItem('mc-formas-v1', JSON.stringify({ forma: 'circulo', w: 16, h: 16, bloque: 'minecraft:bedrock' }))`); await cargar();
+  ok(await ev(`document.getElementById('bloque').value === 'minecraft:stone'`), 'MAT-17: un bloque desconocido guardado vuelve a la piedra');
+  await ev(`localStorage.clear()`); await cargar();
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
 })().catch(e => { console.error(e); cerrar(); process.exit(1); });

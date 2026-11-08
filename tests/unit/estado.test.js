@@ -481,3 +481,35 @@ test('MAR-08: el almacen es obligatorio: sin el, error claro', () => {
   assert.throws(() => Estado.guardarMarcas('f', new Set()), /almacen/i);
   assert.throws(() => Estado.cargarMarcas('f', [[[true]]]), /almacen/i);
 });
+
+// --- MAT-17: bloque del esquema de Litematica (opcion de vista) ----------------------------------
+test('MAT-17: por defecto el bloque es piedra', () => {
+  assert.equal(Estado.DEFAULTS.bloque, 'minecraft:stone');
+  assert.equal(Estado.cargar(Almacen.memoria()).bloque, 'minecraft:stone');
+});
+
+test('MAT-17: el bloque elegido se guarda y se recupera', () => {
+  const almacen = Almacen.memoria();
+  const st = Estado.cargar(almacen);
+  st.bloque = 'minecraft:bricks';
+  assert.equal(Estado.guardar(st, almacen), true);
+  assert.equal(Estado.cargar(almacen).bloque, 'minecraft:bricks');
+});
+
+test('MAT-17: un bloque ausente, desconocido o de otro tipo cae en piedra; el resto de lo guardado vale', () => {
+  const con = raw => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(raw)));
+  assert.equal(con({ forma: 'rombo' }).bloque, 'minecraft:stone', 'un guardado anterior, sin la clave');
+  assert.equal(con({ bloque: 'minecraft:bedrock' }).bloque, 'minecraft:stone');
+  assert.equal(con({ bloque: 7 }).bloque, 'minecraft:stone');
+  assert.equal(con({ bloque: 'minecraft:glass', forma: 'rombo' }).forma, 'rombo');
+  assert.equal(con({ bloque: 'minecraft:glass' }).bloque, 'minecraft:glass');
+});
+
+test('MAT-17: el bloque no entra en la firma de las marcas, en el enlace ni en el proyecto', () => {
+  const base = { ...Estado.DEFAULTS, forma: 'circulo', w: 16, h: 16 };
+  assert.equal(Estado.firma({ ...base, bloque: 'minecraft:glass' }), Estado.firma(base));
+  assert.ok(!Estado.CLAVES_GEO.includes('bloque'));
+  assert.ok(!Estado.aEnlace({ ...base, bloque: 'minecraft:glass' }).includes('bloque'));
+  assert.ok(!('bloque' in JSON.parse(Estado.aArchivo({ ...base, bloque: 'minecraft:glass' }, 'f', new Set())).forma));
+  assert.equal(Estado.aEnlace({ ...base, bloque: 'minecraft:glass' }), Estado.aEnlace(base));
+});

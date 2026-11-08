@@ -1,6 +1,7 @@
 // Parametros de la aplicacion: valores por defecto, validacion, persistencia y firma de geometria.
 // El almacen se inyecta: Almacen.local() en la app, Almacen.memoria() en los tests.
 import { Formas } from './formas.js';
+import { Materiales } from './materiales.js';
 export const Estado = (() => {
 
   const KEY = 'mc-formas-v1';
@@ -43,6 +44,7 @@ export const Estado = (() => {
     forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1,
     esfera: variantes()[0] || '', orient: orientaciones()[0] || '', zoom: 26, rel: true, tramos: true,
     tramosDentro: false, distEjes: true, guiasChunk: false, centroX: null, centroZ: null, baseY: null, capa: 0,
+    bloque: Materiales.BLOQUE_DEFECTO,   // al final: lo guardado antes es un prefijo de lo de ahora
   };
 
   const num = (v, min, max, def) => {
@@ -95,6 +97,8 @@ export const Estado = (() => {
     st.centroZ = coordenada(raw.centroZ);
     st.baseY = coordenada(raw.baseY);   // altura Y de la capa 1 (solo formas 3D), opcional
     for (const k of BOOLEANOS) if (typeof raw[k] === 'boolean') st[k] = raw[k];
+    // Bloque del esquema de Litematica (MAT-17): una opcion de vista mas, solo de la lista corta.
+    if (Materiales.BLOQUES.some(b => b.id === raw.bloque)) st.bloque = raw.bloque;
     return st;
   }
 
