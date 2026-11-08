@@ -734,6 +734,57 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // INT-13, NUM-18, NUM-19: altura Y de la base (escritorio).
+  await ev(`localStorage.clear()`); await cargar();
+  const ponerCampo = (id, v) => ev(`(() => { const e = document.getElementById('${id}'); e.value = '${v}'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+  const irCapaN = i => ev(`(() => { const e = document.getElementById('capa'); e.value = ${i}; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  const textoCapa = () => ev(`document.getElementById('capaTxt').textContent`);
+  const campoY = () => ev(`(() => { const e = document.getElementById('baseY'), f = document.getElementById('rowBaseY');
+    return e ? { visible: !f.hidden, valor: e.value, etiqueta: e.closest('label').textContent.trim(), ayuda: (document.getElementById(e.getAttribute('aria-describedby')) || {}).textContent || '' } : null; })()`);
+
+  // INT-13: con una forma 2D no hay campo.
+  const en2D = await campoY();
+  ok(en2D && !en2D.visible, `INT-13: con el circulo (2D) no se ve el campo «Y de la base» (${JSON.stringify(en2D)})`);
+
+  // INT-13, NUM-19: con una esfera aparece, vacio, y el texto de la capa es el de siempre.
+  await ponerCampo('forma', 'esfera'); await ponerCampo('w', '11'); await esperar(500);
+  const en3D = await campoY();
+  ok(en3D && en3D.visible && en3D.valor === '' && en3D.etiqueta.includes('Y de la base') && /capa 1/.test(en3D.ayuda),
+    `INT-13: con la esfera aparece el campo vacio, con etiqueta y ayuda enlazada (${JSON.stringify(en3D)})`);
+  ok(await textoCapa() === 'Capa 1 de 11 (base)', 'NUM-19: con la Y vacia el texto de la capa es el de siempre -> ' + await textoCapa());
+  await ev(`document.getElementById('marcarCapa').click()`); await esperar(300);
+  const marcadas = await prog(), avisoMarcar = (await aviso()).texto;
+
+  // NUM-18: con la base en Y=64 cada capa muestra su altura.
+  await ponerCampo('baseY', '64'); await esperar(300);
+  ok(await textoCapa() === 'Capa 1 de 11 (base) · Y 64', 'NUM-18: la capa base muestra Y 64 -> ' + await textoCapa());
+  await irCapaN(2); await esperar(250);
+  ok(await textoCapa() === 'Capa 3 de 11 · Y 66', 'NUM-18: la capa 3 muestra Y 66 -> ' + await textoCapa());
+  await irCapaN(10); await esperar(250);
+  ok(await textoCapa() === 'Capa 11 de 11 · Y 74', 'NUM-18: la capa 11 muestra Y 74 -> ' + await textoCapa());
+  await ponerCampo('baseY', '-60'); await esperar(250);
+  ok(await textoCapa() === 'Capa 11 de 11 · Y -50', 'NUM-18: con la base negativa (-60) la capa 11 esta en Y -50 -> ' + await textoCapa());
+  await ponerCampo('baseY', '64'); await irCapaN(0); await esperar(250);
+  ok(await prog() === marcadas && (await aviso()).texto === avisoMarcar, 'NUM-19: cambiar la Y no toca las marcas ni saca ningun aviso -> ' + await prog());
+
+  // INT-13: se recuerda al recargar.
+  await cargar();
+  const recargado = await campoY();
+  ok(recargado.visible && recargado.valor === '64' && /Y 64$/.test(await textoCapa()), `INT-13: al recargar sigue la Y de la base (${JSON.stringify(recargado)} · ${await textoCapa()})`);
+
+  // NUM-19: vuelta a una forma 2D con la Y guardada: sin campo ni altura.
+  await ponerCampo('forma', 'circulo'); await esperar(400);
+  const vuelta2D = await campoY();
+  ok(!vuelta2D.visible && await ev(`document.getElementById('selCapa').hidden`), 'NUM-19: en una forma 2D con la Y guardada no se ve el campo ni la altura');
+
+  // NUM-19: un estado guardado antes de este cambio (sin baseY) arranca igual.
+  await ev(`localStorage.setItem('mc-formas-v1', '{"forma":"esfera","w":11,"h":11,"igualar":true,"modo":"relleno","grosor":1,"esfera":"cupula","orient":"plano","zoom":20,"rel":true,"tramos":true,"tramosDentro":false,"distEjes":true,"capa":0}')`);
+  await cargar();
+  const antiguoY = await campoY();
+  ok(antiguoY.visible && antiguoY.valor === '' && /^Capa 1 de [0-9]+ \(base\)$/.test(await textoCapa()), `NUM-19: un estado guardado antes de la altura carga igual y sin Y (${JSON.stringify(antiguoY)} · ${await textoCapa()})`);
+  await ev(`localStorage.clear()`);
+  await cargar();
+
   await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 800, deviceScaleFactor: 1, mobile: true });
   await cargar(); await esperar(300);
   ok(await ev(`document.documentElement.scrollWidth <= 375`), 'INT-03: sin scroll horizontal a 375 px');
@@ -788,6 +839,15 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   `INT-12: en movil «X del centro» y «Z del centro» caben, tienen etiqueta, 16 px y al menos 44 px (${JSON.stringify(camposMovil)})`);
   await shot('10-guias-movil.png');
   await ev(`(() => { const c = document.getElementById('guiasChunk'); c.checked = false; c.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  // INT-13 en movil: el campo «Y de la base» (solo 3D) cabe, tiene etiqueta, 16 px y al menos 44 px.
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`); await esperar(500);
+  await ev(`document.getElementById('baseY').scrollIntoView({ block: 'center' })`); await esperar(300);
+  const campoYMovil = await ev(`(() => { const e = document.getElementById('baseY'); if (!e) return null; const r = e.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right), vw, fuente: parseFloat(getComputedStyle(e).fontSize), etiqueta: e.closest('label').textContent.trim(), visible: !document.getElementById('rowBaseY').hidden }; })()`);
+  ok(campoYMovil && campoYMovil.visible && campoYMovil.alto >= 44 && campoYMovil.izq >= 0 && campoYMovil.der <= campoYMovil.vw && campoYMovil.fuente >= 16 && campoYMovil.etiqueta.includes('Y de la base'),
+    `INT-13: en movil «Y de la base» cabe, tiene etiqueta, 16 px y al menos 44 px (${JSON.stringify(campoYMovil)})`);
+  await shot('11-base-y-movil.png');
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'circulo'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`); await esperar(400);
   await shot('06-proyecto-movil.png');
   await ev(`document.getElementById('cerrarMenu').click()`); await esperar(300);
 

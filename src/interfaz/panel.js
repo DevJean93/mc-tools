@@ -32,6 +32,7 @@ const Panel = (() => {
       st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
       for (const id of COORDS) st[id] = Estado.coordenada($(id).value);   // vacio -> sin coordenada
+      st.baseY = Estado.coordenada($('baseY').value);                    // vacio -> sin altura
       ponerGuias();
     }
 
@@ -104,6 +105,8 @@ const Panel = (() => {
       // No se pisa un campo mientras se teclea en el (un "-" a medias se perderia).
       for (const id of COORDS) if (document.activeElement !== $(id)) $(id).value = st[id] === null ? '' : st[id];
       ponerGuias();
+      if (document.activeElement !== $('baseY')) $('baseY').value = st.baseY === null ? '' : st.baseY;
+      $('rowBaseY').hidden = !es3D();   // la altura de la base solo tiene sentido con varias capas
       $('h').disabled = st.igualar;
       $('rowH').hidden = es3D();
       $('filaDims').classList.toggle('solo', es3D());
@@ -116,7 +119,7 @@ const Panel = (() => {
 
     // Conecta el formulario con la app: cada cambio avisa de si toca regenerar (diferido
     // mientras se teclea) o solo repintar.
-    function conectar({ alCambiarGeo, alCambiarVista }) {
+    function conectar({ alCambiarGeo, alCambiarVista, alCambiarAltura }) {
       for (const id of CAMPOS) {
         $(id).addEventListener('input', () => alCambiarGeo({ diferido: true }));
         $(id).addEventListener('change', () => alCambiarGeo({ diferido: false }));
@@ -124,6 +127,7 @@ const Panel = (() => {
       for (const id of SELECTS) $(id).addEventListener('input', () => alCambiarGeo({ diferido: false }));
       for (const k of TOGGLES) $(k).addEventListener('input', () => alCambiarVista());
       for (const id of COORDS) $(id).addEventListener('input', () => alCambiarVista());
+      $('baseY').addEventListener('input', () => alCambiarAltura());
     }
 
     return { leer, poner, conectar };

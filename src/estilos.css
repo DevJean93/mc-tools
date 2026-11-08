@@ -63,6 +63,7 @@ input[type=number], select { background: var(--bg); color: var(--fg); border: 1p
 input:disabled { opacity: .5; }
 .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .fila2.solo { grid-template-columns: 1fr; }
+#rowBaseY { display: flex; flex-direction: column; gap: 4px; }
 
 button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--muted); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; min-height: 36px; cursor: pointer; font: inherit; font-size: 14px; transition: background-color var(--t-rapida) ease-out, border-color var(--t-rapida) ease-out; }
 button:hover:not(:disabled) { background: #334155; border-color: #64748B; }

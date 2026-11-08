@@ -109,7 +109,8 @@
     const n = doc.capas().length, capa = doc.capa();
     $('selCapa').hidden = n < 2;
     $('capa').max = n - 1; $('capa').value = capa;
-    $('capaTxt').textContent = `Capa ${capa + 1} de ${n}` + (capa === 0 ? ' (base)' : '');
+    const y = Estado.alturaCapa(st, capa);   // null sin Y de la base o en 2D
+    $('capaTxt').textContent = `Capa ${capa + 1} de ${n}` + (capa === 0 ? ' (base)' : '') + (y === null ? '' : ` · Y ${y}`);
     for (const id of ['marcarCapa', 'desmarcarCapa']) $(id).hidden = n < 2;
     $('deshacer').disabled = !doc.puedeDeshacer();
     $('rehacer').disabled = !doc.puedeRehacer();
@@ -218,6 +219,7 @@
   panel.conectar({
     alCambiarGeo: ({ diferido }) => (diferido ? regenerarDiferido() : doc.regenerar()),
     alCambiarVista: () => { panel.leer(); doc.guardarEstado(); programarDibujo(); },
+    alCambiarAltura: () => { panel.leer(); doc.guardarEstado(); refrescar(); },   // cambia el texto de la capa, no el dibujo
   });
   al('zoom', 'input', () => zoom.aplicar(+$('zoom').value));
   al('zoomMenos', 'click', () => zoom.paso(-1));
