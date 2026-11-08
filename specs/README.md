@@ -24,6 +24,7 @@ de la web publicada.
 | Materiales | `MAT` | `specs/areas/materiales/spec.md` |
 | Interfaz | `INT` | `specs/areas/interfaz/spec.md` |
 | Publicación | `PUB` | `specs/areas/publicacion/spec.md` |
+| Sitio | `SIT` | `specs/areas/sitio/spec.md` |
 
 ## Identificadores
 
