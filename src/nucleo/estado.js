@@ -9,6 +9,7 @@ const Estado = (() => {
   const LIMITES = {
     w2d: Formas.MAX_2D, w3d: Formas.MAX_3D, h: Formas.MAX_2D,
     grosor: Formas.MAX_GROSOR, zoomMin: 2, zoomMax: 48,
+    mundo: 30000000,   // las coordenadas del mundo de Minecraft llegan a +-30 000 000
   };
 
   // Las formas validas salen del registro de geometria: una sola lista, no dos.
@@ -33,7 +34,7 @@ const Estado = (() => {
     return deTodas.includes(crudo) ? crudo : defecto;
   };
   // Opciones que solo cambian la vista (no la geometria ni las marcas).
-  const VISTA = ['rel', 'tramos', 'tramosDentro', 'distEjes'];
+  const VISTA = ['rel', 'tramos', 'tramosDentro', 'distEjes', 'guiasChunk'];
   const BOOLEANOS = ['igualar', ...VISTA];
   // Parametros que definen la geometria (los demas son solo de vista).
   const CLAVES_GEO = ['forma', 'w', 'h', 'igualar', 'modo', 'grosor', 'esfera', 'orient'];
@@ -41,12 +42,20 @@ const Estado = (() => {
   const DEFAULTS = {
     forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1,
     esfera: variantes()[0] || '', orient: orientaciones()[0] || '', zoom: 26, rel: true, tramos: true,
-    tramosDentro: false, distEjes: true, capa: 0,
+    tramosDentro: false, distEjes: true, guiasChunk: false, centroX: null, centroZ: null, capa: 0,
   };
 
   const num = (v, min, max, def) => {
     const n = Number(v);
     return v !== null && v !== '' && Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : def;
+  };
+
+  // Coordenada del mundo: entero dentro de +-LIMITES.mundo o null si no hay valor (vacio o no numerico).
+  // Un texto vacio no es un cero: Number('') da 0, asi que se descarta antes.
+  const coordenada = v => {
+    if (typeof v === 'string' ? v.trim() === '' : typeof v !== 'number') return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(LIMITES.mundo, Math.max(-LIMITES.mundo, Math.round(n))) : null;
   };
 
   // Numero entero dentro de [min, max]; si no es un numero, el minimo.
@@ -82,6 +91,8 @@ const Estado = (() => {
     st.grosor = num(raw.grosor, 1, LIMITES.grosor, st.grosor);
     st.zoom = num(raw.zoom, LIMITES.zoomMin, LIMITES.zoomMax, st.zoom);
     st.capa = num(raw.capa, 0, 999, 0);
+    st.centroX = coordenada(raw.centroX);
+    st.centroZ = coordenada(raw.centroZ);
     for (const k of BOOLEANOS) if (typeof raw[k] === 'boolean') st[k] = raw[k];
     return st;
   }
@@ -212,7 +223,7 @@ const Estado = (() => {
   }
 
   return {
-    LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp,
+    LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp, coordenada,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
     VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace,
   };

@@ -344,6 +344,54 @@ test('FOR-17: el enlace no trae zoom ni vista aunque se pidan', () => {
   assert.deepEqual(Object.keys(r), [...Estado.CLAVES_GEO, 'capa']);
 });
 
+// Guias de chunk (cambio 008): una opcion de vista y las coordenadas del bloque central en el mundo.
+test('NUM-17: por defecto las guias estan apagadas y no hay coordenadas', () => {
+  const st = Estado.cargar(Almacen.memoria());
+  assert.equal(st.guiasChunk, false);
+  assert.equal(st.centroX, null);
+  assert.equal(st.centroZ, null);
+  assert.equal(Estado.DEFAULTS.guiasChunk, false);
+});
+
+test('NUM-17: un estado guardado antes de este cambio carga igual y con las guias apagadas', () => {
+  // Cadena literal del formato anterior: sin guiasChunk, centroX ni centroZ.
+  const antiguo = '{"forma":"rombo","w":20,"h":20,"igualar":true,"modo":"hueco","grosor":3,"esfera":"esfera","orient":"plano","zoom":30,"rel":false,"tramos":true,"tramosDentro":true,"distEjes":false,"capa":0}';
+  const st = Estado.cargar(conDatos('mc-formas-v1', antiguo));
+  assert.equal(st.forma, 'rombo'); assert.equal(st.w, 20); assert.equal(st.modo, 'hueco'); assert.equal(st.grosor, 3);
+  assert.equal(st.zoom, 30); assert.equal(st.rel, false); assert.equal(st.tramosDentro, true); assert.equal(st.distEjes, false);
+  assert.equal(st.guiasChunk, false); assert.equal(st.centroX, null); assert.equal(st.centroZ, null);
+});
+
+test('NUM-17: la opcion y las coordenadas se guardan y se recuperan', () => {
+  const almacen = Almacen.memoria();
+  const st = Estado.cargar(almacen);
+  Object.assign(st, { guiasChunk: true, centroX: 100, centroZ: -40 });
+  Estado.guardar(st, almacen);
+  const otra = Estado.cargar(almacen);
+  assert.equal(otra.guiasChunk, true); assert.equal(otra.centroX, 100); assert.equal(otra.centroZ, -40);
+});
+
+test('NUM-17: las coordenadas se redondean, se recortan a +-30 000 000 y un texto o vacio es null', () => {
+  const con = obj => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(obj)));
+  assert.equal(con({ centroX: 12.6 }).centroX, 13);
+  assert.equal(con({ centroX: '-7' }).centroX, -7);
+  assert.equal(con({ centroX: 99999999999 }).centroX, 30000000);
+  assert.equal(con({ centroZ: -99999999999 }).centroZ, -30000000);
+  assert.equal(con({ centroZ: 0 }).centroZ, 0, 'el cero es una coordenada valida');
+  for (const malo of ['', 'abc', null, true, [], {}]) assert.equal(con({ centroX: malo }).centroX, null, JSON.stringify(malo));
+  assert.equal(con({ guiasChunk: 'si' }).guiasChunk, false, 'solo un booleano activa la opcion');
+});
+
+test('NUM-17: las guias son una opcion de vista: no entran en la geometria, la firma, el enlace ni el proyecto', () => {
+  assert.ok(Estado.VISTA.includes('guiasChunk'));
+  assert.ok(!Estado.CLAVES_GEO.includes('guiasChunk') && !Estado.CLAVES_GEO.includes('centroX') && !Estado.CLAVES_GEO.includes('centroZ'));
+  const base = { ...Estado.DEFAULTS };
+  const con = { ...base, guiasChunk: true, centroX: 100, centroZ: -40 };
+  assert.equal(Estado.firma(con), Estado.firma(base));
+  assert.equal(Estado.aEnlace(con), Estado.aEnlace(base));
+  assert.equal(Estado.aArchivo(con, Estado.firma(con), new Set()), Estado.aArchivo(base, Estado.firma(base), new Set()));
+});
+
 test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
   assert.equal(Estado.clamp('42', 1, 200), 42);
   assert.equal(Estado.clamp('42.6', 1, 200), 43);
@@ -354,7 +402,7 @@ test('MAR-10: clamp redondea y recorta; si no es un numero, el minimo', () => {
 });
 
 test('MAR-07: las vistas son los booleanos que no son geometria', () => {
-  assert.deepEqual(Estado.VISTA, ['rel', 'tramos', 'tramosDentro', 'distEjes']);
+  assert.deepEqual(Estado.VISTA, ['rel', 'tramos', 'tramosDentro', 'distEjes', 'guiasChunk']);
   assert.deepEqual(Estado.BOOLEANOS, ['igualar', ...Estado.VISTA]);
 });
 
