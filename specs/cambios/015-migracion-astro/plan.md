@@ -171,7 +171,7 @@ autoalojadas y el despliegue.
   y `@fontsource-variable/jetbrains-mono` (versiones exactas), importes en `Base.astro`, se quitan los `<link>`
   de Google. Hecho cuando: E2E verde y comparación píxel a píxel = 0 (o diferencia explicada y
   corregida). Commit: «Fuentes autoalojadas con fontsource (015 T06, PUB-10)».
-- [ ] T07 — Datos antiguos (`PUB-09`). Test primero: cargar un estado guardado y un archivo de proyecto
+- [x] T07 — Datos antiguos (`PUB-09`). Test primero: cargar un estado guardado y un archivo de proyecto
   de la 006 de referencia (unitario y E2E con `localStorage`); es de regresión: debería pasar ya
   (se comprueba rompiendo la clave a propósito para ver el rojo y se revierte). Commit: «Pruebas de datos
   antiguos tras la migración (015 T07, PUB-09)».

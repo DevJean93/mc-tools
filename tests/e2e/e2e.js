@@ -599,6 +599,17 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // PUB-09: lo guardado por la version anterior (claves mc-formas-v1*) se carga igual tras la migracion.
+  const guardadoViejo = '{"forma":"esfera","w":11,"h":11,"igualar":true,"modo":"hueco","grosor":2,"esfera":"cupula","orient":"plano","zoom":30,"rel":false,"tramos":true,"tramosDentro":false,"distEjes":true,"guiasChunk":false,"centroX":null,"centroZ":null,"baseY":64,"capa":3}';
+  const marcasViejas = '{"firma":"esfera|11|11|hueco|2|cupula|","porCapa":{"0":[3,0,4,0,5,0],"3":[3,1,4,1,5,1]}}';
+  await ev("localStorage.clear(); localStorage.setItem('mc-formas-v1', " + JSON.stringify(guardadoViejo) + "); localStorage.setItem('mc-formas-v1:marcas', " + JSON.stringify(marcasViejas) + ")");
+  await cargar();
+  const viejo = await ev("(() => { const v = id => document.getElementById(id).value; return { forma: v('forma'), esfera: v('esfera'), w: +v('w'), modo: v('modo'), grosor: +v('grosor'), baseY: v('baseY'), capa: document.getElementById('capaTxt').textContent, prog: document.getElementById('progTxt').textContent }; })()");
+  ok(viejo.forma === 'esfera' && viejo.esfera === 'cupula' && viejo.w === 11 && viejo.modo === 'hueco' && viejo.grosor === 2 && viejo.baseY === '64' && /Total: 6\//.test(viejo.prog),
+    'PUB-09: un estado guardado por la version anterior carga igual, con sus marcas (' + JSON.stringify(viejo) + ')');
+  await ev('localStorage.clear()');
+  await cargar();
+
   // PUB-04: la portada (raiz del sitio) lista Formas MC y enlaza a /formas/.
   await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
   const portada = await ev(`(() => {
