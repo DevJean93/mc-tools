@@ -150,7 +150,7 @@ autoalojadas y el despliegue.
   mitad de los archivos en cada formato. Hecho cuando: `check`, `test` (234), `e2e` (~197, sin el
   `PUB-01`) y `specs` en verde; comparación píxel a píxel = 0. Commit: «Astro: Formas MC pasa a
   módulos ES en /formas/ (015 T02)».
-- [ ] T03 — Portada (`PUB-04`). Test primero: E2E que abre `/mc-tools/` y comprueba una tarjeta
+- [x] T03 — Portada (`PUB-04`). Test primero: E2E que abre `/mc-tools/` y comprueba una tarjeta
   «Formas MC» que enlaza a `/formas/`, aviso Mojang y pie (rojo: 404). Cambio: `index.astro` con la
   skill `ui-ux-pro-max`, estilos compartidos mínimos. Hecho cuando: E2E verde y capturas en móvil y
   escritorio. Commit: «Portada con la lista de herramientas (015 T03, PUB-04)».

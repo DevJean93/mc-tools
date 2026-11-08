@@ -599,6 +599,20 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
+  // PUB-04: la portada (raiz del sitio) lista Formas MC y enlaza a /formas/.
+  await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
+  const portada = await ev(`(() => {
+    const a = document.querySelector('a[href$="/formas/"]'); if (!a) return null;
+    const r = a.getBoundingClientRect();
+    return { titulo: document.querySelector('h1').textContent, tarjeta: a.textContent, href: a.getAttribute('href'), alto: Math.round(r.height),
+      mojang: document.body.textContent.includes('No está afiliado a Mojang'), pie: /Versión \\S+/.test(document.querySelector('.pie').textContent) };
+  })()`);
+  ok(portada && portada.titulo === 'Herramientas MC' && /Formas MC/.test(portada.tarjeta) && portada.href === '/mc-tools/formas/' && portada.alto >= 44 && portada.mojang && portada.pie,
+    `PUB-04: la portada lista Formas MC con un enlace a /formas/, el aviso de Mojang y el pie (${JSON.stringify(portada)})`);
+  await send('Page.navigate', { url: URL_PORTADA + 'formas/' }); await esperar(500);
+  ok(await ev(`location.pathname`) === '/mc-tools/formas/', 'PUB-04: Formas MC vive en /formas/');
+  await cargar();
+
   // INT-11: el pie muestra la version, en la fuente de las cifras y sin partirse.
   const versiones = await ev(`(() => {
     const pie = document.getElementById('version');

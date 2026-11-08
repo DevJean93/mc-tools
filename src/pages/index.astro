@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+import '../herramientas/formas/estilos.css';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const herramientas = [
+  { nombre: 'Formas MC', texto: 'Círculos, esferas, cúpulas y más en bloques, con numeración, marcas de construcción y lista de materiales.', ruta: `${base}/formas/` },
+];
+---
+<Base titulo="Herramientas MC" descripcion="Herramientas no oficiales para Minecraft: planificador de formas en bloques.">
+  <header class="cab">
+    <h1>Herramientas MC</h1>
+    <p>Herramientas no oficiales para Minecraft</p>
+  </header>
+  <main class="portada">
+    <h2>Herramientas</h2>
+    <ul class="herramientas">
+      {herramientas.map(h => (
+        <li>
+          <a class="tarjeta" href={h.ruta}>
+            <strong>{h.nombre}</strong>
+            <span>{h.texto}</span>
+            <span class="abrir">Abrir →</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </main>
+</Base>
+
+<style is:global>
+  main.portada { display: block; max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+  .portada h2 { margin: 0 0 12px; }
+  .herramientas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .tarjeta { display: flex; flex-direction: column; gap: 4px; min-height: 44px; padding: 16px; color: var(--fg); text-decoration: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radio); }
+  .tarjeta strong { font-family: var(--mono); font-size: 18px; }
+  .tarjeta span { color: var(--fg-mut); }
+  .tarjeta .abrir { color: var(--accent); font-family: var(--mono); }
+  @media (prefers-reduced-motion: no-preference) { .tarjeta { transition: border-color var(--t-rapida) ease-out; } }
+  .tarjeta:hover { border-color: var(--accent); }
+  .tarjeta:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+</style>
