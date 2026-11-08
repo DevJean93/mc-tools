@@ -2,7 +2,7 @@
 
 ## Estado
 
-Borrador
+En revisión
 
 ## Motivo
 
@@ -38,7 +38,9 @@ Se aplica a `specs/constitucion.md` solo cuando esta propuesta esté aprobada y 
 - **Principio 3** (módulos): los scripts pasan de IIFE y globales a módulos ES con `import/export`. «Se
   extiende por registro» y «la lógica pura no toca el DOM» se mantienen.
 - **Principio 9** (simplicidad): una dependencia nueva exige una propuesta y se anota en esta
-  constitución; las de esta migración se listan en la enmienda (`astro`, y las de pruebas y tipos).
+  constitución. Las de esta migración son `astro`, `vitest`, `typescript` (con `@astrojs/check`) y
+  `@fontsource` para las fuentes (todas de desarrollo o de build: al navegador solo llegan archivos
+  estáticos).
 - Se añade al principio 6 que la migración conserva las claves `mc-formas-v1*` y la firma de las marcas.
 
 ## Delta
@@ -51,6 +53,9 @@ Se aplica a `specs/constitucion.md` solo cuando esta propuesta esté aprobada y 
   contenido, calculada por el build, así que un navegador que tenía la app guardada descarga lo nuevo
   sin pasos manuales. Las páginas HTML pueden tardar hasta unos 10 minutos en actualizarse (límite de
   GitHub Pages).
+- `PUB-10`: las fuentes de la app se sirven desde el propio sitio, no desde Google: con o sin conexión
+  el texto y las cifras se ven con la misma tipografía. La app no hace ninguna petición a otros
+  dominios.
 - `PUB-06`: el pie de cada página muestra la versión: el commit corto desde el que se construyó, o
   `dev` en local.
 - `PUB-07`: al subir a `main`, GitHub Actions construye y despliega el sitio; si falla la comprobación
@@ -89,6 +94,8 @@ Se aplica a `specs/constitucion.md` solo cuando esta propuesta esté aprobada y 
   construido, y en local muestra `dev` (`PUB-06`).
 - **Dado** la portada, **cuando** se abre, **entonces** lista Formas MC y enlaza a `/formas/`
   (`PUB-04`).
+- **Dado** la app abierta sin conexión, **cuando** carga, **entonces** el texto usa las mismas fuentes
+  que con conexión y no se pide nada a otros dominios (`PUB-10`).
 
 ## Decisiones tomadas al aclarar
 
@@ -101,9 +108,21 @@ Se aplica a `specs/constitucion.md` solo cuando esta propuesta esté aprobada y 
   poco, módulo a módulo (propuestas siguientes, no esta).
 - 2026-11-08: el objetivo es varias herramientas, y que cada una crezca.
 
+- 2026-11-08: Formas MC pasa a `/formas/` y la raíz es una portada. Los enlaces antiguos redirigen
+  conservando la forma (`PUB-08`). Se descartó dejarla en la raíz hasta tener una segunda herramienta:
+  habría que mover los enlaces después, con más gente ya usándolos.
+- 2026-11-08: las pruebas pasan a Vitest, con los mismos nombres e IDs. Se descartó conservar
+  `node --test` porque no entiende los alias ni las utilidades de Vite y hay que escribir las
+  extensiones en los imports al pasar a TypeScript.
+- 2026-11-08: las fuentes se autoalojan en esta misma migración (`PUB-10`), con `@fontsource`. Amplía
+  el alcance: ya no es solo un cambio de empaquetado. La comparación píxel a píxel se hace con las
+  mismas fuentes cargadas antes y después; si una fuente autoalojada diera otra forma de letra, se
+  corrige en el plan y no se acepta la diferencia.
+- 2026-11-08: el trabajo va en una rama aparte (`migracion-astro`) y solo se fusiona a `main` con el
+  build, las pruebas y el despliegue por Actions probados. Antes de la fusión, el usuario cambia
+  Pages a «GitHub Actions» en Ajustes. Se descartó trabajar directo en `develop` porque lo dejaría sin
+  poder fusionarse a `main` mientras dure la migración.
+
 ## Preguntas abiertas
 
-- `[NECESITA ACLARACIÓN: ¿Formas MC pasa a /formas/ con una portada nueva en la raíz (y los enlaces antiguos redirigen), o se queda en la raíz hasta que exista una segunda herramienta y solo entonces se crea la portada?]`
-- `[NECESITA ACLARACIÓN: ¿Las pruebas pasan a Vitest (una dependencia nueva, pensada para TypeScript) o se conserva node --test, que ya lee TypeScript directamente en Node 22 y no añade nada?]`
-- `[NECESITA ACLARACIÓN: ¿Se autoalojan las fuentes de Google en esta migración (cumple el «sin red» de la constitución) o se deja para otra propuesta?]`
-- `[NECESITA ACLARACIÓN: ¿La migración se hace en una rama aparte (migracion-astro) y se fusiona a main solo cuando el despliegue por Actions está probado, para no tener la web rota en medio?]`
+Ninguna.
