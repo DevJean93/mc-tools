@@ -256,5 +256,5 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
   .ficha-pie { margin: 6mm 0 0; font-size: 9pt; color: #555; }
   #ficha figure { margin: 0; }
   #ficha img { display: block; margin: 0 auto; max-width: 100%; max-height: calc(100vh - 1mm); object-fit: contain; }
-  #ficha .ficha-dibujo img { max-height: 60vh; margin: 6mm 0 0; }
+  #ficha .ficha-dibujo img { max-height: 60vh; margin: 6mm auto 0; }
 }
