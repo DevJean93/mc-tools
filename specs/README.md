@@ -23,6 +23,7 @@ de GitHub Pages.
 | Táctil | `TAC` | `specs/areas/tactil/spec.md` |
 | Materiales | `MAT` | `specs/areas/materiales/spec.md` |
 | Interfaz | `INT` | `specs/areas/interfaz/spec.md` |
+| Publicación | `PUB` | `specs/areas/publicacion/spec.md` |
 
 ## Identificadores
 
