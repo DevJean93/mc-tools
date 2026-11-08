@@ -14,6 +14,7 @@ siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
 - `016-litematica` — exportar e importar archivos de Litematica (áreas MAT, FOR e INT).
 - `017-portada` — portada más completa: presentación, imagen de la herramienta y funciones (área PUB).
+- `018-tema-claro-oscuro` — selector de tema claro u oscuro que se recuerda (áreas INT, PUB y MAT).
 
 ## Ideas sin propuesta
 
