@@ -1,0 +1,25 @@
+---
+// Botón de tema de la cabecera (INT-16): solo icono de contorno (sol en el tema oscuro, luna en el claro,
+// lo alterna el CSS según data-tema). El nombre accesible y aria-pressed los pone Tema.iniciar.
+---
+<button type="button" id="botonTema" class="icono ver-tema" aria-pressed="true" aria-label="Cambiar a tema claro">
+  <svg class="ico sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  <svg class="ico luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+</button>
+
+<script>
+  import { Tema } from './tema.js';
+  import { Almacen } from '../herramientas/formas/nucleo/almacen.js';
+
+  const boton = document.getElementById('botonTema');
+  if (boton) {
+    Tema.iniciar({
+      raiz: document.documentElement,
+      boton,
+      almacen: Almacen.local(),
+      media: matchMedia('(prefers-color-scheme: light)'),
+      meta: document.querySelector('meta[name="theme-color"]'),
+      documento: document,
+    });
+  }
+</script>

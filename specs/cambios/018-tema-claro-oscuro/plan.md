@@ -106,7 +106,7 @@ botón de 44 px a 390 px (`INT-16`); el lienzo cambia de fondo (`INT-18`).
 
 ## Tareas
 
-- [ ] T01 — Tests en rojo de `INT-16`/`INT-17` (`tests/unit/tema.test.js`) y luego `src/compartido/tema.js`. Hecho cuando: pasan los tests nuevos. Commit: «INT-16, INT-17: lógica del tema (resolver, guardar, seguir al sistema)».
-- [ ] T02 — Test en rojo de `INT-18` (contrastes y escala de grises del bloque claro, bloque oscuro intacto) y luego las variables y `:root[data-tema="claro"]` en `estilos.css`, `paleta()` por tema y repintado en `app.js`. Hecho cuando: pasan los tests y el tema oscuro es idéntico píxel a píxel. Commit: «INT-18, MAT-07: paleta clara y lienzo que sigue el tema».
-- [ ] T03 — E2E en rojo (`INT-16`, `INT-17`, `PUB-04`, `MAT-07`, `INT-18`) y luego script del `<head>`, `BotonTema.astro` y su sitio en las dos cabeceras. Hecho cuando: E2E verde, capturas revisadas, sin errores de consola. Commit: «INT-16, INT-17, PUB-04: botón de tema en la app y en la portada».
+- [x] T01 — Tests en rojo de `INT-16`/`INT-17` (`tests/unit/tema.test.js`) y luego `src/compartido/tema.js`. Hecho cuando: pasan los tests nuevos. Commit: «INT-16, INT-17: lógica del tema (resolver, guardar, seguir al sistema)».
+- [x] T02 — Test en rojo de `INT-18` (contrastes y escala de grises del bloque claro, bloque oscuro intacto) y luego las variables y `:root[data-tema="claro"]` en `estilos.css`, `paleta()` por tema y repintado en `app.js`. Hecho cuando: pasan los tests y el tema oscuro es idéntico píxel a píxel. Commit: «INT-18, MAT-07: paleta clara y lienzo que sigue el tema».
+- [x] T03 — E2E en rojo (`INT-16`, `INT-17`, `PUB-04`, `MAT-07`, `INT-18`) y luego script del `<head>`, `BotonTema.astro` y su sitio en las dos cabeceras. Hecho cuando: E2E verde, capturas revisadas, sin errores de consola. Commit: «INT-16, INT-17, PUB-04: botón de tema en la app y en la portada».
 - [ ] T04 — Archivar: INT-16..18 al área de interfaz, MAT-07 y PUB-04 modificados con sus Decisiones, `README.md`, `pendientes.md`, propuesta `Hecha` y a `archivo/`. Hecho cuando: `npm run specs` y `npm test` en verde. Commit: «SDD: archiva la propuesta 018 (tema claro y oscuro)».

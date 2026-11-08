@@ -14,6 +14,18 @@ const version = versionDe(process.env);
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1B2336">
 <meta name="description" content={descripcion}>
+<!-- INT-17: el tema se aplica aquí, antes de pintar (sin destello). Misma regla que Tema.resolver:
+     lo guardado en mc-tema manda; si no, el tema del sistema. -->
+<script is:inline>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('mc-tema'); } catch (e) { /* almacenamiento bloqueado */ }
+    if (t !== 'claro' && t !== 'oscuro') t = matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro';
+    document.documentElement.dataset.tema = t;
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.content = t === 'claro' ? '#FFFFFF' : '#1B2336';
+  })();
+</script>
 <title>{titulo}</title>
 </head>
 <body>

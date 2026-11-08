@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import BotonTema from '../compartido/BotonTema.astro';
 import '../herramientas/formas/estilos.css';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const herramientas = [
@@ -14,6 +15,7 @@ const herramientas = [
   <header class="cab">
     <h1>Herramientas MC</h1>
     <p>Herramientas no oficiales para Minecraft</p>
+    <div class="cab-acciones"><BotonTema /></div>
   </header>
   <main class="portada">
     <h2>Herramientas</h2>

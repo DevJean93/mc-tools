@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import BotonTema from '../../compartido/BotonTema.astro';
 import '../../herramientas/formas/estilos.css';
 ---
 <Base
@@ -31,7 +32,10 @@ import '../../herramientas/formas/estilos.css';
 <header class="cab">
   <h1>Formas MC</h1>
   <p>Planificador de formas en bloques para Minecraft</p>
-  <button type="button" id="verMenu" class="ver-menu" aria-controls="panel" aria-expanded="true"><svg class="ico" aria-hidden="true"><use href="#i-panel"/></svg><span id="verMenuTxt">Ocultar menú</span></button>
+  <div class="cab-acciones">
+    <BotonTema />
+    <button type="button" id="verMenu" class="ver-menu" aria-controls="panel" aria-expanded="true"><svg class="ico" aria-hidden="true"><use href="#i-panel"/></svg><span id="verMenuTxt">Ocultar menú</span></button>
+  </div>
 </header>
 <noscript><p class="error">Esta herramienta necesita JavaScript activado.</p></noscript>
 <div id="error" class="error" role="alert" hidden></div>

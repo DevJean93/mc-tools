@@ -50,6 +50,11 @@ const medirAviso = () => ev(`(() => {
     lineas: Math.round(t.getBoundingClientRect().height / parseFloat(getComputedStyle(t).lineHeight)), texto: t.textContent };
 })()`);
 const ctrl = k => ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '${k}', ctrlKey: true, bubbles: true }))`);
+// Tema del sistema que emula el navegador (INT-17). Edge headless sin preferencia sigue el tema claro, y los
+// escenarios que no hablan del tema esperan la app oscura de siempre: el arnés arranca en oscuro.
+const emularTema = v => send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: v }] });
+let sistemaTema = 'dark';
+const fijarTema = async v => { sistemaTema = v; await emularTema(v); };
 async function cargar() { await send('Page.navigate', { url: URL_APP }); await esperar(1200); }
 
 (async () => {
@@ -67,7 +72,7 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     if (d.method === 'Runtime.exceptionThrown') errores.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text);
     if (d.method === 'Runtime.consoleAPICalled' && d.params.type === 'error') errores.push(d.params.args.map(a => a.value || a.description).join(' '));
   };
-  await send('Runtime.enable'); await send('Page.enable');
+  await send('Runtime.enable'); await send('Page.enable'); await fijarTema('dark');
   await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: OUT }).catch(() => {});
 
@@ -907,8 +912,8 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
     return (Buffer.from(r.data, 'base64').toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
   };
   const enImpresion = async fn => {
-    await send('Emulation.setEmulatedMedia', { media: 'print' });
-    try { return await fn(); } finally { await send('Emulation.setEmulatedMedia', { media: '' }); }
+    await send('Emulation.setEmulatedMedia', { media: 'print', features: [{ name: 'prefers-color-scheme', value: sistemaTema }] });
+    try { return await fn(); } finally { await send('Emulation.setEmulatedMedia', { media: '', features: [{ name: 'prefers-color-scheme', value: sistemaTema }] }); }
   };
   const medidasLienzo = () => ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.width, r.height, document.documentElement.scrollHeight].join(); })()`);
 
@@ -1465,6 +1470,114 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await esperar(250);
   ok(await progM() === 0, 'MAR-14: en movil, arrastrar desde la regla fija desplaza y no marca');
+  await ev(`localStorage.clear()`);
+
+  // INT-16, INT-17, INT-18, MAT-07, PUB-04: tema claro y oscuro con selector.
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await ev(`localStorage.clear()`);
+  // Espía: anota el tema en cuanto <html> lo recibe y si ya existía <body> (si existía, habría destello).
+  const espia = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `window.__tema = null; new MutationObserver((l, o) => { const t = document.documentElement.dataset.tema;
+      if (t && !window.__tema) { window.__tema = { t, cuerpo: !!document.body }; o.disconnect(); } })
+      .observe(document, { subtree: true, attributes: true, attributeFilter: ['data-tema'] });`,
+  });
+  const tema = () => ev(`document.documentElement.dataset.tema`);
+  const fondoLienzo = () => ev(`(() => { const d = document.getElementById('lienzo').getContext('2d').getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]].join(); })()`);
+  const claro = c => c.split(',').every(v => +v > 200), oscuro = c => c.split(',').every(v => +v < 60);
+  const btnTema = () => ev(`(() => { const b = document.getElementById('botonTema'); if (!b) return null; const r = b.getBoundingClientRect(), m = document.getElementById('verMenu');
+    return { label: b.getAttribute('aria-label'), pressed: b.getAttribute('aria-pressed'), ancho: Math.round(r.width), alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right),
+      vw: document.documentElement.clientWidth, antesDeMenu: !m || r.right <= m.getBoundingClientRect().left, icono: !!b.querySelector('svg'), nombre: b.textContent.trim(), dentroCab: !!b.closest('.cab') }; })()`);
+
+  // INT-17: sistema claro y nada guardado -> la app abre en claro, con el tema puesto antes de existir <body>.
+  await fijarTema('light'); await cargar();
+  const antesClaro = await ev(`window.__tema`);
+  ok(await tema() === 'claro' && antesClaro && antesClaro.t === 'claro' && antesClaro.cuerpo === false,
+    `INT-17: con el sistema en claro y nada guardado la app abre en claro, sin destello (${JSON.stringify(antesClaro)})`);
+  ok(await ev(`document.querySelector('meta[name=theme-color]').content`) === '#FFFFFF' && await ev(`getComputedStyle(document.documentElement).colorScheme`) === 'light',
+    'INT-17: theme-color y color-scheme siguen el tema claro');
+  ok(claro(await fondoLienzo()), `INT-18: el lienzo del tema claro tiene fondo claro (${await fondoLienzo()})`);
+  await shot('12-tema-claro-escritorio.png');
+  // INT-17: sin elección guardada, si el sistema cambia con la página abierta el tema lo sigue.
+  await fijarTema('dark'); await esperar(300);
+  ok(await tema() === 'oscuro' && oscuro(await fondoLienzo()), 'INT-17: sin elección guardada, el cambio del sistema se sigue en vivo (oscuro)');
+  await fijarTema('light'); await esperar(300);
+  ok(await tema() === 'claro' && claro(await fondoLienzo()), 'INT-17: ... y de vuelta a claro');
+  ok(await ev(`localStorage.getItem('mc-tema')`) === null, 'INT-17: seguir al sistema no guarda ninguna elección');
+
+  // INT-16: el botón alterna sin recargar y sin perder la forma ni las marcas.
+  await ev(`document.getElementById('marcarTodo').click()`); await esperar(250);
+  const progAntes = await prog(), formaAntes = await ev(`document.getElementById('forma').value`);
+  let b = await btnTema();
+  ok(b && b.label === 'Cambiar a tema oscuro' && b.pressed === 'false' && b.icono && b.nombre === '' && b.dentroCab,
+    `INT-16: en claro el botón dice «Cambiar a tema oscuro», aria-pressed=false, con icono y sin texto (${JSON.stringify(b)})`);
+  ok(b && b.antesDeMenu, 'INT-16: el botón de tema va junto a «Ocultar menú», a su izquierda');
+  ok(await ev(`getComputedStyle(document.querySelector('#botonTema .sol')).display`) === 'none' && await ev(`getComputedStyle(document.querySelector('#botonTema .luna')).display`) !== 'none',
+    'INT-16: en el tema claro se ve la luna');
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  b = await btnTema();
+  ok(await tema() === 'oscuro' && oscuro(await fondoLienzo()) && await prog() === progAntes && await ev(`document.getElementById('forma').value`) === formaAntes,
+    `INT-16: al tocar el botón pasa a oscuro al instante, repinta el lienzo y conserva forma y marcas (${await prog()})`);
+  ok(b.label === 'Cambiar a tema claro' && b.pressed === 'true' && await ev(`getComputedStyle(document.querySelector('#botonTema .sol')).display`) !== 'none',
+    'INT-16: en oscuro el botón dice «Cambiar a tema claro», aria-pressed=true y se ve el sol');
+  ok(await ev(`localStorage.getItem('mc-tema')`) === 'oscuro' && await ev(`document.querySelector('meta[name=theme-color]').content`) === '#1B2336',
+    'INT-17: la elección se guarda en mc-tema y theme-color sigue el tema');
+  await shot('12-tema-oscuro-escritorio.png');
+
+  // INT-17: elegido oscuro con el sistema en claro, recargar abre en oscuro sin pasar por el claro.
+  await cargar();
+  const antesOscuro = await ev(`window.__tema`);
+  ok(await tema() === 'oscuro' && antesOscuro && antesOscuro.t === 'oscuro' && antesOscuro.cuerpo === false && await prog() === progAntes,
+    `INT-17: elegido oscuro con el sistema en claro, al recargar abre en oscuro sin destello y con las marcas (${JSON.stringify(antesOscuro)})`);
+  await fijarTema('dark'); await fijarTema('light'); await esperar(300);
+  ok(await tema() === 'oscuro', 'INT-17: con elección guardada el cambio del sistema no la pisa');
+
+  // MAT-07: el PNG de la capa sale con los colores del tema activo.
+  await ev(`(() => { const o = HTMLCanvasElement.prototype.toBlob; HTMLCanvasElement.prototype.toBlob = function (cb, t, q) { window.__png = this; return o.call(this, cb, t, q); }; })()`);
+  const pngFondo = async () => { await ev(`document.getElementById('exportar').click()`); await esperar(700);
+    return ev(`(() => { const d = window.__png.getContext('2d').getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]].join(); })()`); };
+  const pngOscuro = await pngFondo();
+  ok(pngOscuro === '11,18,34', `MAT-07: con el tema oscuro el PNG tiene el fondo de siempre (${pngOscuro})`);
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  const pngClaro = await pngFondo();
+  ok(pngClaro === '226,232,240', `MAT-07: con el tema claro el PNG sale con los colores claros (${pngClaro})`);
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);   // de nuevo oscuro
+
+  // PUB-04, INT-17: la portada lleva el botón y respeta el tema elegido en la app.
+  await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
+  const antesPortada = await ev(`window.__tema`);
+  const bp = await btnTema();
+  ok(await tema() === 'oscuro' && antesPortada && antesPortada.cuerpo === false && bp && bp.dentroCab && bp.label === 'Cambiar a tema claro' && bp.pressed === 'true',
+    `PUB-04: la portada respeta el tema elegido (oscuro, sin destello) y lleva el botón en su cabecera (${JSON.stringify(bp)})`);
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  ok(await tema() === 'claro' && claro(await ev(`getComputedStyle(document.body).backgroundColor.match(/[0-9]+/g).slice(0, 3).join()`)),
+    'PUB-04: el botón de la portada cambia al tema claro y la página se ve clara');
+  await shot('12-portada-tema-claro.png');
+  await send('Page.navigate', { url: URL_APP }); await esperar(1200);
+  ok(await tema() === 'claro' && claro(await fondoLienzo()), 'INT-17: lo elegido en la portada manda también en la app');
+
+  // INT-16 en móvil: el botón cabe junto al título y a «Ocultar menú», mide 44 px y responde a un toque real.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  await cargar(); await esperar(300);
+  b = await btnTema();
+  ok(b && b.ancho >= 44 && b.alto >= 44 && b.izq >= 0 && b.der <= b.vw && b.antesDeMenu,
+    `INT-16: a 390 px el botón de tema cabe en la cabecera, junto a «Ocultar menú», y mide al menos 44 px (${JSON.stringify(b)})`);
+  ok(await ev(`document.documentElement.scrollWidth <= document.documentElement.clientWidth`), 'INT-16: la cabecera no desborda a 390 px');
+  await shot('12-tema-claro-movil.png');
+  const [tx, ty] = await ev(`(() => { const r = document.getElementById('botonTema').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+  await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tx, y: ty, id: 1 }] });
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await esperar(400);
+  ok(await tema() === 'oscuro' && oscuro(await fondoLienzo()), 'INT-16: un toque real en el botón cambia al tema oscuro en móvil');
+  await shot('12-tema-oscuro-movil.png');
+  await send('Page.navigate', { url: URL_PORTADA }); await esperar(800);
+  b = await btnTema();
+  ok(b && b.ancho >= 44 && b.alto >= 44 && b.der <= b.vw, `PUB-04, INT-16: en la portada a 390 px el botón de tema mide al menos 44 px y cabe (${JSON.stringify(b)})`);
+  await shot('12-portada-movil.png');
+
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: espia.identifier });
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await fijarTema('dark');
+  await send('Page.navigate', { url: URL_APP }); await esperar(800);
   await ev(`localStorage.clear()`);
 
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));

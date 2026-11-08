@@ -91,7 +91,10 @@ small { color: var(--fg-mut); font-weight: 400; }
 .cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 12px 16px; background: var(--card); border-bottom: 2px solid var(--accent); }
 .cab h1 { margin: 0; font-size: 20px; }
 .cab p { margin: 0; color: var(--fg-mut); }
-.ver-menu { margin-left: auto; align-self: center; }
+.cab-acciones { margin-left: auto; align-self: center; display: flex; align-items: center; gap: 8px; }
+/* Botón de tema (INT-16): sol en el tema oscuro, luna en el claro. */
+.ver-tema .luna, :root[data-tema="claro"] .ver-tema .sol { display: none; }
+:root[data-tema="claro"] .ver-tema .luna { display: block; }
 
 main.sin-menu { grid-template-columns: minmax(0, 1fr); }
 .panel-cab { display: none; }
@@ -208,7 +211,7 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
   }
   .cab h1 { font-size: 18px; }
   .cab p { font-size: 13px; grid-column: 1 / -1; }
-  .ver-menu { grid-row: 1; grid-column: 2; margin: 0; }
+  .cab-acciones { grid-row: 1; grid-column: 2; margin: 0; }
 
   /* En movil el menu es una hoja a pantalla completa sobre el dibujo (encima queda la barra inferior) */
   .panel {
