@@ -5,7 +5,7 @@ Código: `MAT`
 ## Propósito
 
 Traduce los bloques de la forma a materiales de Minecraft (stacks, shulkers y cofres dobles)
-y calcula el progreso por capa y total, y exporta el dibujo de cada capa como imagen. El
+y calcula el progreso por capa y total, exporta el dibujo de cada capa como imagen y prepara una ficha para imprimir. El
 cálculo es puro; la tabla y la barra solo pintan su resultado.
 
 ## Requisitos
@@ -72,6 +72,34 @@ Los números del desglose de materiales (stacks, shulker boxes, cofres dobles, c
 faltan) se muestran en negrita, como el total y las cifras del lienzo. Las etiquetas y la
 fórmula de equivalencias siguen en peso normal.
 
+### MAT-11
+
+«Imprimir ficha» abre el diálogo de impresión del navegador con una ficha preparada solo para
+papel: en pantalla la app no cambia y en el papel no salen los controles. La primera página lleva el
+nombre, las dimensiones y el modo de la forma y sus materiales (bloques, stacks, shulker boxes y
+cofres dobles); en 3D, además, la tabla por capas, con la columna Y si hay Y de la base (NUM-18).
+Después hay una página por capa con su dibujo numerado y su cabecera, la misma que el PNG (capa, Y si
+la hay y bloques). En 2D todo cabe en una página. El dibujo usa las opciones de vista actuales
+(reglas, tramos, guías de chunk…), igual que el PNG. Desde el diálogo se puede imprimir o elegir
+«Guardar como PDF».
+
+Ejemplo: círculo → 1 página; esfera de 11 → 12 páginas (la forma y 11 capas); con la base en Y = 64,
+la cabecera de la capa 3 dice «Y 66».
+
+### MAT-12
+
+La ficha es la forma limpia: no lleva las marcas de lo construido ni «Construidos», «Faltan» o
+«Hechos», y los materiales son el total necesario, no lo que falta. Cada dibujo ocupa lo máximo que
+cabe en la página que se elija en el diálogo (tamaño y orientación), sin deformarse ni cortarse.
+
+### MAT-13
+
+Si alguna capa mide más de 60 bloques de ancho o de alto, antes de abrir el diálogo sale un aviso: la
+ficha se imprime igual, pero en un A4 sus cifras no se leerán (quedarían menos de 3 mm por bloque);
+para imprimir legible, mejor el PNG por capa.
+
+Ejemplo: círculo de 120 → aviso; círculo de 60 → sin aviso.
+
 ## Casos límite
 
 - 0 bloques: `0 × 64`, sin shulkers ni cofres.
@@ -79,6 +107,7 @@ fórmula de equivalencias siguen en peso normal.
 - Porcentaje 67,5 % se muestra como 68 %.
 - Una capa de total 0 no está completa aunque no le falte nada.
 - Una imagen demasiado grande para el navegador no se descarga: se avisa de reducir el zoom.
+- Una esfera de 100 genera 100 imágenes para la ficha; se hacen una a una y se liberan tras imprimir.
 
 ## Fuera de alcance
 
@@ -99,3 +128,21 @@ fórmula de equivalencias siguen en peso normal.
   que es lo que se consulta, destaquen sobre las etiquetas. La tabla por capas de las formas
   3D se queda en peso normal: con todo en negrita se pierde la jerarquía, y la capa activa ya
   se distingue por su fondo (cambio 004).
+- 2026-11-08 (cambio 010): la ficha se hace con el diálogo de impresión del navegador, que también permite
+  guardarla como PDF: funciona con doble clic y en móvil sin dependencias. Se descartó generar un PDF
+  propio (exigiría una dependencia y enmendar la constitución) y una sola imagen PNG grande (al
+  imprimirla, el tamaño y los márgenes los decidiría el visor).
+- 2026-11-08 (cambio 010): en 3D va una capa por página, para que cada dibujo salga lo más grande
+  posible. Se descartó poner varias capas por página (las grandes quedarían pequeñas) y solo la capa
+  actual (obligaría a imprimir varias veces).
+- 2026-11-08 (cambio 010): la ficha es la forma limpia, sin lo construido: el papel sirve para ir
+  tachando a mano. El tamaño de papel no se elige en la app, sino en el diálogo; un selector propio
+  tendría que coincidir con él.
+- 2026-11-08 (cambio 010): las capas de más de 60 bloques se encogen igualmente y se avisa antes de
+  imprimir (un A4 deja unos 180 mm útiles: a menos de 3 mm por bloque las cifras no se leen). Se
+  descartó partirlas en varias hojas, mucho más complejo de hacer y de probar.
+- 2026-11-08 (cambio 010): implementación: `#ficha` está oculto en pantalla y `@media print` oculta todo
+  lo demás; cada capa es una imagen (blob URL, no `toDataURL`) dibujada con celdas de 20 px,
+  independiente del zoom de pantalla, para que las cifras salgan nítidas al encogerse. Los blobs se
+  revocan al regenerar y tras `afterprint`. `VistaMateriales` pinta la página de resumen con una
+  opción `sinMarcas`. El dibujo conserva la paleta oscura de la app, igual que el PNG.

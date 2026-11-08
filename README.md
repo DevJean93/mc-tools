@@ -25,6 +25,7 @@ Abre `index.html` con doble clic. No hace falta instalar nada ni conexión (sin 
 - **Proyecto:** «Guardar proyecto» descarga un archivo `.json` con la forma y lo construido, y «Cargar proyecto» lo recupera (con aviso y «Deshacer»). Sirve de copia de seguridad y para pasar la obra a otro dispositivo; funciona aunque el navegador no pueda guardar.
 - **Enlace para compartir:** «Copiar enlace» copia una dirección que abre la misma forma (tipo, tamaño, modo, grosor…) sin lo construido; para pasar también el progreso, guarda un proyecto.
 - **Exportar:** PNG de la capa actual o de todas las capas (una imagen por capa), con cabecera de forma, capa, bloques y fecha.
+- **Imprimir ficha:** abre el diálogo de impresión (o «Guardar como PDF») con una ficha limpia, sin marcas: una página con el nombre, los materiales y, en 3D, la tabla por capas, y una página por capa con su dibujo numerado. Con capas de más de 60 bloques avisa de que las cifras saldrán pequeñas.
 
 Si cambias la geometría con bloques marcados, las marcas se limpian y aparece un aviso con **Deshacer**.
 
@@ -65,7 +66,7 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 | `src/interfaz/vista-materiales.js` | Tabla de capas, totales y barra de progreso. |
 | `src/interfaz/panel.js` | Enlace entre el formulario y los parámetros. |
 | `src/dibujo/zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
-| `src/interfaz/exportar.js` | Exportación PNG de una capa o de todas. |
+| `src/interfaz/exportar.js` | Exportación PNG de una capa o de todas y ficha imprimible. |
 | `src/interfaz/menu.js` | Menú plegable, hoja móvil y barra inferior. |
 | `src/entrada/raton.js` | Ratón y lápiz. |
 | `src/entrada/tactil.js` | Toques: marcar, desplazar y pellizcar. |

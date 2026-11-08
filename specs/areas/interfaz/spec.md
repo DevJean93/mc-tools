@@ -101,6 +101,11 @@ enlazada al campo con `aria-describedby`, dice que es la altura de la capa 1 (la
 suelo, la que se ve con F3) y que vacío solo se ve el número de capa. Al cambiarlo se actualizan el
 texto de la capa y la tabla sin repintar el dibujo. Se recuerda al recargar.
 
+### INT-14
+
+El botón «Imprimir ficha» va en «Vista», a todo el ancho, bajo «PNG de la capa» y «Todas las capas».
+Lleva un icono de impresora de contorno, texto visible y nombre accesible, y mide 44 px en móvil.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -173,3 +178,6 @@ texto de la capa y la tabla sin repintar el dibujo. Se recuerda al recargar.
   marcador) y la ayuda va enlazada con `aria-describedby`.
 - 2026-11-08: `Panel` avisa con un callback propio, `alCambiarAltura`, y la app llama a `refrescar()`: a
   diferencia de las demás opciones de vista, esta no cambia el lienzo sino el texto y la tabla.
+- 2026-11-08 (cambio 010): el botón va en «Vista», con los de exportar, porque imprimir es otra forma de
+  exportar; usa la clase `.ancho` como «Copiar enlace» y el icono `i-imprimir` del sprite, del mismo
+  trazo que los demás.

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Aprobada
+Hecha
 
 ## Motivo
 
