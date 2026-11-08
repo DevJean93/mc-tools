@@ -1,4 +1,5 @@
-/* Tokens (sistema "Dark Mode (OLED)" de ui-ux-pro-max). El canvas lee estas mismas variables. */
+/* Tokens (sistema "Dark Mode (OLED)" de ui-ux-pro-max). El canvas lee estas mismas variables.
+   Tema oscuro = :root; el claro (INT-18) redefine los colores con data-tema="claro" en <html>. */
 :root {
   color-scheme: dark;
   --bg: #0F172A;
@@ -11,6 +12,15 @@
   --on-accent: #0F172A;
   --destructive: #EF4444;
   --oro: #FACC15;
+  --hover: #334155;
+  --hover-borde: #64748B;
+  --activo: #1E293B;
+  --error-texto: #FECACA;
+  --error-fondo: rgba(239, 68, 68, .15);
+  --nota-fondo: rgba(250, 204, 21, .12);
+  --sel-fondo: rgba(34, 197, 94, .18);
+  --sombra: rgba(0, 0, 0, .5);
+  --borde-marca: #000;
 
   /* canvas */
   --lienzo: #0B1222;
@@ -30,6 +40,42 @@
   --radio: 8px;
   --t-rapida: 150ms;
   accent-color: var(--accent);
+}
+
+/* Tema claro (INT-18): fondo claro, bloques verdes y cifras oscuras; distinto de la paleta de papel (MAT-14). */
+:root[data-tema="claro"] {
+  color-scheme: light;
+  --bg: #F1F5F9;
+  --card: #FFFFFF;
+  --muted: #E2E8F0;
+  --border: #7F8EA3;
+  --fg: #0F172A;
+  --fg-mut: #475569;
+  --accent: #15803D;
+  --on-accent: #FFFFFF;
+  --destructive: #DC2626;
+  --oro: #854D0E;
+  --hover: #E2E8F0;
+  --hover-borde: #64748B;
+  --activo: #CBD5E1;
+  --error-texto: #7F1D1D;
+  --error-fondo: rgba(220, 38, 38, .10);
+  --nota-fondo: rgba(133, 77, 14, .10);
+  --sel-fondo: rgba(21, 128, 61, .16);
+  --sombra: rgba(15, 23, 42, .25);
+  --borde-marca: #475569;
+
+  --lienzo: #E2E8F0;
+  --vacia: #FFFFFF;
+  --bloque: #4ADE80;
+  --hecho: #3B82F6;
+  --sobre-bloque: #0F172A;
+  --centro-banda: rgba(120, 53, 15, .22);
+  --regla: #334155;
+  --tramo: #0C4A6E;
+  --rejilla: rgba(15, 23, 42, .18);
+  --rejilla-5: rgba(15, 23, 42, .45);
+  --guia-chunk: #7E22CE;
 }
 
 * { box-sizing: border-box; }
@@ -66,8 +112,8 @@ input:disabled { opacity: .5; }
 #rowBaseY { display: flex; flex-direction: column; gap: 4px; }
 
 button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--muted); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; min-height: 36px; cursor: pointer; font: inherit; font-size: 14px; transition: background-color var(--t-rapida) ease-out, border-color var(--t-rapida) ease-out; }
-button:hover:not(:disabled) { background: #334155; border-color: #64748B; }
-button:active:not(:disabled) { background: #1E293B; }
+button:hover:not(:disabled) { background: var(--hover); border-color: var(--hover-borde); }
+button:active:not(:disabled) { background: var(--activo); }
 button:disabled { opacity: .45; cursor: not-allowed; }
 button.icono { padding: 6px; min-width: 36px; }
 .ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -101,7 +147,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .ayuda b { color: var(--fg); font-weight: 500; }
 .leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--fg-mut); font-size: 13px; }
 .leyenda li { display: flex; align-items: center; gap: 6px; }
-.leyenda .m { width: 14px; height: 14px; border: 1px solid #000; border-radius: 2px; flex: none; }
+.leyenda .m { width: 14px; height: 14px; border: 1px solid var(--borde-marca); border-radius: 2px; flex: none; }
 .leyenda .bloque { background: var(--bloque); }
 .leyenda .hecho { background: linear-gradient(225deg, var(--fg) 30%, var(--hecho) 30%); }
 .leyenda .centro { background: var(--centro-banda); border-color: var(--oro); }
@@ -119,17 +165,17 @@ th { color: var(--fg-mut); font-family: var(--fuente); font-weight: 500; positio
 td:first-child, th:first-child { text-align: left; }
 tbody tr { cursor: pointer; transition: background-color var(--t-rapida); }
 tbody tr:hover { background: var(--muted); }
-tr.sel { background: rgba(34, 197, 94, .18); }
+tr.sel { background: var(--sel-fondo); }
 tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 #tablaCapas { max-height: 260px; overflow: auto; }
 
-.error { margin: 12px 16px 0; padding: 10px 14px; background: rgba(239, 68, 68, .15); border: 1px solid var(--destructive); border-radius: var(--radio); color: #FECACA; }
+.error { margin: 12px 16px 0; padding: 10px 14px; background: var(--error-fondo); border: 1px solid var(--destructive); border-radius: var(--radio); color: var(--error-texto); }
 /* Estado que no desaparece (p. ej. el almacenamiento no guarda): fijo bajo la cabecera, con icono y texto. */
-.nota { display: flex; align-items: flex-start; gap: 10px; margin: 12px 16px 0; padding: 10px 14px; background: rgba(250, 204, 21, .12); border: 1px solid var(--oro); border-radius: var(--radio); color: var(--fg); font-size: 14px; }
+.nota { display: flex; align-items: flex-start; gap: 10px; margin: 12px 16px 0; padding: 10px 14px; background: var(--nota-fondo); border: 1px solid var(--oro); border-radius: var(--radio); color: var(--fg); font-size: 14px; }
 .nota .ico { color: var(--oro); margin-top: 2px; }
 /* Anclado a los dos lados y centrado con margen automatico: con left: 50% + translate el navegador
    solo le dejaba la mitad derecha de la pantalla y en movil el texto se partia en muchas lineas. */
-.aviso { position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content; bottom: 20px; display: flex; align-items: center; gap: 12px; max-width: min(calc(100% - 32px), 60ch); background: var(--card); border: 1px solid var(--oro); border-radius: var(--radio); padding: 10px 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 20; overflow-wrap: anywhere; }
+.aviso { position: fixed; left: 0; right: 0; margin-inline: auto; width: max-content; bottom: 20px; display: flex; align-items: center; gap: 12px; max-width: min(calc(100% - 32px), 60ch); background: var(--card); border: 1px solid var(--oro); border-radius: var(--radio); padding: 10px 14px; box-shadow: 0 8px 24px var(--sombra); z-index: 20; overflow-wrap: anywhere; }
 .aviso button { border-color: var(--oro); }
 .pie { padding: 8px 16px 24px; color: var(--fg-mut); font-size: 12px; }
 #version { font-family: var(--mono); white-space: nowrap; }

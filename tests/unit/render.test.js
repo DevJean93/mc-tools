@@ -377,3 +377,59 @@ test('MAT-14: las guias de chunk son mas oscuras que la rejilla en papel', () =>
   const P = Render.PAPEL;
   assert.ok(luz(hex(P.guiaChunk)) < luz(hex(P.rejilla5)) && luz(hex(P.guiaChunk)) < luz(hex(P.rejilla)));
 });
+
+// --- INT-18: paleta del tema claro (variables CSS de estilos.css) ------------------------------------
+import fs from 'node:fs';
+const CSS = fs.readFileSync(new URL('../../src/herramientas/formas/estilos.css', import.meta.url), 'utf8');
+// Variables `--nombre: valor;` del primer bloque que empieza con `selector {`.
+const variables = selector => {
+  const i = CSS.indexOf(selector + ' {');
+  assert.ok(i >= 0, `existe el bloque ${selector}`);
+  const cuerpo = CSS.slice(i, CSS.indexOf('}', i));
+  return Object.fromEntries([...cuerpo.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]));
+};
+const CLARO = variables(':root[data-tema="claro"]');
+const OSCURO = variables(':root');
+const rgba = s => s.match(/[0-9.]+/g).map(Number);
+
+test('INT-18: el tema oscuro conserva los colores de siempre', () => {
+  const esperado = { bg: '#0F172A', card: '#1B2336', fg: '#F8FAFC', lienzo: '#0B1222', vacia: '#1B2336', bloque: '#22C55E',
+    hecho: '#3B82F6', 'sobre-bloque': '#0F172A', 'centro-banda': 'rgba(250, 204, 21, .28)', regla: '#CBD5E1', tramo: '#7DD3FC',
+    rejilla: 'rgba(15, 23, 42, .55)', 'rejilla-5': 'rgba(248, 250, 252, .35)', 'guia-chunk': '#E879F9', oro: '#FACC15' };
+  for (const [k, v] of Object.entries(esperado)) assert.equal(OSCURO[k], v, k);
+});
+
+test('INT-18: el tema claro redefine todas las variables de color del lienzo', () => {
+  for (const k of ['lienzo', 'vacia', 'bloque', 'hecho', 'sobre-bloque', 'centro-banda', 'regla', 'tramo', 'rejilla', 'rejilla-5', 'guia-chunk', 'oro', 'fg', 'bg', 'card'])
+    assert.ok(CLARO[k], `falta --${k} en el tema claro`);
+});
+
+test('INT-18: en el tema claro las cifras tienen al menos 4,5:1 sobre el bloque, el bloque en un eje y el construido', () => {
+  const sobre = hex(CLARO['sobre-bloque']), bloque = hex(CLARO.bloque), eje = velo(bloque, CLARO['centro-banda']);
+  assert.ok(contraste(sobre, bloque) >= 4.5, 'cifra sobre bloque');
+  assert.ok(contraste(sobre, eje) >= 4.5, 'cifra sobre bloque en un eje');
+  assert.ok(contraste(sobre, hex(CLARO.hecho)) >= 4.5, 'cifra sobre bloque construido');
+});
+
+test('INT-18: en el tema claro el texto del dibujo y de la interfaz tiene al menos 4,5:1 sobre su fondo', () => {
+  const ejeVacio = velo(hex(CLARO.vacia), CLARO['centro-banda']);
+  for (const k of ['regla', 'tramo', 'fg', 'oro']) assert.ok(contraste(hex(CLARO[k]), hex(CLARO.lienzo)) >= 4.5, `${k} sobre el lienzo`);
+  for (const k of ['regla', 'tramo', 'oro']) assert.ok(contraste(hex(CLARO[k]), ejeVacio) >= 4.5, `${k} sobre un eje vacío`);
+  for (const fondo of ['bg', 'card'])
+    for (const k of ['fg', 'fg-mut', 'accent', 'oro']) assert.ok(contraste(hex(CLARO[k]), hex(CLARO[fondo])) >= 4.5, `${k} sobre ${fondo}`);
+  assert.ok(contraste(hex(CLARO['on-accent']), hex(CLARO.accent)) >= 4.5, 'texto sobre el acento');
+  assert.ok(contraste(hex(CLARO.border), hex(CLARO.bg)) >= 3, 'el borde de los campos se ve (3:1)');
+});
+
+test('INT-18: en el tema claro vacía, bloque, bloque en eje y centro se distinguen en escala de grises', () => {
+  const bloque = hex(CLARO.bloque), eje = velo(bloque, CLARO['centro-banda']);
+  const L = [luz(hex(CLARO.vacia)), luz(bloque), luz(eje), luz(hex(CLARO.oro))];
+  for (let i = 1; i < L.length; i++) assert.ok(L[i - 1] - L[i] >= 0.1, `escalón ${i}: ${L[i - 1].toFixed(2)} -> ${L[i].toFixed(2)}`);
+  assert.ok(Math.abs(luz(hex(CLARO.hecho)) - luz(bloque)) >= 0.1, 'construido y bloque normal se distinguen');
+});
+
+test('INT-18: en el tema claro la guía de chunk es más oscura que la rejilla', () => {
+  const vacia = hex(CLARO.vacia);
+  assert.ok(luz(hex(CLARO['guia-chunk'])) < luz(velo(vacia, CLARO['rejilla-5'])) && luz(hex(CLARO['guia-chunk'])) < luz(velo(vacia, CLARO.rejilla)));
+  assert.ok(rgba(CLARO.rejilla).length === 4);
+});

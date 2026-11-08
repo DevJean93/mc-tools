@@ -17,17 +17,17 @@ export const Tema = (() => {
   function iniciar({ raiz, boton, almacen, media, meta, documento }) {
     let elegido = esTema(almacen.leer(CLAVE));
 
-    function aplicar(tema) {
+    function aplicar(tema, avisar = true) {
       raiz.dataset.tema = tema;
       if (meta) meta.content = COLOR[tema];
       if (boton) {
         boton.setAttribute('aria-label', etiqueta(tema));
         boton.setAttribute('aria-pressed', String(tema === 'oscuro'));
       }
-      if (documento) documento.dispatchEvent(new CustomEvent('mc-tema', { detail: { tema } }));
+      if (avisar && documento) documento.dispatchEvent(new CustomEvent('mc-tema', { detail: { tema } }));
     }
 
-    aplicar(resolver(almacen.leer(CLAVE), media.matches));
+    aplicar(resolver(almacen.leer(CLAVE), media.matches), false);   // al arrancar nadie ha pintado con otro tema
     if (boton) boton.addEventListener('click', () => {
       const nuevo = otro(raiz.dataset.tema);
       elegido = true;

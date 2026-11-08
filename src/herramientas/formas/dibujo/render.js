@@ -12,9 +12,12 @@ export const Render = (() => {
   };
   const FUENTE = '"JetBrains Mono", ui-monospace, Consolas, monospace';
 
-  let PAL = null;
+  // La paleta se lee del CSS y se guarda; se vuelve a leer si cambia el tema (data-tema de <html>, INT-18).
+  let PAL = null, PAL_TEMA;
   function paleta() {
-    if (PAL) return PAL;
+    const tema = document.documentElement.dataset.tema;
+    if (PAL && PAL_TEMA === tema) return PAL;
+    PAL_TEMA = tema;
     const css = getComputedStyle(document.documentElement);
     const v = n => css.getPropertyValue(n).trim();
     PAL = {

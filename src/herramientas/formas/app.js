@@ -312,4 +312,6 @@ globalThis.Render = Render;
   // fragmento se quita de la direccion para que recargar no pise lo que se haga despues.
   if (doc.abrirEnlace(location.hash)) history.replaceState(null, '', location.pathname + location.search);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(dibujar);
+  // INT-16: al cambiar de tema el lienzo se repinta con la paleta nueva; la forma y las marcas no se tocan.
+  document.addEventListener('mc-tema', dibujar);
 })();
