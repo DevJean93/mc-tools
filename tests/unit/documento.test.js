@@ -449,3 +449,20 @@ test('FOR-18: abrir el enlace ocupa un solo paso de historial', () => {
   assert.equal(d.st.forma, 'circulo');
   assert.equal(d.doc.hechos().size, lleno - 1);
 });
+
+test('FOR-18: un enlace que acaba en la misma geometria tras normalizarla conserva las marcas (regresion)', () => {
+  // Con «igualar» el alto vuelve al ancho; en hueco el grosor se recorta al maximo. Ninguno cambia la
+  // forma final, asi que las marcas no se pueden perder (antes se borraban sin aviso ni Deshacer).
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const hechos = clavesHechas(d.doc), avisos = d.avisos.dichos.length;
+  d.doc.abrirEnlace('forma=circulo&w=16&h=10&igualar=1');
+  assert.deepEqual(clavesHechas(d.doc), hechos, 'alto distinto con igualar');
+  assert.equal(d.avisos.dichos.length, avisos, 'sin aviso');
+
+  const h = conMarcas({ forma: 'circulo', w: 16, h: 16, modo: 'hueco', grosor: 7 });   // 7 es el maximo
+  const hechosHueco = clavesHechas(h.doc);
+  assert.ok(hechosHueco.length > 0);
+  h.doc.abrirEnlace('forma=circulo&w=16&h=16&igualar=1&modo=hueco&grosor=50');
+  assert.equal(h.st.grosor, 7);
+  assert.deepEqual(clavesHechas(h.doc), hechosHueco, 'grosor por encima del maximo');
+});

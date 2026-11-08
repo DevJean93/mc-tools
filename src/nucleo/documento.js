@@ -162,12 +162,15 @@ const Documento = (() => {
       const forma = Estado.desdeEnlace(fragmento);
       if (!forma) return false;
       const antes = JSON.stringify(params()) + st.capa;
-      const cambiaGeo = Estado.firma({ ...st, ...forma }) !== firmaActual;
+      const firmaAntes = firmaActual;
       const habiaMarcas = marcas.total() > 0;
       antesDeMarcar();
       Object.assign(st, forma);
-      if (cambiaGeo) marcas.limpiar();
       regenerar({ sinLeer: true, conservar: true });
+      // La geometria se compara ya normalizada (alto igualado, grosor recortado): un enlace que acaba
+      // en la misma forma no puede borrar las marcas.
+      const cambiaGeo = firmaActual !== firmaAntes;
+      if (cambiaGeo && habiaMarcas) { marcas.limpiar(); trasMarcar(); }
       if (JSON.stringify(params()) + st.capa === antes) { descartarPaso(); return true; }
       if (cambiaGeo && habiaMarcas) avisos.avisar('Se abrió la forma del enlace. Tu progreso anterior se borró.', deshacer);
       return true;
