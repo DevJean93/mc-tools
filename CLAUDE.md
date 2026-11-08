@@ -17,13 +17,13 @@ npm run specs      # valida las specs e imprime la cobertura ID -> tests
 
 ## Estructura
 
-- `src/pages/` — `index.astro` (portada y redirección de enlaces antiguos) y `formas/index.astro`.
+- `src/pages/` — `index.astro` (portada, con su dibujo en vivo, y redirección de enlaces antiguos) y `formas/index.astro`.
 - `src/layouts/Base.astro` — head, aviso de Mojang y pie con la versión.
 - `src/herramientas/formas/` — la app: `nucleo/` (lógica pura sin DOM: `formas`, `estado`, `documento`,
   `marcas`, `historial`, `materiales`, `almacen`), `dibujo/` (canvas), `interfaz/` (DOM del panel, avisos,
   menú, exportación), `entrada/` (ratón, táctil, teclado), `app.js` (raíz de composición, sin reglas de
   negocio) y `estilos.css`.
-- `src/compartido/` — versión del pie y fuentes autoalojadas; lo que compartan las herramientas.
+- `src/compartido/` — versión del pie, fuentes autoalojadas, tema claro/oscuro y el dibujo en vivo de la portada; lo que compartan las herramientas.
 - `tests/unit/` (Vitest), `tests/e2e/`, `tests/herramientas/` (validador de specs).
 - `specs/` — constitución, áreas vivas y propuestas de cambio.
 

@@ -59,10 +59,10 @@ Sitio estático con [Astro](https://astro.build) (sin framework de interfaz), pu
 | Archivo | Rol |
 |---|---|
 | `astro.config.mjs` | `site` y `base` (`/mc-tools`) del sitio. |
-| `src/pages/index.astro` | Portada: lista de herramientas y redirección de los enlaces antiguos. |
+| `src/pages/index.astro` | Portada: presentación con dibujo en vivo, funciones, lista de herramientas y redirección de los enlaces antiguos. |
 | `src/pages/formas/index.astro` | Formas MC: estructura del panel y del área de dibujo, y el script de la app. |
 | `src/layouts/Base.astro` | Cabecera del documento, aviso de Mojang y pie con la versión. |
-| `src/compartido/` | Lo que comparten las herramientas: versión del pie (`version.js`), fuentes autoalojadas (`fuentes.css`) y el tema claro/oscuro (`tema.js` y el botón `BotonTema.astro`). |
+| `src/compartido/` | Lo que comparten las herramientas: versión del pie (`version.js`), fuentes autoalojadas (`fuentes.css`) el tema claro/oscuro (`tema.js` y el botón `BotonTema.astro`) y el dibujo en vivo de la portada (`dibujoVivo.js`). |
 | `src/herramientas/formas/estilos.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
 | `src/herramientas/formas/nucleo/almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
 | `src/herramientas/formas/nucleo/formas.js` | Geometría pura y registro de formas, sin DOM. |

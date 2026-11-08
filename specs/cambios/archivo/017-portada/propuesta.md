@@ -2,7 +2,7 @@
 
 ## Estado
 
-En curso
+Hecha
 
 ## Motivo
 

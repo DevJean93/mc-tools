@@ -107,5 +107,5 @@ el JS de la app no se tocan). Lo nuevo:
   Commit: «SIT-01, SIT-02, SIT-03, SIT-04, SIT-05: portada con presentación, dibujo en vivo y funciones».
 - [x] T03 — Validación visual: capturas, retoques, píxel a píxel de `/formas/`, tamaño de `dist/`. Commit:
   solo si hay retoques.
-- [ ] T04 — Archivar: `SIT-01..05` al área `sitio`, `PUB-04` modificado, README/CLAUDE.md,
+- [x] T04 — Archivar: `SIT-01..05` al área `sitio`, `PUB-04` modificado, README/CLAUDE.md,
   `pendientes.md`, propuesta a `Hecha` y al archivo. Commit: «SDD: archiva la propuesta 017 (portada)».

@@ -29,9 +29,7 @@ reutiliza.
 ### PUB-04
 
 El sitio se construye con Astro y publica una portada en la raíz y cada herramienta en su propia ruta:
-Formas MC queda en `/formas/`. La portada lista las herramientas disponibles, con un enlace a cada una
-(objetivo táctil de 44 px como mínimo), el aviso de que el proyecto no es oficial de Mojang y el pie con la
-versión. Además lleva el botón de tema de INT-16 en su cabecera y respeta el tema elegido (INT-17).
+Formas MC queda en `/formas/`. Qué lleva la portada lo dice el área `SIT`.
 
 Ejemplo: `https://devjean93.github.io/mc-tools/` (portada) y `…/mc-tools/formas/` (Formas MC).
 
@@ -144,3 +142,6 @@ con la misma tipografía, y la app no hace ninguna petición a otros dominios.
   pie con la versión»; ahora: además lleva el botón de tema y respeta el tema elegido, que comparte con la app
   por la clave `mc-tema` (mismo origen). El script que aplica el tema va en `Base.astro`, así que lo heredan
   todas las páginas del sitio.
+- 2026-11-08 (cambio 017): modifica PUB-04. Antes: «la portada lista las herramientas, el aviso de Mojang, el
+  pie con la versión, el botón de tema y respeta el tema elegido»; ahora: se queda con el build y las rutas, y
+  lo de la portada pasa al área `SIT` (SIT-01 a SIT-05).
