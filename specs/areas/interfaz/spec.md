@@ -77,6 +77,13 @@ enlace de FOR-16 al portapapeles y avisa «Enlace copiado.». Si el navegador no
 portapapeles, el aviso muestra el enlace entero, seleccionado y partido en líneas para que quepa en
 la pantalla, y dura 15 s para dar tiempo a copiarlo a mano.
 
+### INT-11
+
+El pie de la app muestra la versión («Versión 8edada70»), la misma que llevan las direcciones de los
+archivos (PUB-01), en la fuente monoespaciada de las cifras y sin partirse en dos líneas, con el color
+atenuado del pie, que tiene contraste suficiente sobre el fondo. Sirve para comprobar en cualquier
+dispositivo qué versión se está ejecutando.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -134,3 +141,6 @@ la pantalla, y dura 15 s para dar tiempo a copiarlo a mano.
 - 2026-11-08: el aviso de respaldo usa `overflow-wrap: anywhere` (en todos los avisos): una
   dirección larga sin espacios no se partía y se salía de la pantalla, como mostró la captura en
   móvil.
+- 2026-11-08: la versión va en el pie y no en el menú ni en un aviso: es información de consulta,
+  no una acción, y el pie ya es el sitio de lo secundario. Se muestra siempre, para comprobar en la
+  tablet si llegó lo nuevo sin herramientas de desarrollo.

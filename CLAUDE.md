@@ -7,10 +7,11 @@ que también se exportan a Node para los tests. Todo en español.
 ## Comandos
 
 ```bash
-npm run check   # sintaxis de src/ y tests/ (recursivo)
-npm test        # tests unitarios (incluye el validador de specs)
-npm run e2e     # 63 comprobaciones en Edge headless vía CDP
-npm run specs   # valida las specs e imprime la cobertura ID -> tests
+npm run check      # sintaxis de src/ y tests/ (recursivo)
+npm test           # tests unitarios (incluye el validador de specs y la versión de index.html)
+npm run e2e        # comprobaciones en Edge headless vía CDP
+npm run specs      # valida las specs e imprime la cobertura ID -> tests
+npm run versionar  # sella index.html con la huella de su contenido (?v= y pie)
 ```
 
 ## Estructura
@@ -42,6 +43,8 @@ Detalle y comandos: `specs/README.md`. Principios: `specs/constitucion.md`.
 - Cada requisito vigente tiene al menos un test que cita su ID (`NUM-07: …`). Solo se
   admite `[verificación manual]`, con motivo, en lo puramente visual.
 - Test primero: rojo y luego verde. Un bug se corrige con un test de regresión con ID.
+- Tras cambiar `index.html` o algo de `src/`, ejecutar `npm run versionar`: si no, `npm test`
+  falla («no está al día»). Va en el mismo commit que el cambio.
 - No se tocan las claves `mc-formas-v1*` ni la firma de las marcas sin migración y test.
 - En tareas de interfaz se usa la skill `ui-ux-pro-max` y se valida con capturas reales
   (móvil 390×844 con toques reales y escritorio).
@@ -70,6 +73,8 @@ Detalle y comandos: `specs/README.md`. Principios: `specs/constitucion.md`.
 GitHub Pages desde la rama `main`, carpeta raíz: `https://devjean93.github.io/mc-tools/`, sin
 dominio propio. `_config.yml` excluye de la web `specs/`, `.claude/`, `CLAUDE.md`, `tests/` y
 `package.json`; la app es `index.html` + `src/`. No se hace push sin que lo pida el usuario.
+Cada script y hoja de estilos locales lleva `?v=<huella>` para que el navegador descargue lo nuevo
+(área PUB); `index.html` puede tardar hasta unos 10 minutos en llegar (caché de Pages).
 
 ## Dónde está cada cosa
 

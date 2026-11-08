@@ -45,6 +45,7 @@ Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondea
 - Un solo material por forma.
 - El enlace no lleva las marcas. Abierta la app con doble clic, el enlace apunta al archivo de tu equipo: para compartirlo con otros hay que usar la web publicada.
 - Pegar un enlace en una pestaña con la app ya abierta no lo aplica: ábrelo en una pestaña nueva.
+- Tras publicar un cambio, un navegador que ya tenía la web puede tardar hasta unos 10 minutos en verlo (caché de GitHub Pages); recargar lo acelera. La versión del pie dice cuál se está ejecutando.
 
 ## Estructura
 
@@ -80,10 +81,11 @@ las áreas vivas (`specs/areas/<área>/spec.md`) y las propuestas de cambio
 ## Desarrollo
 
 ```bash
-npm test        # 112 tests unitarios, incluido el validador de specs
-npm run check   # sintaxis de todos los scripts de src/ y tests/
-npm run e2e     # 63 comprobaciones en Edge headless (móvil y escritorio)
-npm run specs   # valida las specs e imprime la cobertura requisito -> tests
+npm test           # tests unitarios, incluidos el validador de specs y la versión de index.html
+npm run check      # sintaxis de todos los scripts de src/ y tests/
+npm run e2e        # comprobaciones en Edge headless (móvil y escritorio)
+npm run specs      # valida las specs e imprime la cobertura requisito -> tests
+npm run versionar  # pone la huella del contenido en las direcciones y en el pie (antes de desplegar)
 ```
 
 ## Metodología (SDD)
