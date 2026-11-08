@@ -21,6 +21,7 @@ const Render = (() => {
       lienzo: v('--lienzo'), vacia: v('--vacia'), bloque: v('--bloque'), hecho: v('--hecho'),
       banda: v('--centro-banda'), oro: v('--oro'), regla: v('--regla'), tramo: v('--tramo'),
       sobreBloque: v('--sobre-bloque'), rejilla: v('--rejilla'), rejilla5: v('--rejilla-5'), texto: v('--fg'),
+      guiaChunk: v('--guia-chunk'),
     };
     return PAL;
   }
@@ -35,6 +36,19 @@ const Render = (() => {
   }
 
   const centro = n => [Math.floor((n - 1) / 2), Math.floor(n / 2)];
+  // Guias de chunk: indices de las lineas entre celdas (la i va entre las celdas i-1 e i, 0 < i < n) en
+  // las que cae una frontera de chunk del mundo. La X del mundo de la columna i es cx - c0 + i, con c0 la
+  // primera columna del centro (la de arriba a la izquierda si es 2x2) y cx la X de ese bloque; lo mismo
+  // con las filas y cz. `% 16 === 0` vale tambien con coordenadas negativas (-16 % 16 es -0).
+  function fronterasChunk({ w, h }, cx, cz) {
+    const lineas = (n, origen) => {
+      const r = [], c0 = centro(n)[0];
+      for (let i = 1; i < n; i++) if ((origen - c0 + i) % 16 === 0) r.push(i);
+      return r;
+    };
+    return { cols: lineas(w, cx), filas: lineas(h, cz) };
+  }
+
   // Bloques que separan i de la franja central [a, b] (0 dentro de la franja).
   const distFranja = (i, a, b) => (i < a ? a - i : i > b ? i - b : 0);
 
@@ -169,6 +183,18 @@ const Render = (() => {
       ctx.strokeStyle = i % 5 === 0 ? P.rejilla5 : P.rejilla;
       ctx.beginPath(); ctx.moveTo(L, T + i * s + .5); ctx.lineTo(L + w * s, T + i * s + .5); ctx.stroke();
     }
+  };
+
+  // Guias de chunk: linea de 2 px de borde a borde en cada frontera. Sin la opcion o sin las dos
+  // coordenadas no se pinta nada (el dibujo es el de siempre).
+  const capaGuiasChunk = (ctx, m, o, P) => {
+    const op = o.op;
+    if (!op.guiasChunk || op.centroX == null || op.centroZ == null) return;
+    const { L, T, s, w, h } = m;
+    const f = fronterasChunk(m, op.centroX, op.centroZ);
+    ctx.strokeStyle = P.guiaChunk; ctx.lineWidth = 2;
+    for (const i of f.cols) { ctx.beginPath(); ctx.moveTo(L + i * s, T); ctx.lineTo(L + i * s, T + h * s); ctx.stroke(); }
+    for (const j of f.filas) { ctx.beginPath(); ctx.moveTo(L, T + j * s); ctx.lineTo(L + w * s, T + j * s); ctx.stroke(); }
   };
 
   const capaCentro = (ctx, m, o, P) => {
@@ -336,6 +362,7 @@ const Render = (() => {
   registrar('bandas', capaBandas);
   registrar('marcasHechas', capaMarcas);
   registrar('rejilla', capaRejilla);
+  registrar('guiasChunk', capaGuiasChunk);
   registrar('centro', capaCentro);
   registrar('reglas', capaReglas);
   registrar('tramos', capaTramos);
@@ -450,7 +477,7 @@ const Render = (() => {
 
   return {
     dibujar, medir, reglaRelativa, cifrasReglaRelativa, textoRelativo, centro, registrar, etiquetasTramosDentro, etiquetasEjes,
-    zonaRegla, zonaCelda, dibujarReglasFijas,
+    fronterasChunk, zonaRegla, zonaCelda, dibujarReglasFijas,
   };
 })();
 if (typeof module !== 'undefined') module.exports = Render; else globalThis.Render = Render;

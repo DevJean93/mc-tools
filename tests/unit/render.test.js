@@ -293,3 +293,54 @@ test('NUM-15: bajo una regla fija no hay celda, y fuera de ellas la celda es la 
   const px = ORIGEN.x0 + GEO.L + 30, py = ORIGEN.y0 + GEO.T + 30;
   assert.deepEqual(Render.zonaCelda(GEO, px, py, ORIGEN), { x: Math.floor((px - GEO.L) / GEO.s), y: Math.floor((py - GEO.T) / GEO.s) });
 });
+
+// Guias de chunk (cambio 008): lineas entre celdas que caen en una frontera de chunk del mundo.
+// La linea i va entre las columnas i-1 e i; la X del mundo de la columna i es cx - c0 + i, con c0 la
+// primera columna del centro (la de arriba a la izquierda si el centro es 2x2).
+const fronteras = (w, h, cx, cz) => Render.fronterasChunk({ w, h }, cx, cz);
+
+test('NUM-16: circulo de 16 con el centro en X=100, Z=-40: una guia entre las columnas 2 y 3 y otra entre las filas 14 y 15', () => {
+  // Columna 0 = X 93 (centro en la 7 = X 100), asi que X 96 es la columna 3: linea 3.
+  // Fila 0 = Z -47, asi que Z -32 es la fila 15: linea 15.
+  assert.deepEqual(fronteras(16, 16, 100, -40), { cols: [3], filas: [15] });
+});
+
+test('NUM-16: con centro de 1x1 y X=0 la guia cae justo a la izquierda del bloque central', () => {
+  assert.deepEqual(fronteras(15, 15, 0, 0), { cols: [7], filas: [7] });
+});
+
+test('NUM-16: con coordenadas negativas la guia cae donde toca (X=-1: a la derecha del centro)', () => {
+  assert.deepEqual(fronteras(15, 15, -1, -1), { cols: [8], filas: [8] });
+  assert.deepEqual(fronteras(15, 15, -17, -16), { cols: [8], filas: [7] });
+});
+
+test('NUM-16: las guias se repiten cada 16 bloques y ninguna cae en los bordes del dibujo', () => {
+  const f = fronteras(200, 200, 0, 0);
+  assert.equal(f.cols.length, 13);
+  assert.equal(f.cols[0], 3); assert.equal(f.cols[12], 195);
+  for (let i = 1; i < f.cols.length; i++) assert.equal(f.cols[i] - f.cols[i - 1], 16);
+  assert.ok(![...f.cols, ...f.filas].some(i => i <= 0 || i >= 200), 'ni la linea 0 ni la 200');
+  assert.deepEqual(f.filas, f.cols);
+});
+
+test('NUM-16: una forma sin ninguna frontera dentro, o de un solo bloque, no tiene guias ni falla', () => {
+  assert.deepEqual(fronteras(10, 10, 5, 5), { cols: [], filas: [] });
+  assert.deepEqual(fronteras(1, 1, 0, 0), { cols: [], filas: [] });
+});
+
+test('NUM-16: ancho y alto son independientes (un rectangulo tiene sus propias guias en cada eje)', () => {
+  const f = fronteras(40, 20, 0, 0);
+  assert.deepEqual(f.cols, [3, 19, 35]);   // centro en la columna 19: X 0 en la 19, 16 en la 35, -16 en la 3
+  assert.deepEqual(f.filas, [9]);          // centro en la fila 9: Z 0 en la 9 (y -16 / 16 quedan fuera)
+});
+
+test('NUM-16: las guias no dependen de la capa: todas las capas de una esfera tienen el mismo tamano', () => {
+  const { capas } = Formas.generar({ forma: 'esfera', w: 20, h: 20, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' });
+  const medidas = new Set(capas.map(c => `${c[0].length}x${c.length}`));
+  assert.equal(medidas.size, 1, 'mismo ancho y alto en todas las capas: mismas guias en cada una');
+});
+
+test('NUM-17: los argumentos raros no hacen fallar a fronterasChunk', () => {
+  assert.doesNotThrow(() => fronteras(16, 16, 30000000, -30000000));
+  assert.deepEqual(fronteras(16, 16, 0, 0).cols.every(i => i >= 1 && i < 16), true);
+});
