@@ -836,6 +836,11 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   };
   const medidasLienzo = () => ev(`(() => { const r = document.getElementById('lienzo').getBoundingClientRect(); return [r.width, r.height, document.documentElement.scrollHeight].join(); })()`);
 
+  // MAT-11 (regresión): imprimir sin pedir la ficha (Ctrl+P) saca la app como siempre, no una página en blanco.
+  const sinFicha = await enImpresion(() => ev(`['lienzo', 'secDibujo'].every(id => document.getElementById(id).getClientRects().length > 0) &&
+    getComputedStyle(document.body).backgroundColor !== 'rgb(255, 255, 255)'`));
+  ok(sinFicha, 'MAT-11: imprimir sin pedir la ficha (Ctrl+P) saca la app, no una página en blanco');
+
   // INT-14: el botón va en «Vista», a todo el ancho, tras los de PNG, con icono y texto.
   const boton = await ev(`(() => { const b = document.getElementById('imprimirFicha'); if (!b) return null;
     const hermanos = [...b.parentElement.children].map(e => e.id);

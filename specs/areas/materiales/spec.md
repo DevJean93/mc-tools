@@ -108,6 +108,7 @@ Ejemplo: círculo de 120 → aviso; círculo de 60 → sin aviso.
 - Una capa de total 0 no está completa aunque no le falte nada.
 - Una imagen demasiado grande para el navegador no se descarga: se avisa de reducir el zoom.
 - Una esfera de 100 genera 100 imágenes para la ficha; se hacen una a una y se liberan tras imprimir.
+- Imprimir sin pedir la ficha (Ctrl+P o el menú del navegador) saca la app como siempre, no una página en blanco.
 
 ## Fuera de alcance
 

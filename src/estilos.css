@@ -234,12 +234,13 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 
 /* Ficha imprimible (MAT-11, MAT-12): en pantalla no existe; al imprimir es lo unico que sale, en
    blanco y negro, con una pagina de resumen y una por capa. Los dibujos se ajustan a la pagina que
-   se elija en el dialogo (ancho y alto maximos + object-fit), sin deformarse ni cortarse. */
+   se elija en el dialogo (ancho y alto maximos + object-fit), sin deformarse ni cortarse. Sin ficha
+   pedida (Ctrl+P) se imprime la app como siempre. */
 #ficha { display: none; }
 @media print {
   @page { margin: 10mm; }
-  html, body { background: #fff !important; color: #000; }
-  body > *:not(#ficha) { display: none !important; }
+  html:has(#ficha:not(:empty)), body:has(> #ficha:not(:empty)) { background: #fff !important; color: #000; }
+  body:has(> #ficha:not(:empty)) > *:not(#ficha) { display: none !important; }
   #ficha {
     display: block; --fg: #000; --fg-mut: #333; --muted: #bbb; --card: #fff;
     font: 11pt/1.4 var(--fuente); color: #000;
