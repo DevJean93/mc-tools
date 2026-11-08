@@ -26,6 +26,7 @@ En local: `npm install` y `npm run dev` (se abre en `http://localhost:4321/mc-to
 - **En pantallas táctiles:** un toque corto marca el bloque, el toque en el número de una fila o columna de la regla la marca entera, arrastrar con un dedo mueve el dibujo (y la página cuando ya no cabe) y dos dedos hacen zoom.
 - **Proyecto:** «Guardar proyecto» descarga un archivo `.json` con la forma y lo construido, y «Cargar proyecto» lo recupera (con aviso y «Deshacer»). Sirve de copia de seguridad y para pasar la obra a otro dispositivo; funciona aunque el navegador no pueda guardar.
 - **Enlace para compartir:** «Copiar enlace» copia una dirección que abre la misma forma (tipo, tamaño, modo, grosor…) sin lo construido; para pasar también el progreso, guarda un proyecto.
+- **Tema claro u oscuro:** el botón de sol/luna de la cabecera (también en la portada) alterna entre los dos temas sin recargar; sin elección guardada se sigue el tema del sistema, y al tocarlo la elección se recuerda (clave `mc-tema`). El PNG sale con los colores del tema activo; la ficha imprimible siempre va en papel.
 - **Exportar:** PNG de la capa actual o de todas las capas (una imagen por capa), con cabecera de forma, capa, bloques y fecha.
 - **Imprimir ficha:** abre el diálogo de impresión (o «Guardar como PDF») con una ficha limpia, sin marcas: una página con el nombre, los materiales y, en 3D, la tabla por capas, y una página por capa con su dibujo numerado, en fondo blanco y verde suave para gastar poca tinta. Con capas de más de 60 bloques avisa de que las cifras saldrán pequeñas.
 
@@ -61,7 +62,7 @@ Sitio estático con [Astro](https://astro.build) (sin framework de interfaz), pu
 | `src/pages/index.astro` | Portada: lista de herramientas y redirección de los enlaces antiguos. |
 | `src/pages/formas/index.astro` | Formas MC: estructura del panel y del área de dibujo, y el script de la app. |
 | `src/layouts/Base.astro` | Cabecera del documento, aviso de Mojang y pie con la versión. |
-| `src/compartido/` | Lo que comparten las herramientas: versión del pie (`version.js`) y fuentes autoalojadas (`fuentes.css`). |
+| `src/compartido/` | Lo que comparten las herramientas: versión del pie (`version.js`), fuentes autoalojadas (`fuentes.css`) y el tema claro/oscuro (`tema.js` y el botón `BotonTema.astro`). |
 | `src/herramientas/formas/estilos.css` | Tokens de color/tipografía (el canvas lee los mismos) y layout. |
 | `src/herramientas/formas/nucleo/almacen.js` | Almacenamiento clave/valor (localStorage o memoria), inyectable y sin lanzar errores. |
 | `src/herramientas/formas/nucleo/formas.js` | Geometría pura y registro de formas, sin DOM. |

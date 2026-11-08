@@ -31,7 +31,7 @@ reutiliza.
 El sitio se construye con Astro y publica una portada en la raíz y cada herramienta en su propia ruta:
 Formas MC queda en `/formas/`. La portada lista las herramientas disponibles, con un enlace a cada una
 (objetivo táctil de 44 px como mínimo), el aviso de que el proyecto no es oficial de Mojang y el pie con la
-versión.
+versión. Además lleva el botón de tema de INT-16 en su cabecera y respeta el tema elegido (INT-17).
 
 Ejemplo: `https://devjean93.github.io/mc-tools/` (portada) y `…/mc-tools/formas/` (Formas MC).
 
@@ -140,3 +140,7 @@ con la misma tipografía, y la app no hace ninguna petición a otros dominios.
 - 2026-11-08 (cambio 015): el despliegue (PUB-07) usa `withastro/action` y `actions/deploy-pages` con
   versiones exactas, y `npm run check` (`astro check`) y `npm test` antes del build. Se borra
   `_config.yml` (Jekyll ya no aplica).
+- 2026-11-08 (cambio 018): modifica PUB-04. Antes: «la portada lista las herramientas, el aviso de Mojang y el
+  pie con la versión»; ahora: además lleva el botón de tema y respeta el tema elegido, que comparte con la app
+  por la clave `mc-tema` (mismo origen). El script que aplica el tema va en `Base.astro`, así que lo heredan
+  todas las páginas del sitio.

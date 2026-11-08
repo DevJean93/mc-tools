@@ -7,14 +7,13 @@ Lo que se ha hablado pero todavía no está decidido. Cuando algo se decide, pas
 
 Las ideas de la auditoría inicial ya son propuestas en `Borrador`, cada una con sus preguntas
 abiertas. Ya están hechas la 006 (guardar y cargar un proyecto), la 007 (enlace para compartir), la
-008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 013 (versionar por la caché), la 014 (ficha en fondo claro) y la 015 (migración a Astro). El
+008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 013 (versionar por la caché), la 014 (ficha en fondo claro), la 015 (migración a Astro) y la 018 (tema claro y oscuro). El
 siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
 
 - `011-varios-materiales` — varios materiales por forma (área MAT).
 - `012-plantillas` — formas guardadas como plantillas (área FOR).
 - `016-litematica` — exportar e importar archivos de Litematica (áreas MAT, FOR e INT).
 - `017-portada` — portada más completa: presentación, imagen de la herramienta y funciones (área PUB).
-- `018-tema-claro-oscuro` — selector de tema claro u oscuro que se recuerda (áreas INT, PUB y MAT).
 
 ## Ideas sin propuesta
 

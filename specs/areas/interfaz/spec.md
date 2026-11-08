@@ -106,6 +106,29 @@ texto de la capa y la tabla sin repintar el dibujo. Se recuerda al recargar.
 El botón «Imprimir ficha» va en «Vista», a todo el ancho, bajo «PNG de la capa» y «Todas las capas».
 Lleva un icono de impresora de contorno, texto visible y nombre accesible, y mide 44 px en móvil.
 
+### INT-16
+
+Un botón de tema en la cabecera de la app (junto a «Ocultar menú») y en la de la portada alterna entre
+tema claro y oscuro al instante, sin recargar y sin perder la forma, las marcas ni el historial. Tiene
+nombre accesible que dice a qué tema cambia («Cambiar a tema claro» / «Cambiar a tema oscuro»), indica
+el tema actual con `aria-pressed` (`true` con el tema oscuro), lleva un icono de contorno (sol en el
+tema oscuro, luna en el claro) y mide 44 px en móvil.
+
+### INT-17
+
+Sin elección guardada, el tema sigue el del sistema (`prefers-color-scheme`), también si el sistema
+cambia mientras la página está abierta. Al tocar el botón, la elección se guarda en el navegador y manda
+desde entonces, en la app y en la portada, y se aplica antes de pintar la página (sin destello del otro
+tema; `theme-color` sigue el tema). Se guarda en la clave `mc-tema` (`claro` / `oscuro`), sin tocar las
+claves `mc-formas-v1*`; si el navegador no deja guardar, el botón funciona igual durante la visita.
+
+### INT-18
+
+El tema claro tiene su propia paleta para la interfaz y para el lienzo (fondo claro, bloques verdes,
+cifras oscuras), distinta de la de papel (MAT-14). El texto y las cifras sobre los bloques tienen un
+contraste de al menos 4,5:1, y el centro, los ejes, los construidos y las guías de chunk se distinguen
+sin depender solo del color, igual que en el tema oscuro. El tema oscuro queda idéntico al de antes.
+
 ## Casos límite
 
 - Al pasar de escritorio a móvil (o al revés) el menú adopta el comportamiento del nuevo
@@ -181,3 +204,20 @@ Lleva un icono de impresora de contorno, texto visible y nombre accesible, y mid
 - 2026-11-08 (cambio 010): el botón va en «Vista», con los de exportar, porque imprimir es otra forma de
   exportar; usa la clase `.ancho` como «Copiar enlace» y el icono `i-imprimir` del sprite, del mismo
   trazo que los demás.
+- 2026-11-08 (cambio 018): tema claro y oscuro con un botón de dos posiciones. Sin elección guardada se
+  sigue el tema del sistema (también en vivo) y tocar el botón guarda la elección en `mc-tema`. Se
+  descartaron tres posiciones con «Automático» (ocupa más en la cabecera del móvil) y abrir siempre en
+  oscuro. El botón va en la cabecera, en la app y en la portada, siempre en el mismo sitio; se descartó
+  ponerlo en «Vista», que la portada no tiene. Es solo icono (sol en oscuro, luna en claro) con nombre
+  accesible que dice a qué tema cambia; `aria-pressed` es `true` con el tema oscuro.
+- 2026-11-08 (cambio 018): el tema es el atributo `data-tema` de `<html>`. `:root` conserva los valores de
+  siempre (tema oscuro, comprobado píxel a píxel) y `:root[data-tema="claro"]` los redefine. Un script en
+  línea en el `<head>` lo pone antes de pintar (sin destello) y `src/compartido/tema.js` añade el botón y el
+  seguimiento del sistema. Los colores que estaban fijos en el CSS (hover y pulsado de botones, error, fila
+  seleccionada, sombra, borde de la leyenda) pasaron a variables con el mismo valor en oscuro.
+- 2026-11-08 (cambio 018): paleta clara con la skill `ui-ux-pro-max`: fondo `#F1F5F9`, tarjetas blancas,
+  acento verde `#15803D` y oro `#854D0E` (los de oscuro no llegan a 4,5:1 como texto sobre claro), lienzo
+  `#E2E8F0` con celdas vacías blancas, bloques `#4ADE80` y cifras `#0F172A` (10,2:1). En escala de grises:
+  vacía 1,00 > bloque 0,55 > bloque en eje 0,37 > centro 0,10. Se descartó dejar el lienzo oscuro dentro de
+  una interfaz clara. La entrada de la leyenda «Construido» pasó de «esquina blanca» a «esquina marcada»
+  porque en el tema claro la esquina es oscura.

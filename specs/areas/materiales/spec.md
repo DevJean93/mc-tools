@@ -51,6 +51,8 @@ la app las lee de ahí en vez de repetir los números.
 
 «PNG de la capa» descarga la capa visible como imagen PNG con un nombre que dice la forma,
 el tamaño, el modo y la capa: `<variante>-<tamaño>[-hueco-g<grosor>][-capas<n>-capa<k>].png`.
+La imagen se dibuja con los colores del tema activo (INT-17, INT-18); con el tema oscuro es idéntica a la
+de siempre.
 
 Ejemplo: capa 1 de una esfera de 11 hueca con grosor 5 → `esfera-11-hueco-g5-capas11-capa1.png`.
 
@@ -115,7 +117,7 @@ Los dibujos de la ficha imprimible usan siempre una paleta para papel, sin opci�
 - tramos y guías de chunk siguen apareciendo si están activados; las guías son líneas de 2 px más
   oscuras que la rejilla.
 
-En pantalla y en el PNG se sigue dibujando con la paleta oscura de siempre (MAT-07 a MAT-09).
+En pantalla y en el PNG se dibuja con la paleta del tema activo (INT-18; con el oscuro, la de siempre), también en MAT-07 a MAT-09.
 
 ## Casos límite
 
@@ -178,3 +180,8 @@ En pantalla y en el PNG se sigue dibujando con la paleta oscura de siempre (MAT-
   confundirían) y el rayado (estorba a las cifras). Implementación: `Render.PAPEL` y una opción
   `paleta` de `Render.dibujar` que se mezcla sobre la de la app; `centroAncho` vale 2 en pantalla.
   Pantalla y PNG quedan idénticos byte a byte a los de antes.
+- 2026-11-08 (cambio 018): modifica MAT-07. Antes: «la imagen PNG de la capa se dibuja siempre con los
+  colores oscuros de la app»; ahora: con los colores del tema activo, y con el tema oscuro es idéntica a la de
+  antes (comprobado píxel a píxel). El PNG se descarga como se ve; para papel ya está la ficha (MAT-14), que no
+  cambia. Se descartaron siempre oscuro y siempre claro. `paleta()` de `render.js` ya no la guarda para
+  siempre: la vuelve a leer cuando cambia `data-tema`.
