@@ -9,6 +9,20 @@ const Exportar = (() => {
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
+  // Las tres lineas de la cabecera de una capa. Con `construidos: false` (la ficha) no habla de lo hecho.
+  function cabecera(d, c, { construidos = true } = {}) {
+    const y = d.altura && d.altura(c) !== null ? ` · Y ${d.altura(c)}` : '';
+    const hechos = construidos ? ` · construidos ${d.porCapa[c]}` : '';
+    return [
+      `${d.nombre} ${d.dimensiones} · ${d.modoTexto}`,
+      `Capa ${c + 1} de ${d.capas.length}${y} · ${d.totales[c]} bloques (${d.stacks(d.totales[c])})${hechos}`,
+      `Formas MC · ${new Date().toLocaleDateString('es')}`,
+    ];
+  }
+
+  // ¿Alguna capa mide mas de `limite` bloques de ancho o de alto? (aviso de la ficha, MAT-13)
+  const capaMasAnchaQue = (capas, limite) => capas.some(g => g.length > limite || (g[0] || []).length > limite);
+
   function crear({ render, descargar: bajar, avisos, contexto }) {
     function nombreArchivo(c, d) {
       const hueco = d.modo === 'hueco' ? `-hueco-g${d.grosor}` : '';
@@ -23,11 +37,7 @@ const Exportar = (() => {
           const aux = document.createElement('canvas');
           render.dibujar(aux, {
             g: d.capas[c], capa: c, hechos: d.hechos, s: d.zoom, op: d.op, dpr: 1,
-            cabecera: [
-              `${d.nombre} ${d.dimensiones} · ${d.modoTexto}`,
-              `Capa ${c + 1} de ${d.capas.length}${d.altura && d.altura(c) !== null ? ` · Y ${d.altura(c)}` : ''} · ${d.totales[c]} bloques (${d.stacks(d.totales[c])}) · construidos ${d.porCapa[c]}`,
-              `Formas MC · ${new Date().toLocaleDateString('es')}`,
-            ],
+            cabecera: cabecera(d, c),
           });
           aux.toBlob(blob => {
             if (!blob) {
@@ -58,6 +68,6 @@ const Exportar = (() => {
     return { capa, todas };
   }
 
-  return { crear, descargar };
+  return { crear, descargar, cabecera, capaMasAnchaQue };
 })();
 if (typeof module !== 'undefined') module.exports = Exportar; else globalThis.Exportar = Exportar;
