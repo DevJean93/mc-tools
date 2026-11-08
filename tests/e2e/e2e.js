@@ -626,13 +626,20 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await ev(`localStorage.clear()`);
   await cargar();
 
-  // INT-11: el pie muestra la version, en la fuente de las cifras y sin partirse.
-  const versiones = await ev(`(() => {
-    const pie = document.getElementById('version');
-    return { pie: pie ? pie.textContent : null, cargado: typeof Formas === 'object' && !!document.getElementById('lienzo').width };
+  // PUB-05: cada script y hoja de estilos locales lleva una huella en su nombre y la app carga.
+  const archivos = await ev(`(() => {
+    const dirs = [...document.querySelectorAll('script[src], link[rel="stylesheet"]')].map(e => e.getAttribute('src') || e.getAttribute('href'));
+    return { dirs, cargado: typeof Formas === 'object' && !!document.getElementById('lienzo').width };
   })()`);
-  ok(versiones.cargado, 'La app carga (Formas expuesta y lienzo dibujado)');
-  ok(/^Versión \S+$/.test(versiones.pie), `INT-11: el pie muestra la version (${versiones.pie})`);
+  const locales = archivos.dirs.filter(d => !/^(https?:)?\/\//.test(d));
+  ok(locales.length >= 2 && locales.every(d => /^\/mc-tools\/_astro\/[^?]*\.[A-Za-z0-9_-]{8}\.(js|css)$/.test(d)) && archivos.cargado,
+    `PUB-05: los ${locales.length} archivos locales llevan huella en el nombre y la app carga (${locales.join(', ')})`);
+
+  // INT-11, PUB-06: el pie muestra la version: el commit corto de la construccion (GITHUB_SHA) o «dev» en local.
+  const pie = await ev(`(() => { const p = document.getElementById('version'); return p ? { texto: p.textContent, fuente: getComputedStyle(p).fontFamily, lineas: p.getClientRects().length } : null; })()`);
+  const esperada = process.env.GITHUB_SHA ? process.env.GITHUB_SHA.slice(0, 7).toLowerCase() : 'dev';
+  ok(pie && pie.texto === 'Versión ' + esperada && /JetBrains Mono/.test(pie.fuente) && pie.lineas === 1,
+    `PUB-06, INT-11: el pie muestra «Versión ${esperada}» en la fuente de las cifras y sin partirse (${JSON.stringify(pie)})`);
 
   // FOR-16, FOR-17, FOR-18, INT-10: enlace para compartir una forma (escritorio).
   // Para abrir un enlace hay que salir de la pagina: navegar solo cambiando el # no la recarga.

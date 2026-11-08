@@ -158,7 +158,7 @@ autoalojadas y el despliegue.
   `aEnlace`) y espera estar en `/formas/` con la misma forma y el fragmento limpio (rojo: se queda en la
   portada). Cambio: script de redirección de la portada. Commit: «Los enlaces antiguos redirigen a
   /formas/ (015 T04, PUB-08)».
-- [ ] T05 — Versión y huella (`PUB-05`, `PUB-06`). Test primero: unitario de `versionDe` (rojo: no
+- [x] T05 — Versión y huella (`PUB-05`, `PUB-06`). Test primero: unitario de `versionDe` (rojo: no
   existe) y E2E del pie y de los nombres con huella. Cambio: `src/compartido/version.js`,
   `vite.define` en `astro.config.mjs`, pie en `Base.astro`. Commit: «Pie con el commit corto y archivos
   con huella (015 T05, PUB-05, PUB-06)».
