@@ -1,0 +1,45 @@
+# Despliegue en GitHub Pages al subir a main. Si falla la comprobación de tipos, las pruebas o el
+# build, no se publica nada (el trabajo «desplegar» depende de «construir»).
+# En Ajustes > Pages el origen debe ser «GitHub Actions».
+name: Desplegar
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      # Instala, construye (npm run build, con GITHUB_SHA para el pie) y sube dist/ como artefacto de Pages.
+      - uses: withastro/action@v6.1.4
+        with:
+          node-version: 22
+
+  desplegar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - id: despliegue
+        uses: actions/deploy-pages@v5.0.1

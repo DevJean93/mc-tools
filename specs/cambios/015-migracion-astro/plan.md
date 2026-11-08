@@ -175,7 +175,7 @@ autoalojadas y el despliegue.
   de la 006 de referencia (unitario y E2E con `localStorage`); es de regresión: debería pasar ya
   (se comprueba rompiendo la clave a propósito para ver el rojo y se revierte). Commit: «Pruebas de datos
   antiguos tras la migración (015 T07, PUB-09)».
-- [ ] T08 — Despliegue (`PUB-07`). Test primero: test unitario del YAML (rojo: no existe). Cambio:
+- [x] T08 — Despliegue (`PUB-07`). Test primero: test unitario del YAML (rojo: no existe). Cambio:
   `.github/workflows/deploy.yml`, se borra `_config.yml`. Commit: «Despliegue por GitHub Actions
   (015 T08, PUB-07)».
 - [ ] T09 — Comparación final y capturas. Sin commit de código: píxel a píxel final, capturas en

@@ -1,6 +1,0 @@
-exclude:
-  - specs
-  - .claude
-  - CLAUDE.md
-  - tests
-  - package.json

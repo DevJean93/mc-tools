@@ -1,6 +1,8 @@
 // Publicación: versión del pie y datos de antes de la migración a Astro.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { Estado } from '../../src/herramientas/formas/nucleo/estado.js';
 import { Almacen } from '../../src/herramientas/formas/nucleo/almacen.js';
 import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
@@ -64,4 +66,37 @@ test('PUB-09: un archivo de proyecto de la versión anterior (006) se carga igua
 test('PUB-09: guardar un proyecto hoy da el mismo archivo que la versión anterior', () => {
   const st = { ...Estado.DEFAULTS, forma: 'esfera', w: 11, h: 11, esfera: 'cupula', modo: 'hueco', grosor: 2, capa: 3 };
   assert.equal(Estado.aArchivo(st, Estado.firma(st), new Set(MARCADOS)), PROYECTO);
+});
+
+// --- despliegue -------------------------------------------------------------------------------
+// No se puede ejecutar GitHub Actions aquí: se comprueba la forma del flujo (qué lo dispara, el orden
+// de las comprobaciones y que cada acción lleva una versión exacta). La prueba real es el primer push a main.
+const raiz = path.join(import.meta.dirname, '..', '..');
+const flujo = () => fs.readFileSync(path.join(raiz, '.github', 'workflows', 'deploy.yml'), 'utf8').replace(/\r\n/g, '\n');
+
+test('PUB-07: el despliegue solo corre al subir a main', () => {
+  const y = flujo();
+  const on = y.slice(y.indexOf('\non:'), y.indexOf('\njobs:'));
+  assert.match(on, /push:\n\s+branches: \[main\]/);
+  assert.doesNotMatch(on, /pull_request/);
+});
+
+test('PUB-07: antes de construir se comprueban tipos y pruebas, y desplegar depende de construir', () => {
+  const y = flujo();
+  const iCheck = y.indexOf('npm run check'), iTest = y.indexOf('npm test'), iBuild = y.indexOf('withastro/action@');
+  assert.ok(iCheck > 0 && iTest > iCheck && iBuild > iTest, 'check, test y luego la construcción');
+  const desplegar = y.slice(y.indexOf('\n  desplegar:'));
+  assert.match(desplegar, /needs: construir/);
+  assert.match(desplegar, /actions\/deploy-pages@/);
+  assert.ok(y.indexOf('npm ci') > 0 && y.indexOf('npm ci') < iCheck, 'las dependencias se instalan del lockfile');
+});
+
+test('PUB-07: cada acción usada lleva una versión exacta (vX.Y.Z)', () => {
+  const usos = [...flujo().matchAll(/uses: (\S+)/g)].map(m => m[1]);
+  assert.ok(usos.length >= 4);
+  for (const u of usos) assert.match(u, /@v\d+\.\d+\.\d+$/, `${u} sin versión exacta`);
+});
+
+test('PUB-07: Jekyll ya no aplica: no queda _config.yml', () => {
+  assert.equal(fs.existsSync(path.join(raiz, '_config.yml')), false);
 });
