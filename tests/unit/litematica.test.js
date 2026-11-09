@@ -5,6 +5,7 @@ import { Litematica } from '../../src/herramientas/formas/nucleo/litematica.js';
 import { Nbt } from '../../src/herramientas/formas/nucleo/nbt.js';
 import { Estado } from '../../src/herramientas/formas/nucleo/estado.js';
 import { Formas } from '../../src/herramientas/formas/nucleo/formas.js';
+import { Materiales } from '../../src/herramientas/formas/nucleo/materiales.js';
 
 const AHORA = 1700000000000;
 const stDe = p => ({ ...Estado.DEFAULTS, ...p });
@@ -248,4 +249,66 @@ test('FOR-19: un esquema con el autor de Formas MC pero sin forma o con un bloqu
     assert.equal(res.ok, false);
     assert.match(res.mensaje, /^Este esquema de Formas MC no se puede leer/);
   }
+});
+
+// --- MAT-21: dos materiales (borde y relleno) en el esquema --------------------------------------------
+const nbtReparto = (p, bloque, relleno) => {
+  const { st, capas } = hacer({ modo: 'relleno', ...p });
+  return { r: Nbt.leer(Litematica.aNbt({ st, capas, bloque, relleno, ahora: AHORA })), capas };
+};
+const IDS = r => region(r).v.BlockStatePalette.v.map(b => b.Name.v);
+
+test('MAT-21: con reparto la paleta es aire, borde y relleno, y cada celda lleva su zona', () => {
+  const { r, capas } = nbtReparto({ forma: 'circulo', w: 16, h: 16 }, 'minecraft:bricks', 'minecraft:stone');
+  assert.deepEqual(IDS(r), ['minecraft:air', 'minecraft:bricks', 'minecraft:stone']);
+  const rel = Materiales.rellenoDe(capas), c = celdas(r);
+  let borde = 0, relleno = 0;
+  capas[0].forEach((f, y) => f.forEach((v, x) => {
+    const esperado = !v ? 0 : rel.celdas[0][y * 16 + x] ? 2 : 1;
+    assert.equal(c[0][y][x], esperado, `celda ${x},${y}`);
+    if (esperado === 1) borde++; if (esperado === 2) relleno++;
+  }));
+  assert.equal(borde + relleno, 208);
+  assert.ok(borde > 0 && relleno > 0);
+  assert.equal(r.v.Metadata.v.TotalBlocks.v, 208);
+});
+
+test('MAT-21: una esfera de 11 con reparto lleva borde en su capa 1 y relleno en la del medio', () => {
+  const { r } = nbtReparto({ forma: 'esfera', w: 11, esfera: 'esfera' }, 'minecraft:glass', 'minecraft:stone');
+  const c = celdas(r);
+  assert.ok(!c[0].flat().includes(2), 'la capa 1 es toda borde');
+  assert.ok(c[5].flat().includes(2), 'la capa del medio tiene relleno');
+});
+
+test('MAT-21: sin reparto el esquema es el de siempre (paleta de dos), también con el mismo material o en hueco', () => {
+  const normal = nbtDe({ forma: 'circulo', w: 16, h: 16 }, 'minecraft:bricks');
+  const igual = nbtReparto({ forma: 'circulo', w: 16, h: 16 }, 'minecraft:bricks', 'minecraft:bricks').r;
+  const vacio = nbtReparto({ forma: 'circulo', w: 16, h: 16 }, 'minecraft:bricks', '').r;
+  const hueco = nbtReparto({ forma: 'circulo', w: 16, h: 16, modo: 'hueco', grosor: 2 }, 'minecraft:bricks', 'minecraft:stone').r;
+  for (const r of [normal, igual, vacio, hueco]) assert.deepEqual(IDS(r), ['minecraft:air', 'minecraft:bricks']);
+  assert.deepEqual(celdas(igual), celdas(normal));
+});
+
+test('FOR-19: un esquema con borde y relleno vuelve a ser la misma forma con sus dos materiales', async () => {
+  const { st, capas } = hacer({ forma: 'esfera', w: 11, esfera: 'esfera' });
+  const r = await Litematica.leer(await Litematica.exportar({ st, capas, bloque: 'minecraft:bricks', relleno: 'minecraft:glass', ahora: AHORA }));
+  assert.equal(r.ok, true);
+  assert.equal(r.bloque, 'minecraft:bricks');
+  assert.equal(r.relleno, 'minecraft:glass');
+  assert.deepEqual(r.forma, Estado.desdeEnlace(Estado.aEnlace(st)));
+});
+
+test('FOR-19: un esquema con un solo bloque se lee sin relleno', async () => {
+  const r = await Litematica.leer(await exportar({ forma: 'circulo', w: 16, h: 16 }, 'minecraft:glass'));
+  assert.equal(r.ok, true);
+  assert.equal(r.relleno, '');
+});
+
+test('FOR-19: un esquema con un relleno que no es de la lista no se puede leer', async () => {
+  const { st, capas } = hacer({ forma: 'circulo', w: 16, h: 16 });
+  const nbt = Nbt.leer(Litematica.aNbt({ st, capas, bloque: 'minecraft:bricks', relleno: 'minecraft:stone', ahora: AHORA }));
+  region(nbt).v.BlockStatePalette.v[2].Name.v = 'minecraft:bedrock';
+  const r = await Litematica.leer(await gzip(Nbt.escribir(nbt)));
+  assert.equal(r.ok, false);
+  assert.match(r.mensaje, /no se puede leer/);
 });

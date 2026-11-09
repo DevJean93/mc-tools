@@ -591,3 +591,14 @@ test('MAT-21: cambiar el reparto no borra marcas ni saca aviso', () => {
   d.doc.regenerar();
   assert.deepEqual({ hechos: clavesHechas(d.doc), avisos: d.avisos.dichos.length, pasos: d.doc.puedeDeshacer() }, antes);
 });
+
+test('FOR-19: importar un esquema con dos materiales recupera el reparto; uno con un solo bloque lo quita', () => {
+  const d = montar(); d.doc.regenerar();
+  d.doc.importarEsquema({ ...esquema('forma=rombo&w=20', 'minecraft:bricks'), relleno: 'minecraft:stone' });
+  assert.deepEqual([d.st.bloque, d.st.relleno], ['minecraft:bricks', 'minecraft:stone']);
+  assert.equal(JSON.parse(d.almacen.leer('mc-formas-v1')).relleno, 'minecraft:stone', 'se guarda en el navegador');
+  d.doc.importarEsquema({ ...esquema('forma=rombo&w=20', 'minecraft:glass'), relleno: '' });
+  assert.deepEqual([d.st.bloque, d.st.relleno], ['minecraft:glass', '']);
+  d.doc.importarEsquema(esquema('forma=rombo&w=20', 'minecraft:glass'));
+  assert.equal(d.st.relleno, '', 'un resultado sin la clave tampoco deja reparto');
+});

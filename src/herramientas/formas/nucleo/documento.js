@@ -184,12 +184,13 @@ export const Documento = (() => {
       return true;
     }
 
-    // Importa un esquema de Litematica ya leido (Litematica.leer): { ok, forma, bloque } o { ok: false,
+    // Importa un esquema de Litematica ya leido (Litematica.leer): { ok, forma, bloque, relleno } o { ok: false,
     // mensaje }. Uno no valido solo avisa del motivo. Uno valido pone la forma con la misma regla que un
     // enlace y el bloque (una opcion de vista: no entra en el historial ni en las marcas).
     function importarEsquema(r) {
       if (!r.ok) { avisos.avisar(r.mensaje); return false; }
       st.bloque = r.bloque;
+      st.relleno = r.relleno || '';
       const res = aplicarForma(r.forma);
       guardarEstado();
       if (res.perdio) avisos.avisar('Se importó la forma del esquema. Tu progreso anterior se borró.', deshacer);

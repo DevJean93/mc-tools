@@ -290,7 +290,7 @@ globalThis.Render = Render;
   al('descargarLitematica', 'click', async () => {
     try {
       const nombre = Litematica.nombreArchivo(st);
-      const bytes = await Litematica.exportar({ st, capas: doc.capas(), bloque: st.bloque, ahora: Date.now() });
+      const bytes = await Litematica.exportar({ st, capas: doc.capas(), bloque: st.bloque, relleno: st.relleno, ahora: Date.now() });
       Exportar.descargar(new Blob([bytes], { type: 'application/octet-stream' }), nombre);
       avisos.avisar(`Esquema descargado: ${nombre}`);
     } catch (e) { avisos.mostrarError(`No se pudo crear el esquema (${e.message}).`); }

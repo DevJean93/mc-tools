@@ -75,16 +75,19 @@ export const Litematica = (() => {
   // --- escritura ---------------------------------------------------------------------
   const xyz = (x, y, z) => Nbt.compound({ x: Nbt.int(x), y: Nbt.int(y), z: Nbt.int(z) });
 
-  // El esquema de la forma entera (las marcas no entran): NBT sin comprimir.
-  function aNbt({ st, capas, bloque, ahora }) {
+  // El esquema de la forma entera (las marcas no entran): NBT sin comprimir. Con reparto (MAT-21: `relleno`
+  // distinto del bloque y forma solida) la paleta lleva ademas el bloque del relleno y cada celda el de su zona.
+  function aNbt({ st, capas, bloque, relleno, ahora }) {
     const X = capas[0][0].length, Z = capas[0].length, Y = capas.length;
     const indices = new Array(X * Y * Z);
+    const reparto = Materiales.repartoActivo({ modo: st.modo, bloque, relleno });
+    const zonas = reparto ? Materiales.rellenoDe(capas).celdas : null;
     let bloques = 0;
     for (let y = 0; y < Y; y++) for (let z = 0; z < Z; z++) for (let x = 0; x < X; x++) {
-      const v = capas[y][z][x] ? 1 : 0;
-      indices[(y * Z + z) * X + x] = v; bloques += v;
+      const v = capas[y][z][x] ? (zonas && zonas[y][z * X + x] ? 2 : 1) : 0;
+      indices[(y * Z + z) * X + x] = v; if (v) bloques++;
     }
-    const paleta = [AIRE, bloque].map(Name => ({ Name: Nbt.string(Name) }));
+    const paleta = [AIRE, bloque, ...(reparto ? [reparto.relleno] : [])].map(Name => ({ Name: Nbt.string(Name) }));
     const hora = Nbt.long(ahora);
     return Nbt.escribir(Nbt.compound({
       MinecraftDataVersion: Nbt.int(DATA_VERSION),
@@ -125,7 +128,7 @@ export const Litematica = (() => {
   // --- lectura -----------------------------------------------------------------------
   const texto = n => (n && n.t === 'string' ? n.v : null);
 
-  // Lee un .litematic. Devuelve { ok: true, forma, bloque } o { ok: false, mensaje } sin tocar nada. Solo
+  // Lee un .litematic. Devuelve { ok: true, forma, bloque, relleno } (relleno '' si hay un solo bloque) o { ok: false, mensaje } sin tocar nada. Solo
   // vale un esquema de Formas MC: autor, forma (enlace en la descripcion) y bloque de la lista corta.
   async function leer(bytes) {
     let raiz;
@@ -141,8 +144,10 @@ export const Litematica = (() => {
     const reg = regiones[0] && regiones[0].v;
     const paleta = reg && reg.BlockStatePalette && reg.BlockStatePalette.t === 'list' ? reg.BlockStatePalette.v : [];
     const bloque = paleta[1] && paleta[1].Name ? texto(paleta[1].Name) : null;
-    if (!forma || !Materiales.BLOQUES.some(b => b.id === bloque)) return { ok: false, mensaje: MSG_ILEGIBLE };
-    return { ok: true, forma, bloque };
+    const esBloque = id => Materiales.BLOQUES.some(b => b.id === id);
+    const relleno = paleta[2] && paleta[2].Name ? texto(paleta[2].Name) : '';
+    if (!forma || !esBloque(bloque) || (paleta.length > 2 && (!esBloque(relleno) || relleno === bloque))) return { ok: false, mensaje: MSG_ILEGIBLE };
+    return { ok: true, forma, bloque, relleno };
   }
 
   return {
