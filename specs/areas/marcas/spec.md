@@ -114,8 +114,10 @@ no hace nada.
 El proyecto actual se puede guardar como un archivo descargable. El archivo contiene el nombre de la
 aplicación, la versión del formato, los parámetros de la forma (tipo, ancho, alto, proporción, modo,
 grosor, variante, orientación y capa actual) y las marcas en el mismo formato compacto que usa el
-navegador. No incluye el zoom ni las opciones de vista, que son preferencias de cada dispositivo. El
-nombre del archivo dice la forma y el tamaño.
+navegador. Si hay reparto de materiales (MAT-18) lleva además, al final, el campo `reparto` con el bloque del
+borde y el del relleno; sin reparto el archivo no lleva ese campo y es el de siempre, y uno de versiones
+anteriores (sin él) se abre igual, con un solo material. No incluye el zoom ni las opciones de vista, que son
+preferencias de cada dispositivo. El nombre del archivo dice la forma y el tamaño.
 
 Ejemplos: `formas-mc-circulo-30x30.json`, `formas-mc-esfera-11.json`, `formas-mc-cupula-16.json`.
 
@@ -207,3 +209,8 @@ almacenamiento sigue visible.
   hoy el progreso se pierde al recargar y el archivo es la única copia posible.
 - 2026-10-31: cuando unas marcas no corresponden a la forma del archivo (solo pasa si alguien lo
   editó a mano) se abre la forma sin ellas y el mismo aviso lo dice: solo se ve un aviso a la vez.
+- 2026-11-08 (cambio 011): modifica MAR-19. Antes: el archivo lleva los parámetros de la forma y las marcas;
+  ahora, además, el reparto de materiales como campo opcional `reparto` al final, sin cambiar la versión del
+  formato (un archivo sin él sigue siendo válido y carga con un solo material; uno con un reparto no válido
+  se abre sin reparto). Cargar un proyecto pone el material del borde y el del relleno, que son opciones
+  y no entran en el historial (un Deshacer no los toca).

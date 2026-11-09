@@ -26,7 +26,8 @@ export const VistaMateriales = (() => {
       const altura = textos.altura || (() => null);
       const conY = altura(0) !== null;
       if (r.capas.length > 1) {
-        let t = '<table><thead><tr><th scope="col">Capa</th>' + (conY ? '<th scope="col">Y</th>' : '') +
+        // Con reparto la tabla gana columnas: no se parten los textos y el contenedor se desplaza en horizontal.
+        let t = `<table${r.materiales ? ' class="con-reparto"' : ''}><thead><tr><th scope="col">Capa</th>` + (conY ? '<th scope="col">Y</th>' : '') +
           '<th scope="col">Bloques</th><th scope="col">Stacks</th>' + (r.materiales || []).map(m => `<th scope="col">${m.nombre}</th>`).join('') + (sinMarcas ? '' : '<th scope="col">Hechos</th>') + '</tr></thead><tbody>';
         for (const c of r.capas) {
           const cls = [c.i === capa ? 'sel' : '', c.completa ? 'completa' : ''].join(' ');

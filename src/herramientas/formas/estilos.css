@@ -177,6 +177,7 @@ table { border-collapse: collapse; width: 100%; font-size: 13px; font-family: va
 td, th { padding: 4px 6px; border-bottom: 1px solid var(--muted); text-align: right; }
 th { color: var(--fg-mut); font-family: var(--fuente); font-weight: 500; position: sticky; top: 0; background: var(--card); }
 td:first-child, th:first-child { text-align: left; }
+table.con-reparto td, table.con-reparto th { white-space: nowrap; }
 tbody tr { cursor: pointer; transition: background-color var(--t-rapida); }
 tbody tr:hover { background: var(--muted); }
 tr.sel { background: var(--sel-fondo); }

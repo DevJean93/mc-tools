@@ -115,21 +115,21 @@ fuera de la firma, de `CLAVES_GEO`, de `VISTA` y del enlace. El borde usa `st.bl
 
 ## Tareas
 
-- [ ] T01 — `rellenoDe`, `repartoActivo` y `resumen` con reparto (MAT-18, MAT-19). Archivos: `materiales.js`,
+- [x] T01 — `rellenoDe`, `repartoActivo` y `resumen` con reparto (MAT-18, MAT-19). Archivos: `materiales.js`,
   `materiales.test.js`. Hecho cuando: los tests de zonas y de suma pasan y sin reparto el resumen no cambia.
   Commit: «MAT-18, MAT-19: zonas de borde y relleno y desglose por material».
-- [ ] T02 — `relleno` guardado y en el archivo de proyecto (MAT-21, MAR-19, PUB-09). Archivos: `estado.js`,
+- [x] T02 — `relleno` guardado y en el archivo de proyecto (MAT-21, MAR-19, PUB-09). Archivos: `estado.js`,
   `estado.test.js`, `pub.test.js`. Hecho cuando: cargar, guardar y la cadena de PUB-09 pasan.
   Commit: «MAT-21, MAR-19: el reparto se guarda y viaja en el proyecto».
-- [ ] T03 — esquema de Litematica con dos bloques y su lectura (MAT-21, FOR-19). Archivos: `litematica.js`,
+- [x] T03 — esquema de Litematica con dos bloques y su lectura (MAT-21, FOR-19). Archivos: `litematica.js`,
   `litematica.test.js`. Hecho cuando: paleta de 3, índices por zona e ida y vuelta pasan.
   Commit: «MAT-21, FOR-19: esquema con borde y relleno y su lectura».
-- [ ] T04 — colores del relleno y celdas (MAT-20). Archivos: `render.js`, `estilos.css`, `render.test.js`.
+- [x] T04 — colores del relleno y celdas (MAT-20). Archivos: `render.js`, `estilos.css`, `render.test.js`.
   Hecho cuando: contraste y luminancia en los tres temas y `capaCeldas` pintan; sin relleno nada cambia.
   Commit: «MAT-20: color del relleno en los dos temas y en papel».
-- [ ] T05 — documento, interfaz, leyenda, ficha y E2E (MAT-18..21, MAR-19). Archivos: `documento.js`,
+- [x] T05 — documento, interfaz, leyenda, ficha y E2E (MAT-18..21, MAR-19). Archivos: `documento.js`,
   `panel.js`, `vista-materiales.js`, `exportar.js`, `app.js`, `index.astro`, `estilos.css`, tests y E2E.
   Hecho cuando: el flujo completo funciona en el navegador y los píxeles sin reparto no cambian.
   Commit: «MAT-18, MAT-19, MAT-20, MAT-21, MAR-19: reparto de materiales en la interfaz».
-- [ ] T06 — capturas, archivado (delta en MAT y MAR, Decisiones, README, pendientes). Commit: «SDD: archiva
+- [x] T06 — capturas, archivado (delta en MAT y MAR, Decisiones, README, pendientes). Commit: «SDD: archiva
   la propuesta 011 (varios materiales)».

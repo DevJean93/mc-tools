@@ -41,14 +41,14 @@ Si cambias la geometría con bloques marcados, las marcas se limpian y aparece u
 | 1 shulker box = 27 stacks | 1728 |
 | 1 cofre doble = 54 stacks | 3456 |
 
-Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondeado hacia arriba), los construidos y los que faltan. En 3D hay una tabla por capa con su porcentaje hecho.
+Se muestran el total, los stacks, cuántos shulkers/cofres hacen falta (redondeado hacia arriba), los construidos y los que faltan. En 3D hay una tabla por capa con su porcentaje hecho. En las formas sólidas, «Material del relleno» (en «Proyecto», bajo el bloque) da otro material al interior: el borde son los bloques que tocan el exterior (en 3D, también por arriba y por abajo). El desglose, la tabla por capas, el lienzo (relleno en un verde más apagado, con su leyenda), la ficha, el archivo de proyecto y el esquema de Litematica lo separan; «Igual que el borde» vuelve a un solo material.
 
 ## Límites conocidos
 
 - Esfera/cúpula hasta 100 de diámetro.
 - El progreso se guarda solo en el `localStorage` de ese navegador y equipo; borrar los datos del sitio lo elimina. Para no perderlo, guarda un proyecto en un archivo.
 - Las imágenes muy grandes (zoom alto + forma grande) pueden fallar al exportar: reduce el zoom.
-- Un solo material por forma.
+- Como mucho dos materiales por forma (borde y relleno, solo en formas sólidas); no se puede dar otro material a un rango de capas ni bloque a bloque.
 - El enlace no lleva las marcas. Los enlaces de antes de la migración (`…/mc-tools/#forma=…`) siguen funcionando: la portada los redirige a `/formas/`. En local el enlace apunta a `localhost`: para compartirlo con otros hay que usar la web publicada.
 - Pegar un enlace en una pestaña con la app ya abierta no lo aplica: ábrelo en una pestaña nueva.
 - Tras publicar un cambio, un navegador que ya tenía la web puede tardar hasta unos 10 minutos en verlo (caché de GitHub Pages); recargar lo acelera. La versión del pie dice cuál se está ejecutando.

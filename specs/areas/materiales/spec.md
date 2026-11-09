@@ -146,7 +146,51 @@ El bloque del esquema se elige en una lista corta de bloques comunes del juego (
 piedra, ladrillos, tablones de roble, cristal, lana blanca, hormigón blanco y piedra lisa; piedra por
 defecto). La elección se recuerda en el navegador como una opción de vista (en `mc-formas-v1`, con valor
 por defecto si falta o no es de la lista): no entra en la firma de las marcas, no cambia la forma y no
-viaja en el enlace ni en el archivo de proyecto.
+viaja en el enlace. Solo viaja en el archivo de proyecto cuando hay reparto de materiales (MAT-21, MAR-19),
+como el material del borde.
+
+### MAT-18
+
+En las formas sólidas se puede dar un material al borde y otro al relleno, elegidos de la misma lista de
+bloques que Litematica (MAT-17): el bloque del esquema es el del borde y «Material del relleno» el del
+relleno, con «Igual que el borde» como primera opción. El borde son los bloques de la forma que tocan el
+exterior por alguna cara (los cuatro vecinos de la capa y, en 3D, también la capa de arriba y la de abajo,
+o la rejilla si no hay vecino); el relleno, el resto. Por defecto hay un solo material para toda la forma y
+todo queda como antes; elegir el mismo material en los dos es lo mismo que uno solo. En las formas huecas
+todo es borde: el selector del relleno queda deshabilitado, con una línea de ayuda que lo explica, y lo
+elegido se conserva para cuando se vuelva a sólido.
+
+Ejemplo: en una esfera de 11 sólida la capa 1 es toda borde (no hay capa debajo); en un círculo de 16 sólido
+con ladrillos y piedra, el contorno es de ladrillos y el interior de piedra.
+
+### MAT-19
+
+Con dos materiales, el desglose muestra el total de la forma y, para cada material (primero el borde),
+sus bloques, stacks, shulker boxes y cofres dobles; la suma de los dos coincide con el total. La tabla por
+capas añade una columna por material (con el nombre del material como cabecera), sin romper la suma de
+cada fila. La ficha imprimible (MAT-11) lleva lo mismo, sin lo construido. Con un solo material el desglose
+y la tabla son exactamente los de antes.
+
+Ejemplo: círculo de 16 con borde de ladrillos y relleno de piedra → 44 y 164 bloques, que suman los 208.
+
+### MAT-20
+
+Con dos materiales, el lienzo pinta el relleno en un verde grisáceo más apagado que el borde (menos
+luminoso y menos saturado: se distingue también en escala de grises, con una diferencia de luminancia de al
+menos 0,1), en el tema oscuro, en el claro, en el PNG (con los colores del tema, MAT-07) y en la ficha
+(paleta de papel, MAT-14). Las cifras tienen al menos 4,5:1 sobre el relleno, también en un eje. La
+leyenda gana la entrada «Relleno» (y la de los bloques pasa a llamarse «Borde») solo con reparto. La
+numeración y las marcas de construido se ven igual sobre el relleno. Con un solo material el dibujo es
+idéntico, píxel a píxel, al de antes.
+
+### MAT-21
+
+El reparto no entra en la firma de las marcas: cambiarlo no borra nada ni saca avisos. Se recuerda en el
+navegador (clave `relleno` al final de `mc-formas-v1`, vacía o ausente = un solo material), viaja en el
+archivo de proyecto (MAR-19) y en el esquema de Litematica, y no viaja en el enlace (FOR-16). Con reparto la
+paleta del esquema lleva aire, el bloque del borde y el del relleno, y cada bloque de la forma lleva el de su
+zona; sin reparto el esquema es el de MAT-15. Al importar un esquema con dos bloques se recupera el reparto
+(FOR-19).
 
 ## Casos límite
 
@@ -157,10 +201,15 @@ viaja en el enlace ni en el archivo de proyecto.
 - Una imagen demasiado grande para el navegador no se descarga: se avisa de reducir el zoom.
 - Una esfera de 100 genera 100 imágenes para la ficha; se hacen una a una y se liberan tras imprimir.
 - Una esfera de 100 es un esquema de un millón de entradas: se empaqueta en milisegundos y el archivo pesa poco.
+- Una esfera de 100 con reparto calcula sus zonas (un millón de celdas) una vez por forma generada, no en cada pintado.
+- Una forma tan pequeña que todos sus bloques tocan el exterior tiene 0 bloques de relleno: el reparto sigue activo y el segundo material muestra 0.
+- Una cúpula tiene la capa 1 toda de borde (no hay capa debajo).
+- Una forma hueca con un relleno elegido se descarga y se guarda como una forma de un solo material (todo es borde); al importar ese esquema el relleno vuelve a «Igual que el borde».
 - Imprimir sin pedir la ficha (Ctrl+P o el menú del navegador) saca la app como siempre, no una página en blanco.
 
 ## Fuera de alcance
 
+- Más de dos materiales, elegir el material bloque a bloque o dar otro material a un rango de capas en 3D.
 - Marcar los bloques (área MAR).
 - El resumen del centro y la numeración (área NUM).
 - Generar la geometría y contar sus bloques (área FOR).
@@ -234,3 +283,25 @@ viaja en el enlace ni en el archivo de proyecto.
   última clave de lo guardado, así que lo escrito antes es un prefijo de lo de ahora. No se añade a
   `VISTA` (son casillas): tiene su propio selector. La propuesta 011 (varios materiales) ampliará el
   esquema a un bloque por zona.
+- 2026-11-08 (cambio 011): modifica MAT-17. Antes: «no viaja en el enlace ni en el archivo de proyecto»;
+  ahora no viaja en el enlace y solo va en el proyecto cuando hay reparto, como material del borde (MAT-21,
+  MAR-19). Sin reparto un proyecto es byte a byte el de antes.
+- 2026-11-08 (cambio 011): el reparto es por zonas automáticas (borde y relleno), de la lista de bloques de
+  Litematica y como mucho dos materiales, para que viaje tal cual al esquema. Se descartaron elegir bloque
+  a bloque (una segunda capa de marcas con su guardado, deshacer y táctil), el texto libre y el reparto por
+  rangos de capas en 3D (una interfaz de rangos que no hace falta para borde y relleno; podría ser otra
+  propuesta).
+- 2026-11-08 (cambio 011): el borde mira también arriba y abajo en 3D, así que la capa 1 de una esfera es
+  toda borde. Las zonas salen de `Materiales.rellenoDe` (un `Uint8Array` por capa) y el documento las guarda
+  hasta la siguiente regeneración: una esfera de 100 son 10^6 celdas y no se recalculan al pintar.
+- 2026-11-08 (cambio 011): `relleno` es la última clave de lo guardado, vacía por defecto, y no entra en la
+  firma, en `VISTA` ni en el enlace: es como una opción de los materiales y no borra marcas. El PUB-09
+  añade solo el sufijo `,"relleno":""`.
+- 2026-11-08 (cambio 011): el selector del relleno va en «Proyecto», bajo el del bloque y junto a los botones de
+  Litematica, para no mover lo de la 016 y tener los dos materiales juntos; en hueco se deshabilita con una
+  ayuda en vez de ocultarse (una opción que desaparece sin explicación desconcierta). Se descartó ponerlo en
+  «Materiales» (habría que mover el selector de bloque).
+- 2026-11-08 (cambio 011): el relleno es un verde grisáceo (`#6E9C80` oscuro, `#86B096` claro, `#CBD5D0`
+  papel): más apagado que el bloque por luminancia y saturación, para no depender del color; la leyenda lo
+  nombra. Con reparto la tabla por capas no parte los textos y se desplaza en horizontal en el panel
+  estrecho (con la columna Y y dos materiales no cabe sin desplazar).

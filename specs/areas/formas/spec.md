@@ -129,7 +129,8 @@ tampoco. Abrir un enlace ocupa un solo paso de historial, y uno que deja todo ig
 ### FOR-19
 
 «Importar de Litematica» abre un `.litematic` descargado por Formas MC y lo convierte en la misma forma
-(mismos parámetros) y el mismo bloque. Si cambia la forma y había marcas, se aplica la misma regla que al
+(mismos parámetros) y el mismo bloque; si el esquema lleva dos bloques (MAT-21), recupera también el
+reparto de materiales, y si lleva uno quita el que hubiera. Si cambia la forma y había marcas, se aplica la misma regla que al
 abrir un enlace (FOR-18): las marcas se borran y sale el aviso «Se importó la forma del esquema. Tu
 progreso anterior se borró.» con «Deshacer», que devuelve de una vez la forma y las marcas; con la misma
 geometría las marcas se conservan. Si no se pierde nada, el aviso dice «Esquema importado.». Importar
@@ -137,7 +138,7 @@ ocupa un solo paso de historial y no cambia el zoom ni la vista (salvo el bloque
 no es de Litematica, está dañado o no lo hizo Formas MC no cambia nada y muestra un error que dice por
 qué: «Este archivo no es un esquema de Litematica o está dañado.» o «Este esquema no lo hizo Formas MC:
 solo se pueden importar los descargados desde aquí.» (también si, con el autor de Formas MC, faltan los
-datos de la forma o su bloque no es de la lista).
+datos de la forma o alguno de sus bloques no es de la lista).
 
 ## Casos límite
 
@@ -192,3 +193,6 @@ datos de la forma o su bloque no es de la lista).
 - 2026-11-08 (cambio 016): abrir un enlace e importar un esquema comparten `aplicarForma` en el documento
   (misma regla de marcas, mismo paso de historial); cada uno pone su aviso. El bloque es una opción de
   vista: «Deshacer» devuelve la forma y las marcas, pero no el bloque.
+- 2026-11-08 (cambio 011): amplía FOR-19. Un esquema con dos bloques recupera el reparto de materiales y uno con un
+  solo bloque lo quita (el esquema es el estado completo de los materiales); como el bloque, el reparto es una
+  opción y «Deshacer» no lo devuelve. Un esquema con un segundo bloque fuera de la lista se rechaza.
