@@ -20,7 +20,7 @@ npm run specs      # valida las specs e imprime la cobertura ID -> tests
 - `src/pages/` — `index.astro` (portada, con su dibujo en vivo, y redirección de enlaces antiguos) y `formas/index.astro`.
 - `src/layouts/Base.astro` — head, aviso de Mojang y pie con la versión.
 - `src/herramientas/formas/` — la app: `nucleo/` (lógica pura sin DOM: `formas`, `estado`, `documento`,
-  `marcas`, `historial`, `materiales`, `almacen`), `dibujo/` (canvas), `interfaz/` (DOM del panel, avisos,
+  `marcas`, `historial`, `materiales`, `almacen`, `nbt`, `litematica`), `dibujo/` (canvas), `interfaz/` (DOM del panel, avisos,
   menú, exportación), `entrada/` (ratón, táctil, teclado), `app.js` (raíz de composición, sin reglas de
   negocio) y `estilos.css`.
 - `src/compartido/` — versión del pie, fuentes autoalojadas, tema claro/oscuro y el dibujo en vivo de la portada; lo que compartan las herramientas.

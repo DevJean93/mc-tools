@@ -106,6 +106,14 @@ texto de la capa y la tabla sin repintar el dibujo. Se recuerda al recargar.
 El botón «Imprimir ficha» va en «Vista», a todo el ancho, bajo «PNG de la capa» y «Todas las capas».
 Lleva un icono de impresora de contorno, texto visible y nombre accesible, y mide 44 px en móvil.
 
+### INT-15
+
+En la sección «Proyecto», junto a «Guardar proyecto», «Cargar proyecto» y «Copiar enlace», van el
+selector «Bloque del esquema de Litematica» (con etiqueta visible) y los botones «Descargar para
+Litematica» e «Importar de Litematica» (a todo el ancho, con icono de contorno, texto visible y nombre
+accesible). El selector de archivos de la importación está oculto y solo acepta `.litematic`. En móvil
+(390 px) los botones y el selector caben, miden al menos 44 px y el selector usa 16 px.
+
 ### INT-16
 
 Un botón de tema en la cabecera de la app (junto a «Ocultar menú») y en la de la portada alterna entre
@@ -221,3 +229,8 @@ sin depender solo del color, igual que en el tema oscuro. El tema oscuro queda i
   vacía 1,00 > bloque 0,55 > bloque en eje 0,37 > centro 0,10. Se descartó dejar el lienzo oscuro dentro de
   una interfaz clara. La entrada de la leyenda «Construido» pasó de «esquina blanca» a «esquina marcada»
   porque en el tema claro la esquina es oscura.
+- 2026-11-08 (cambio 016): los controles de Litematica van en «Proyecto» (son archivos de la forma entera,
+  como el proyecto), con el selector de bloque justo encima de los botones que lo usan. Los botones son
+  de todo el ancho: con el texto largo, en media columna se partían en dos líneas. Reutilizan los estilos
+  de `.botones`; solo se añadió un icono de contorno (`i-capas`, capas apiladas). Diseño con la skill
+  `ui-ux-pro-max`: etiqueta visible (no solo placeholder), 44 px táctiles, 16 px en el selector.

@@ -126,6 +126,19 @@ progreso anterior se borró.» con «Deshacer», que devuelve de una vez la form
 anteriores. Si la geometría es la misma, las marcas se conservan y no hay aviso; si no había marcas,
 tampoco. Abrir un enlace ocupa un solo paso de historial, y uno que deja todo igual no ocupa ninguno.
 
+### FOR-19
+
+«Importar de Litematica» abre un `.litematic` descargado por Formas MC y lo convierte en la misma forma
+(mismos parámetros) y el mismo bloque. Si cambia la forma y había marcas, se aplica la misma regla que al
+abrir un enlace (FOR-18): las marcas se borran y sale el aviso «Se importó la forma del esquema. Tu
+progreso anterior se borró.» con «Deshacer», que devuelve de una vez la forma y las marcas; con la misma
+geometría las marcas se conservan. Si no se pierde nada, el aviso dice «Esquema importado.». Importar
+ocupa un solo paso de historial y no cambia el zoom ni la vista (salvo el bloque, MAT-17). Un archivo que
+no es de Litematica, está dañado o no lo hizo Formas MC no cambia nada y muestra un error que dice por
+qué: «Este archivo no es un esquema de Litematica o está dañado.» o «Este esquema no lo hizo Formas MC:
+solo se pueden importar los descargados desde aquí.» (también si, con el autor de Formas MC, faltan los
+datos de la forma o su bloque no es de la lista).
+
 ## Casos límite
 
 - 2D en el máximo: círculo 200 → 31 428 bloques; hexágono 200 plano → 30 000.
@@ -134,6 +147,7 @@ tampoco. Abrir un enlace ocupa un solo paso de historial, y uno que deja todo ig
 - Grosor 50 en una forma pequeña se recorta al máximo real (7 en el círculo 16).
 - Un enlace con claves repetidas usa la primera; con texto mal codificado o con símbolos no falla y nunca se inserta como HTML.
 - Un enlace de una esfera con ancho 150 se recorta a 100.
+- Un esquema de otro programa, un archivo sin gzip, un NBT truncado o un archivo vacío no cambian nada y dicen por qué.
 
 ## Fuera de alcance
 
@@ -171,3 +185,10 @@ tampoco. Abrir un enlace ocupa un solo paso de historial, y uno que deja todo ig
 - 2026-11-08: el fragmento se quita tras aplicarlo para que recargar no deshaga el trabajo hecho
   después. Un cambio de `#` con la app ya abierta (pegar un enlace en la misma pestaña) no recarga
   la página y no se atiende: queda fuera de esta versión.
+- 2026-11-08 (cambio 016): solo se importan esquemas descargados por Formas MC (autor «Formas MC» y la
+  forma como enlace en la descripción, validada con `Estado.desdeEnlace`; el bloque sale de la paleta).
+  Se descartó importar cualquier `.litematic` como forma «libre» (nuevo tipo de forma, firma y límites de
+  tamaño: mucho más trabajo; podría ser otra propuesta) y dejar solo la descarga.
+- 2026-11-08 (cambio 016): abrir un enlace e importar un esquema comparten `aplicarForma` en el documento
+  (misma regla de marcas, mismo paso de historial); cada uno pone su aviso. El bloque es una opción de
+  vista: «Deshacer» devuelve la forma y las marcas, pero no el bloque.

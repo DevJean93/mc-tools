@@ -5,7 +5,7 @@ Código: `MAT`
 ## Propósito
 
 Traduce los bloques de la forma a materiales de Minecraft (stacks, shulkers y cofres dobles)
-y calcula el progreso por capa y total, exporta el dibujo de cada capa como imagen y prepara una ficha para imprimir. El
+y calcula el progreso por capa y total, exporta el dibujo de cada capa como imagen, prepara una ficha para imprimir y descarga la forma como esquema de Litematica. El
 cálculo es puro; la tabla y la barra solo pintan su resultado.
 
 ## Requisitos
@@ -119,6 +119,35 @@ Los dibujos de la ficha imprimible usan siempre una paleta para papel, sin opci�
 
 En pantalla y en el PNG se dibuja con la paleta del tema activo (INT-18; con el oscuro, la de siempre), también en MAT-07 a MAT-09.
 
+### MAT-15
+
+«Descargar para Litematica» descarga la forma actual como un archivo `.litematic` que el mod Litematica
+carga sin errores en Minecraft 1.21.x. Contiene todas las capas de la forma, una por altura (la capa 1
+abajo), con un bloque por cada bloque de la forma y aire en el resto, sin posición en el mundo (se coloca
+en el juego con las herramientas del mod). El nombre del archivo sigue la regla del PNG (`MAT-07`) sin la
+parte de la capa, con la extensión `.litematic`, y el nombre del esquema dentro del archivo es el de la
+forma con sus dimensiones.
+
+Ejemplo: círculo de 16 → `circulo-16x16.litematic`, esquema «Círculo / Óvalo 16×16» de 16 × 1 × 16 con
+208 bloques; esfera de 11 hueca con grosor 5 → `esfera-11-hueco-g5.litematic` con 11 capas.
+
+[verificación manual: que el mod lo cargue en el juego no se puede comprobar sin Minecraft; los tests
+comprueban el archivo contra el formato (bytes de referencia, ida y vuelta, cada capa contra la rejilla)
+y se dejan dos archivos de ejemplo para probarlos en el juego.]
+
+### MAT-16
+
+El esquema lleva la forma entera, sin tener en cuenta las marcas de lo construido. Descargarlo no cambia
+la forma, las marcas, el historial ni las opciones de vista.
+
+### MAT-17
+
+El bloque del esquema se elige en una lista corta de bloques comunes del juego (piedra, ladrillos de
+piedra, ladrillos, tablones de roble, cristal, lana blanca, hormigón blanco y piedra lisa; piedra por
+defecto). La elección se recuerda en el navegador como una opción de vista (en `mc-formas-v1`, con valor
+por defecto si falta o no es de la lista): no entra en la firma de las marcas, no cambia la forma y no
+viaja en el enlace ni en el archivo de proyecto.
+
 ## Casos límite
 
 - 0 bloques: `0 × 64`, sin shulkers ni cofres.
@@ -127,6 +156,7 @@ En pantalla y en el PNG se dibuja con la paleta del tema activo (INT-18; con el 
 - Una capa de total 0 no está completa aunque no le falte nada.
 - Una imagen demasiado grande para el navegador no se descarga: se avisa de reducir el zoom.
 - Una esfera de 100 genera 100 imágenes para la ficha; se hacen una a una y se liberan tras imprimir.
+- Una esfera de 100 es un esquema de un millón de entradas: se empaqueta en milisegundos y el archivo pesa poco.
 - Imprimir sin pedir la ficha (Ctrl+P o el menú del navegador) saca la app como siempre, no una página en blanco.
 
 ## Fuera de alcance
@@ -185,3 +215,22 @@ En pantalla y en el PNG se dibuja con la paleta del tema activo (INT-18; con el 
   antes (comprobado píxel a píxel). El PNG se descarga como se ve; para papel ya está la ficha (MAT-14), que no
   cambia. Se descartaron siempre oscuro y siempre claro. `paleta()` de `render.js` ya no la guarda para
   siempre: la vuelve a leer cuando cambia `data-tema`.
+- 2026-11-08 (cambio 016): el esquema es NBT con gzip del formato de Litematica versión 6, subversión 1, con
+  `MinecraftDataVersion` 3955 (Minecraft 1.21.1: el mod migra a la del juego en curso y esta es la más
+  antigua de la 1.21.x). Los nombres y tipos de las etiquetas y el empaquetado de `BlockStates` (bits =
+  `max(2, ceil(log2(paleta)))`, entradas seguidas que cruzan el límite de un long, índice
+  `(y * sizeZ + z) * sizeX + x`) se tomaron de la documentación y el código de Litemapy, que escribe
+  archivos que Litematica carga; no se pudo leer el código del propio mod. Se eligió la 6 y no la 7 por
+  estar documentada y comprobada. Se descartó un selector de versión (más que probar y mantener).
+- 2026-11-08 (cambio 016): la capa 1 es `y 0`, la fila de la rejilla es `z` y la columna es `x`: el
+  esquema se ve desde arriba como el dibujo de la app. Sin posición: se descartó usar la Y de la base,
+  que el mod no aplica solo al cargar.
+- 2026-11-08 (cambio 016): sin dependencias: el gzip es el nativo del navegador (`CompressionStream`) y de
+  Node 22. El lector y el escritor de NBT y el empaquetado son lógica pura (`nbt.js`, `litematica.js`).
+  El empaquetado arma palabras de 32 bits y une cada long al final: con `BigInt` por entrada una esfera
+  de 100 (un millón de entradas) tardaba demasiado.
+- 2026-11-08 (cambio 016): el bloque es una lista corta con piedra por defecto; se descartaron un bloque
+  fijo y el texto libre (un error de escritura da un esquema que el juego no carga bien). `bloque` es la
+  última clave de lo guardado, así que lo escrito antes es un prefijo de lo de ahora. No se añade a
+  `VISTA` (son casillas): tiene su propio selector. La propuesta 011 (varios materiales) ampliará el
+  esquema a un bloque por zona.

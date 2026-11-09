@@ -25,6 +25,7 @@ En local: `npm install` y `npm run dev` (se abre en `http://localhost:4321/mc-to
 - **Zoom:** de 2 a 48 px por bloque con los botones −/+, el deslizador, `Ctrl` + rueda (hacia el puntero), pellizcando en pantallas táctiles o con `+`/`-` en el teclado. **Ajustar** (o `0`) encaja la capa entera en la ventana, y si la forma crece y deja de caber, el zoom se reduce solo. Con poco zoom se ocultan los números que no caben y la regla numera cada 2, 5, 10… bloques.
 - **En pantallas táctiles:** un toque corto marca el bloque, el toque en el número de una fila o columna de la regla la marca entera, arrastrar con un dedo mueve el dibujo (y la página cuando ya no cabe) y dos dedos hacen zoom.
 - **Proyecto:** «Guardar proyecto» descarga un archivo `.json` con la forma y lo construido, y «Cargar proyecto» lo recupera (con aviso y «Deshacer»). Sirve de copia de seguridad y para pasar la obra a otro dispositivo; funciona aunque el navegador no pueda guardar.
+- **Litematica:** en «Proyecto», «Descargar para Litematica» baja la forma entera (todas las capas, sin las marcas) como un `.litematic` para el mod Litematica de Minecraft 1.21.x, con el bloque que elijas en una lista corta (piedra por defecto, se recuerda). No lleva posición: se coloca en el juego. «Importar de Litematica» recupera la forma de un esquema descargado desde aquí (con aviso y «Deshacer» si se pierden marcas); los esquemas de otros programas se rechazan.
 - **Enlace para compartir:** «Copiar enlace» copia una dirección que abre la misma forma (tipo, tamaño, modo, grosor…) sin lo construido; para pasar también el progreso, guarda un proyecto.
 - **Tema claro u oscuro:** el botón de sol/luna de la cabecera (también en la portada) alterna entre los dos temas sin recargar; sin elección guardada se sigue el tema del sistema, y al tocarlo la elección se recuerda (clave `mc-tema`). El PNG sale con los colores del tema activo; la ficha imprimible siempre va en papel.
 - **Exportar:** PNG de la capa actual o de todas las capas (una imagen por capa), con cabecera de forma, capa, bloques y fecha.
@@ -70,7 +71,9 @@ Sitio estático con [Astro](https://astro.build) (sin framework de interfaz), pu
 | `src/herramientas/formas/nucleo/documento.js` | Forma, marcas, proyecto y enlace: la lógica del documento. |
 | `src/herramientas/formas/nucleo/historial.js` | Deshacer/rehacer con límite de pasos. |
 | `src/herramientas/formas/nucleo/marcas.js` | Bloques marcados como construidos. |
-| `src/herramientas/formas/nucleo/materiales.js` | Stacks, shulkers, cofres, porcentajes y resumen del centro. |
+| `src/herramientas/formas/nucleo/materiales.js` | Stacks, shulkers, cofres, porcentajes, resumen del centro y la lista de bloques del esquema. |
+| `src/herramientas/formas/nucleo/nbt.js` | Lector y escritor de NBT (el formato de datos de Minecraft), sin DOM. |
+| `src/herramientas/formas/nucleo/litematica.js` | El esquema `.litematic` (NBT con gzip): empaquetado, escritura y lectura. |
 | `src/herramientas/formas/dibujo/render.js` | Dibujo de una capa en canvas por capas encadenables (pantalla y exportación). |
 | `src/herramientas/formas/dibujo/zoom.js` | Zoom, anclaje al puntero y ajuste a la ventana. |
 | `src/herramientas/formas/interfaz/` | `avisos`, `vista-materiales`, `panel`, `exportar` (PNG y ficha) y `menu`. |
