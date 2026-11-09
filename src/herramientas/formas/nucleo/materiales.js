@@ -22,12 +22,40 @@ export const Materiales = (() => {
   const fmtStacks = n => `${Math.floor(n / STACK)} × ${STACK}${n % STACK ? ' + ' + (n % STACK) : ''}`;
   const unidades = (n, porCaja) => ({ valor: n / porCaja, cajas: Math.ceil(n / porCaja) });
 
+  // Reparto entre borde y relleno (MAT-18). El borde son los bloques que tocan el exterior por alguna cara: los
+  // 4 vecinos de la capa y, con varias capas (3D), la de arriba y la de abajo; el relleno, el resto.
+  // Devuelve, por capa, un Uint8Array (indice y * ancho + x, 1 = relleno) y cuantos bloques de relleno tiene.
+  function rellenoDe(capas) {
+    const celdas = [], cuenta = [], h = capas[0].length, w = capas[0][0].length, tres = capas.length > 1;
+    for (let c = 0; c < capas.length; c++) {
+      const g = capas[c], abajo = tres ? capas[c - 1] : null, arriba = tres ? capas[c + 1] : null;
+      const z = new Uint8Array(w * h);
+      let n = 0;
+      if (!tres || (abajo && arriba)) {
+        for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+          if (g[y][x] && g[y - 1][x] && g[y + 1][x] && g[y][x - 1] && g[y][x + 1]
+            && (!tres || (abajo[y][x] && arriba[y][x]))) { z[y * w + x] = 1; n++; }
+        }
+      }
+      celdas.push(z); cuenta.push(n);
+    }
+    return { celdas, cuenta };
+  }
+
+  // Materiales de la forma: { borde, relleno } (ID de bloque) o null si es uno solo. Solo hay reparto en formas
+  // solidas (en hueco todo es borde) y con un relleno elegido distinto del borde.
+  function repartoActivo({ modo, bloque, relleno }) {
+    return modo !== 'hueco' && relleno && relleno !== bloque ? { borde: bloque, relleno } : null;
+  }
+
   /**
    * @param {number[]} totales bloques por capa
    * @param {number[]} porCapa bloques marcados por capa
    * @param {number} capa capa visible (0..n-1)
+   * @param {{ materiales: { id: string, nombre: string, porCapa: number[] }[] }} [reparto] bloques de cada
+   *   material por capa (borde y relleno); sin el, un solo material
    */
-  function resumen(totales, porCapa, capa = 0) {
+  function resumen(totales, porCapa, capa = 0, reparto = null) {
     const total = totales.reduce((a, b) => a + b, 0);
     const marcados = porCapa.reduce((a, b) => a + b, 0);
     const enCapa = porCapa[capa] || 0, totCapa = totales[capa] || 0;
@@ -43,7 +71,12 @@ export const Materiales = (() => {
       capas: totales.map((n, i) => ({
         i, total: n, hechos: porCapa[i] || 0, pct: pct(porCapa[i] || 0, n),
         completa: n > 0 && porCapa[i] === n,
+        ...(reparto ? { porMaterial: reparto.materiales.map(m => m.porCapa[i] || 0) } : {}),
       })),
+      ...(reparto ? { materiales: reparto.materiales.map(m => {
+        const t = m.porCapa.reduce((a, b) => a + b, 0);
+        return { id: m.id, nombre: m.nombre, total: t, stacks: fmtStacks(t), shulkers: unidades(t, SHULKER), cofres: unidades(t, COFRE_DOBLE) };
+      }) } : {}),
       // Texto de la barra de progreso: en 3D incluye la capa y el total.
       textoProgreso: totales.length > 1
         ? `Capa: ${enCapa}/${totCapa} (${dosDigitos(enCapa, totCapa)}) · Total: ${marcados}/${total} (${dosDigitos(marcados, total)})`
@@ -72,5 +105,5 @@ export const Materiales = (() => {
     return txt;
   }
 
-  return { STACK, SHULKER, COFRE_DOBLE, BLOQUES, BLOQUE_DEFECTO, resumen, textoResumenCentro, pct, fmtStacks };
+  return { STACK, SHULKER, COFRE_DOBLE, BLOQUES, BLOQUE_DEFECTO, rellenoDe, repartoActivo, resumen, textoResumenCentro, pct, fmtStacks };
 })();
