@@ -433,3 +433,74 @@ test('INT-18: en el tema claro la guía de chunk es más oscura que la rejilla',
   assert.ok(luz(hex(CLARO['guia-chunk'])) < luz(velo(vacia, CLARO['rejilla-5'])) && luz(hex(CLARO['guia-chunk'])) < luz(velo(vacia, CLARO.rejilla)));
   assert.ok(rgba(CLARO.rejilla).length === 4);
 });
+
+// --- MAT-20: color del relleno (011) en el tema oscuro, el claro y el papel -----------------------------
+const TEMAS_RELLENO = {
+  oscuro: { relleno: OSCURO.relleno, bloque: OSCURO.bloque, sobre: OSCURO['sobre-bloque'], banda: OSCURO['centro-banda'], hecho: OSCURO.hecho, vacia: OSCURO.vacia },
+  claro: { relleno: CLARO.relleno, bloque: CLARO.bloque, sobre: CLARO['sobre-bloque'], banda: CLARO['centro-banda'], hecho: CLARO.hecho, vacia: CLARO.vacia },
+  papel: { relleno: Render.PAPEL.relleno, bloque: Render.PAPEL.bloque, sobre: Render.PAPEL.sobreBloque, banda: Render.PAPEL.banda, hecho: Render.PAPEL.hecho, vacia: Render.PAPEL.vacia },
+};
+
+test('MAT-20: el relleno tiene color en los dos temas y en el papel, y no es el del bloque', () => {
+  for (const [tema, c] of Object.entries(TEMAS_RELLENO)) {
+    assert.match(c.relleno || '', /^#[0-9A-Fa-f]{6}$/, `falta el relleno en ${tema}`);
+    assert.notEqual(c.relleno.toUpperCase(), c.bloque.toUpperCase(), tema);
+  }
+});
+
+test('MAT-20: las cifras tienen al menos 4,5:1 sobre el relleno, también en un eje', () => {
+  for (const [tema, c] of Object.entries(TEMAS_RELLENO)) {
+    const relleno = hex(c.relleno);
+    assert.ok(contraste(hex(c.sobre), relleno) >= 4.5, `cifra sobre relleno (${tema})`);
+    assert.ok(contraste(hex(c.sobre), velo(relleno, c.banda)) >= 4.5, `cifra sobre relleno en un eje (${tema})`);
+  }
+});
+
+test('MAT-20: el relleno se distingue del bloque y del fondo por luminancia, no solo por color', () => {
+  for (const [tema, c] of Object.entries(TEMAS_RELLENO)) {
+    const relleno = hex(c.relleno);
+    assert.ok(Math.abs(luz(relleno) - luz(hex(c.bloque))) >= 0.1, `relleno y bloque (${tema})`);
+    assert.ok(luz(relleno) < luz(hex(c.bloque)), `el relleno es más apagado que el bloque (${tema})`);
+    assert.ok(Math.abs(luz(relleno) - luz(hex(c.vacia))) >= 0.1, `relleno y celda vacía (${tema})`);
+  }
+});
+
+// Un contexto de dibujo que apunta el color de cada celda pintada (sin canvas real).
+function dibujarCeldas(o) {
+  const celdas = [];
+  const ctx = new Proxy({ fillStyle: '' }, {
+    get: (t, k) => (k === 'fillRect' ? (x, y, w, h) => celdas.push({ color: t.fillStyle, x, y, w, h })
+      : k === 'measureText' ? () => ({ width: 8 }) : k in t ? t[k] : () => {}),
+    set: (t, k, v) => { t[k] = v; return true; },
+  });
+  const cv = { getContext: () => ctx, style: {} };
+  // `dibujar` lee la paleta de la app del CSS aunque se le pase otra: en Node no hay DOM, se simula vacio.
+  const antes = { document: globalThis.document, getComputedStyle: globalThis.getComputedStyle };
+  globalThis.document = { documentElement: { dataset: { tema: 'prueba-relleno' } } };
+  globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
+  let geo;
+  try { geo = Render.dibujar(cv, { cursor: null, dpr: 1, ...o }); }
+  finally { globalThis.document = antes.document; globalThis.getComputedStyle = antes.getComputedStyle; }
+  return { geo, celdas: celdas.filter(c => c.w === o.s && c.h === o.s) };
+}
+const OP = { rel: false, tramos: false, tramosDentro: false, distEjes: false };
+const PAL = { lienzo: '#000', vacia: '#111111', bloque: '#22AA22', hecho: '#3333CC', relleno: '#667766', banda: 'rgba(0,0,0,0)', oro: '#fff', regla: '#fff', tramo: '#fff', sobreBloque: '#000', rejilla: '#222', rejilla5: '#222', texto: '#fff', guiaChunk: '#f0f', centroAncho: 2 };
+
+test('MAT-20: las celdas marcadas como relleno se pintan con el color del relleno; lo construido y lo vacío no cambian', () => {
+  const g = [[true, true, true], [true, true, true], [false, true, true]];
+  const relleno = Uint8Array.from([0, 0, 0, 0, 1, 1, 0, 1, 0]);
+  const { celdas } = dibujarCeldas({ g, capa: 0, hechos: new Set(['0,2,1']), s: 20, op: OP, paleta: PAL, relleno });
+  const de = (x, y) => celdas.find(c => c.x === celdas[0].x + x * 20 && c.y === celdas[0].y + y * 20).color;
+  assert.equal(de(0, 0), PAL.bloque);
+  assert.equal(de(1, 1), PAL.relleno);
+  assert.equal(de(2, 1), PAL.hecho, 'lo construido se ve igual sobre el relleno');
+  assert.equal(de(0, 2), PAL.vacia);
+});
+
+test('MAT-20: sin relleno el dibujo de las celdas es el de siempre', () => {
+  const g = [[true, true], [true, false]];
+  const args = { g, capa: 0, hechos: new Set(), s: 20, op: OP, paleta: PAL };
+  const sin = dibujarCeldas(args).celdas.map(c => c.color);
+  assert.deepEqual(sin, [PAL.bloque, PAL.bloque, PAL.bloque, PAL.vacia]);
+  assert.deepEqual(dibujarCeldas({ ...args, relleno: null }).celdas.map(c => c.color), sin);
+});

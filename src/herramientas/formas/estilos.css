@@ -28,6 +28,7 @@
   --vacia: #1B2336;
   --bloque: #22C55E;
   --hecho: #3B82F6;
+  --relleno: #6E9C80;   /* material del relleno (MAT-20): verde grisaceo, mas apagado que el bloque */
   --sobre-bloque: #0F172A;
   --centro-banda: rgba(250, 204, 21, .28);
   --regla: #CBD5E1;
@@ -71,6 +72,7 @@
   --vacia: #FFFFFF;
   --bloque: #4ADE80;
   --hecho: #3B82F6;
+  --relleno: #86B096;
   --sobre-bloque: #0F172A;
   --centro-banda: rgba(120, 53, 15, .22);
   --regla: #334155;
@@ -154,6 +156,7 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .leyenda li { display: flex; align-items: center; gap: 6px; }
 .leyenda .m { width: 14px; height: 14px; border: 1px solid var(--borde-marca); border-radius: 2px; flex: none; }
 .leyenda .bloque { background: var(--bloque); }
+.leyenda .relleno { background: var(--relleno); }
 .leyenda .hecho { background: linear-gradient(225deg, var(--fg) 30%, var(--hecho) 30%); }
 .leyenda .centro { background: var(--centro-banda); border-color: var(--oro); }
 .leyenda .guia { background: var(--guia-chunk); }

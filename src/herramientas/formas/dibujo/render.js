@@ -21,7 +21,7 @@ export const Render = (() => {
     const css = getComputedStyle(document.documentElement);
     const v = n => css.getPropertyValue(n).trim();
     PAL = {
-      lienzo: v('--lienzo'), vacia: v('--vacia'), bloque: v('--bloque'), hecho: v('--hecho'),
+      lienzo: v('--lienzo'), vacia: v('--vacia'), bloque: v('--bloque'), hecho: v('--hecho'), relleno: v('--relleno'),
       banda: v('--centro-banda'), oro: v('--oro'), regla: v('--regla'), tramo: v('--tramo'),
       sobreBloque: v('--sobre-bloque'), rejilla: v('--rejilla'), rejilla5: v('--rejilla-5'), texto: v('--fg'),
       guiaChunk: v('--guia-chunk'), centroAncho: 2,
@@ -34,7 +34,7 @@ export const Render = (() => {
   // su borde fino), tinta oscura para cifras y cabecera, ejes con un velo oscuro y el centro con un borde
   // grueso: en escala de grises se distinguen por luminancia, no por el color.
   const PAPEL = {
-    lienzo: '#FFFFFF', vacia: '#FFFFFF', bloque: '#BBF7D0', hecho: '#BBF7D0',
+    lienzo: '#FFFFFF', vacia: '#FFFFFF', bloque: '#BBF7D0', hecho: '#BBF7D0', relleno: '#CBD5D0',
     banda: 'rgba(15, 23, 42, .16)', oro: '#0F172A', regla: '#334155', tramo: '#334155',
     sobreBloque: '#0F172A', rejilla: '#CBD5E1', rejilla5: '#94A3B8', texto: '#0F172A',
     guiaChunk: '#6B21A8', centroAncho: 4,
@@ -156,9 +156,9 @@ export const Render = (() => {
   const franjas = m => [...centro(m.w), ...centro(m.h)];   // cx0, cx1, cy0, cy1
 
   const capaCeldas = (ctx, m, o, P) => {
-    const { g, capa, hechos } = o;
+    const { g, capa, hechos, relleno } = o;   // relleno: celdas de otro material (MAT-20), o nada si es uno solo
     for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) {
-      ctx.fillStyle = g[y][x] ? (hechos.has(`${capa},${x},${y}`) ? P.hecho : P.bloque) : P.vacia;
+      ctx.fillStyle = g[y][x] ? (hechos.has(`${capa},${x},${y}`) ? P.hecho : relleno && relleno[y * m.w + x] ? P.relleno : P.bloque) : P.vacia;
       ctx.fillRect(m.L + x * m.s, m.T + y * m.s, m.s, m.s);
     }
   };
@@ -389,7 +389,7 @@ export const Render = (() => {
    * @param {HTMLCanvasElement} cv
    * @param {{ g: boolean[][], capa: number, hechos: Set<string>, s: number,
    *           op: {rel:boolean, tramos:boolean, tramosDentro:boolean, distEjes:boolean},
-   *           cursor?: {x:number,y:number}|null, cabecera?: string[], dpr?: number,
+   *           cursor?: {x:number,y:number}|null, cabecera?: string[], dpr?: number, relleno?: Uint8Array|null,
    *           paleta?: object }} o   paleta: colores que sustituyen a los de la app (la ficha pasa PAPEL)
    * @returns {{L:number, T:number, s:number, w:number, h:number, ocultos:boolean}}
    */
