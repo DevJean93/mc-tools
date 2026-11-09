@@ -140,6 +140,46 @@ qué: «Este archivo no es un esquema de Litematica o está dañado.» o «Este 
 solo se pueden importar los descargados desde aquí.» (también si, con el autor de Formas MC, faltan los
 datos de la forma o alguno de sus bloques no es de la lista).
 
+### FOR-20
+
+En la sección «Forma» se puede guardar la configuración actual como plantilla con un nombre de 1 a 40
+caracteres (se recortan los espacios de los extremos). La plantilla guarda solo los parámetros de la forma
+(tipo, ancho, alto, proporción, modo, grosor, variante y orientación) y, si hay reparto de materiales
+(MAT-18), el reparto: bloque del borde y del relleno. Sin reparto no guarda el bloque. No guarda las marcas,
+la capa, el zoom ni las opciones de vista. Guardar con un nombre que ya existe sustituye esa plantilla (en su
+sitio) con el aviso «Plantilla «X» sustituida.» y «Deshacer»; con un nombre nuevo sale «Plantilla «X»
+guardada.». El nombre se pide en un campo en línea (`Enter` guarda, `Escape` cancela); un nombre vacío o de
+más de 40 caracteres no se guarda y el motivo sale junto al campo. Los nombres se muestran siempre como texto.
+
+Ejemplo: una cúpula de 30 hueca con grosor 2, guardada como «Cúpula grande», aparece en la lista.
+
+### FOR-21
+
+Las plantillas aparecen en un desplegable «Plantillas» al principio de «Forma», con «Aplicar» y «Borrar»
+(activos solo con una plantilla elegida); sin plantillas solo se ve «Guardar como plantilla» con una ayuda.
+Aplicar una plantilla pasa por la misma vía que abrir un enlace (FOR-18): un solo paso de historial; si
+cambia la geometría y había marcas, se borran y sale «Se aplicó la plantilla «X». Tu progreso anterior se
+borró.» con «Deshacer», que devuelve de una vez la forma y las marcas; si no se pierde nada, «Plantilla «X»
+aplicada.» (con «Deshacer» si algo cambió). Se conservan la capa, el zoom y la vista. Una plantilla con reparto
+pone el bloque y el relleno; una sin reparto quita el relleno y deja el bloque. El reparto es una opción: «Deshacer»
+no lo devuelve. En móvil (390 px) el desplegable, los botones y el campo caben, miden al menos 44 px y su texto
+16 px.
+
+### FOR-22
+
+Una plantilla se borra con «Borrar», con el aviso «Plantilla «X» borrada.» y «Deshacer», que la repone en su
+sitio; borrarla no cambia lo que hay en pantalla. Las plantillas no se renombran. Hay como máximo 20: con 20,
+guardar con un nombre nuevo no se hace y el campo dice que hay que borrar alguna (o usar el nombre de una
+existente); sustituir una existente sí se puede. Si «Deshacer» un borrado ya no cabe, lo dice.
+
+### FOR-23
+
+Las plantillas se guardan solo en el navegador, en la clave propia `mc-plantillas-v1` (sin tocar las claves
+`mc-formas-v1*`), y siguen ahí al recargar. Al leerlas se valida cada una con las mismas reglas que el enlace y
+el archivo de proyecto (valores recortados o por defecto); las inválidas (nombre fuera de rango, forma que no
+es un objeto, repetidas, más de 20) se ignoran y un dato corrupto da una lista vacía, sin romper la app. Si el
+navegador no deja guardar, al guardar el aviso lo dice y la plantilla vale hasta recargar.
+
 ## Casos límite
 
 - 2D en el máximo: círculo 200 → 31 428 bloques; hexágono 200 plano → 30 000.
@@ -149,6 +189,8 @@ datos de la forma o alguno de sus bloques no es de la lista).
 - Un enlace con claves repetidas usa la primera; con texto mal codificado o con símbolos no falla y nunca se inserta como HTML.
 - Un enlace de una esfera con ancho 150 se recorta a 100.
 - Un esquema de otro programa, un archivo sin gzip, un NBT truncado o un archivo vacío no cambian nada y dicen por qué.
+- Un nombre de plantilla con `<b>`, comillas o una etiqueta con código se muestra como texto y no inyecta nada.
+- Datos de plantillas corruptos, con entradas inválidas o con más de 20 no rompen la app: se ignora lo inválido.
 
 ## Fuera de alcance
 
@@ -196,3 +238,19 @@ datos de la forma o alguno de sus bloques no es de la lista).
 - 2026-11-08 (cambio 011): amplía FOR-19. Un esquema con dos bloques recupera el reparto de materiales y uno con un
   solo bloque lo quita (el esquema es el estado completo de los materiales); como el bloque, el reparto es una
   opción y «Deshacer» no lo devuelve. Un esquema con un segundo bloque fuera de la lista se rechaza.
+- 2026-11-08 (cambio 012): la plantilla guarda solo los parámetros de la forma (y el reparto de materiales): las
+  marcas son de una construcción concreta y para eso está el archivo de proyecto. Solo en el navegador (clave
+  `mc-plantillas-v1`); para llevar una forma a otro equipo ya están el enlace y el proyecto. Se descartaron
+  exportar la lista, renombrar y un máximo de 50 (más interfaz que probar para poco uso).
+- 2026-11-08 (cambio 012): la plantilla guarda el bloque solo con reparto, como el archivo de proyecto
+  (MAR-19): una plantilla «solo forma» no debe cambiar el bloque, que es una opción de vista. Al aplicar, una
+  plantilla sin reparto quita el que hubiera (mismo criterio que importar un esquema, FOR-19) y una con reparto
+  lo pone. No guarda la capa: se conserva la actual.
+- 2026-11-08 (cambio 012): aplicar usa `aplicarForma` del documento, la misma vía que el enlace y el esquema; y
+  al leer se valida con `formaValidada`/`repartoValido` de `Estado`, las mismas funciones que el archivo y el
+  enlace, para que ninguna entrada valide distinto.
+- 2026-11-08 (cambio 012): el mismo nombre sustituye (la comparación es exacta, tras recortar) con aviso y
+  «Deshacer», coherente con borrar; así sustituir por error no pierde la anterior. Con 20 el nombre nuevo se
+  rechaza dentro del campo, que sigue abierto, y no con un aviso que se va solo. El nombre se pide en un campo
+  en línea y no con `prompt()`. `Ctrl+Z` dentro de un campo de texto ya no deshace la forma (antes solo se
+  respetaban los numéricos y los selectores).

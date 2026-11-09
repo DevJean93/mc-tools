@@ -1,16 +1,9 @@
 # Pendientes e ideas
 
 Lo que se ha hablado pero todavía no está decidido. Cuando algo se decide, pasa a
-`specs/cambios/NNN-…/propuesta.md` con `/sdd-proponer` y se quita de aquí.
-
-## Propuestas en borrador, sin aclarar
-
-Las ideas de la auditoría inicial ya son propuestas en `Borrador`, cada una con sus preguntas
-abiertas. Ya están hechas la 006 (guardar y cargar un proyecto), la 007 (enlace para compartir), la
-008 (guías de chunk), la 009 (altura Y de cada capa), la 010 (ficha imprimible), la 011 (varios materiales por forma), la 013 (versionar por la caché), la 014 (ficha en fondo claro), la 015 (migración a Astro), la 016 (archivos de Litematica), la 017 (portada más completa) y la 018 (tema claro y oscuro). El
-siguiente paso es `/sdd-aclarar NNN` con la que se quiera decidir primero:
-
-- `012-plantillas` — formas guardadas como plantillas (área FOR).
+`specs/cambios/NNN-…/propuesta.md` con `/sdd-proponer` y se quita de aquí. Las ideas de la auditoría inicial
+ya son propuestas hechas y archivadas (006 a 018, en `specs/cambios/archivo/`): aquí solo quedan las ideas
+que todavía no tienen propuesta.
 
 ## Ideas sin propuesta
 

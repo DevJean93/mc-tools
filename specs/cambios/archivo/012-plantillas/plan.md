@@ -71,8 +71,8 @@
 
 ## Tareas
 
-- [ ] T01 — Tests en rojo del núcleo y luego `plantillas.js` (+ exportar `formaValidada` y `repartoValido`). Hecho cuando: pasan `FOR-20`, `FOR-22`, `FOR-23`. Commit: «FOR-20, FOR-22, FOR-23: núcleo de las plantillas».
-- [ ] T02 — Test en rojo y `Documento.aplicarPlantilla`. Hecho cuando: pasa `FOR-21` unitario. Commit: «FOR-21: aplicar una plantilla por la vía de los enlaces».
-- [ ] T03 — Interfaz y E2E (en rojo primero), `teclado.js`. Hecho cuando: pasa el E2E completo. Commit: «FOR-20, FOR-21, FOR-22, FOR-23: plantillas en la interfaz».
-- [ ] T04 — Validación visual y píxel a píxel; retoques si hacen falta. Commit: solo si hay cambios.
-- [ ] T05 — Archivar: FOR-20 a FOR-23 al área, `pendientes.md`, README/CLAUDE.md, propuesta a `Hecha` y al archivo. Commit: «SDD: archiva la propuesta 012 (plantillas)».
+- [x] T01 — Tests en rojo del núcleo y luego `plantillas.js` (+ exportar `formaValidada` y `repartoValido`). Hecho cuando: pasan `FOR-20`, `FOR-22`, `FOR-23`. Commit: «FOR-20, FOR-22, FOR-23: núcleo de las plantillas».
+- [x] T02 — Test en rojo y `Documento.aplicarPlantilla`. Hecho cuando: pasa `FOR-21` unitario. Commit: «FOR-21: aplicar una plantilla por la vía de los enlaces».
+- [x] T03 — Interfaz y E2E (en rojo primero), `teclado.js`. Hecho cuando: pasa el E2E completo. Commit: «FOR-20, FOR-21, FOR-22, FOR-23: plantillas en la interfaz».
+- [x] T04 — Validación visual y píxel a píxel; retoques si hacen falta. Commit: «FOR-20: la etiqueta del nombre de la plantilla en una sola línea» (único retoque).
+- [x] T05 — Archivar: FOR-20 a FOR-23 al área, `pendientes.md`, README/CLAUDE.md, propuesta a `Hecha` y al archivo. Commit: «SDD: archiva la propuesta 012 (plantillas)».
