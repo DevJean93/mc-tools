@@ -53,6 +53,29 @@ import '../../herramientas/formas/estilos.css';
     </div>
     <section id="secForma" aria-labelledby="t-forma">
       <h2 id="t-forma">Forma</h2>
+      <div id="plantillas" class="plantillas">
+        <div id="plantillaLista" class="plantillas-lista" hidden>
+          <label>Plantillas
+            <select id="plantillaSel"></select>
+          </label>
+          <div class="botones">
+            <button type="button" id="plantillaAplicar" disabled><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Aplicar</button>
+            <button type="button" id="plantillaBorrar" disabled><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>Borrar</button>
+          </div>
+        </div>
+        <p class="ayuda" id="plantillaAyuda">Guarda la forma de ahora con un nombre para recuperarla con un clic. Se guardan solo en este navegador.</p>
+        <button type="button" id="plantillaGuardar" aria-expanded="false" aria-controls="plantillaCampo"><svg class="ico" aria-hidden="true"><use href="#i-descargar"/></svg>Guardar como plantilla</button>
+        <div id="plantillaCampo" class="plantillas-campo" hidden>
+          <label>Nombre de la plantilla <small>(1 a 40 caracteres)</small>
+            <input type="text" id="plantillaNombre" maxlength="40" autocomplete="off" aria-describedby="plantillaError">
+          </label>
+          <p class="ayuda plantilla-error" id="plantillaError" role="alert"></p>
+          <div class="botones">
+            <button type="button" id="plantillaOk"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+            <button type="button" id="plantillaCancelar"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg>Cancelar</button>
+          </div>
+        </div>
+      </div>
       <label>Tipo
         <select id="forma"></select>
       </label>

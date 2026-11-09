@@ -1932,6 +1932,141 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await ev(`localStorage.clear()`); await cargar();
 
+  // --- FOR-20 a FOR-23: formas guardadas como plantillas ------------------------------------------------
+  await ev(`localStorage.clear()`); await cargar();
+  const q = id => `document.getElementById('${id}')`;
+  const setSel = (id, v) => ev(`(() => { const e = ${q(id)}; e.value = ${JSON.stringify(v)}; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+  const lista = () => ev(`[...${q('plantillaSel')}.options].filter(o => o.value !== '').map(o => o.textContent)`);
+  const guardadas = () => ev(`(() => { const r = JSON.parse(localStorage.getItem('mc-plantillas-v1') || 'null'); return r ? r.plantillas : null; })()`);
+  const escribirNombre = v => ev(`(() => { const e = ${q('plantillaNombre')}; e.focus(); e.value = ${JSON.stringify(v)}; e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  const guardarPlantilla = async v => { await ev(`${q('plantillaGuardar')}.click()`); await escribirNombre(v); await ev(`${q('plantillaOk')}.click()`); await esperar(150); };
+  const elegirPlantilla = v => setSel('plantillaSel', v);
+  const formaDe = () => ev(`[${q('forma')}.value, ${q('esfera')}.value, ${q('w')}.value, ${q('modo')}.value, ${q('grosor')}.value].join('|')`);
+  const hacerCupula = async () => {
+    await setSel('forma', 'esfera'); await esperar(200); await setSel('esfera', 'cupula'); await esperar(200);
+    await ponerCampo('w', '30'); await esperar(300); await setSel('modo', 'hueco'); await esperar(200); await ponerCampo('grosor', '2'); await esperar(400);
+  };
+  // Sin plantillas: solo «Guardar como plantilla» y una ayuda.
+  const vacio = await ev(`({ sel: ${q('plantillaLista')}.hidden, ayuda: !${q('plantillaAyuda')}.hidden && ${q('plantillaAyuda')}.textContent.length > 20, guardar: ${q('plantillaGuardar')}.textContent.trim(), campo: ${q('plantillaCampo')}.hidden,
+    primero: ${q('secForma')}.querySelector('h2').nextElementSibling.id })`);
+  ok(vacio.sel && vacio.ayuda && vacio.guardar === 'Guardar como plantilla' && vacio.campo && vacio.primero === 'plantillas',
+    `FOR-21: sin plantillas solo se ve «Guardar como plantilla» con una ayuda, al principio de «Forma» (${JSON.stringify(vacio)})`);
+  // FOR-20: guardar la cúpula de 30 hueca con grosor 2.
+  await hacerCupula();
+  await ev(`${q('plantillaGuardar')}.click()`); await esperar(100);
+  const campo = await ev(`({ visible: !${q('plantillaCampo')}.hidden, enfocado: document.activeElement === ${q('plantillaNombre')}, tipo: ${q('plantillaNombre')}.type, max: ${q('plantillaNombre')}.maxLength, etiqueta: ${q('plantillaNombre')}.labels[0].textContent.trim() })`);
+  ok(campo.visible && campo.enfocado && campo.tipo === 'text' && campo.max === 40 && /Nombre de la plantilla/.test(campo.etiqueta),
+    `FOR-20: «Guardar como plantilla» abre un campo de nombre en línea, enfocado y con etiqueta (${JSON.stringify(campo)})`);
+  await escribirNombre('  Cúpula grande  '); await ev(`${q('plantillaOk')}.click()`); await esperar(200);
+  ok(JSON.stringify(await lista()) === '["Cúpula grande"]' && await ev(`${q('plantillaCampo')}.hidden && !${q('plantillaLista')}.hidden`) && (await aviso()).texto === 'Plantilla «Cúpula grande» guardada.',
+    'FOR-20: la cúpula guardada como «Cúpula grande» aparece en la lista (con el nombre recortado)');
+  const g1 = await guardadas();
+  ok(g1 && g1.length === 1 && g1[0].forma.forma === 'esfera' && g1[0].forma.esfera === 'cupula' && g1[0].forma.w === 30 && g1[0].forma.modo === 'hueco' && g1[0].forma.grosor === 2 && !('capa' in g1[0].forma) && !JSON.stringify(g1).includes('zoom'),
+    'FOR-20: lo guardado son solo los parámetros de la forma');
+  // FOR-23: sigue ahí al recargar y las claves de siempre no cambian.
+  const formasAntes = await ev(`localStorage.getItem('mc-formas-v1')`);
+  await cargar();
+  ok(JSON.stringify(await lista()) === '["Cúpula grande"]' && await ev(`localStorage.getItem('mc-formas-v1') !== null`) && formasAntes !== null,
+    'FOR-23: tras recargar la plantilla sigue en la lista');
+  // FOR-21: aplicar con marcas -> aviso con Deshacer; Deshacer devuelve la forma y las marcas.
+  await setSel('forma', 'circulo'); await esperar(200); await ponerCampo('w', '16'); await esperar(500);
+  await ev(`${q('lienzo')}.focus()`); await key('f', 'KeyF', 70); await esperar(200);
+  const antesAplicar = { forma: await formaDe(), prog: await prog(), marcas: await ev(`localStorage.getItem('mc-formas-v1:marcas')`) };
+  ok(/^Construidos: [1-9]/.test(antesAplicar.prog), 'FOR-21: preparado un círculo hueco de 16 con una fila marcada (' + antesAplicar.prog + ')');
+  await elegirPlantilla('Cúpula grande'); await ev(`${q('plantillaAplicar')}.click()`); await esperar(500);
+  const trasAplicar = await aviso();
+  ok(await formaDe() === 'esfera|cupula|30|hueco|2' && trasAplicar.accion && /^Se aplicó la plantilla «Cúpula grande»\. Tu progreso anterior se borró\.$/.test(trasAplicar.texto),
+    `FOR-21: aplicar la plantilla cambia la forma y avisa con Deshacer (${await formaDe()} · ${trasAplicar.texto})`);
+  await ev(`${q('avisoAccion')}.click()`); await esperar(500);
+  ok(await formaDe() === antesAplicar.forma && await prog() === antesAplicar.prog && await ev(`localStorage.getItem('mc-formas-v1:marcas')`) === antesAplicar.marcas,
+    'FOR-21: «Deshacer» devuelve la forma y las marcas');
+  // FOR-22: borrar no cambia lo que hay en pantalla; Deshacer la recupera.
+  await elegirPlantilla('Cúpula grande');
+  ok(await ev(`!${q('plantillaAplicar')}.disabled && !${q('plantillaBorrar')}.disabled`), 'FOR-21: con una plantilla elegida se activan «Aplicar» y «Borrar»');
+  const pantallaAntes = { forma: await formaDe(), prog: await prog() };
+  await ev(`${q('plantillaBorrar')}.click()`); await esperar(200);
+  const trasBorrar = await aviso();
+  ok((await lista()).length === 0 && JSON.stringify(await guardadas()) === '[]' && await formaDe() === pantallaAntes.forma && await prog() === pantallaAntes.prog && trasBorrar.accion && /borrada/.test(trasBorrar.texto) && await ev(`${q('plantillaLista')}.hidden`),
+    `FOR-22: borrar quita la plantilla sin cambiar la pantalla y ofrece Deshacer (${trasBorrar.texto})`);
+  await ev(`${q('avisoAccion')}.click()`); await esperar(200);
+  ok(JSON.stringify(await lista()) === '["Cúpula grande"]' && await formaDe() === pantallaAntes.forma, 'FOR-22: «Deshacer» recupera la plantilla borrada');
+  // Sustituir: mismo nombre, con aviso y Deshacer.
+  await ponerCampo('w', '12'); await esperar(500);
+  await guardarPlantilla('Cúpula grande');
+  const sust = await aviso();
+  ok(JSON.stringify(await lista()) === '["Cúpula grande"]' && (await guardadas())[0].forma.w === 12 && sust.texto === 'Plantilla «Cúpula grande» sustituida.' && sust.accion, 'FOR-20: guardar con un nombre que existe sustituye esa plantilla, con aviso y Deshacer');
+  await ev(`${q('avisoAccion')}.click()`); await esperar(200);
+  ok((await guardadas())[0].forma.w === 30 && (await lista()).length === 1, 'FOR-22: «Deshacer» de una sustitución devuelve la plantilla anterior');
+  // Enter guarda y Escape cancela.
+  await ev(`${q('plantillaGuardar')}.click()`); await escribirNombre('Con Enter'); await key('Enter', 'Enter', 13); await esperar(200);
+  ok((await lista()).includes('Con Enter') && await ev(`${q('plantillaCampo')}.hidden`), 'FOR-20: Enter guarda la plantilla');
+  await ev(`${q('plantillaGuardar')}.click()`); await escribirNombre('No debe guardarse'); await key('Escape', 'Escape', 27); await esperar(150);
+  ok(!(await lista()).includes('No debe guardarse') && await ev(`${q('plantillaCampo')}.hidden && document.activeElement === ${q('plantillaGuardar')}`), 'FOR-20: Escape cancela y devuelve el foco al botón');
+  // Nombre vacío: no guarda y lo dice junto al campo.
+  await ev(`${q('plantillaGuardar')}.click()`); await escribirNombre('   '); await ev(`${q('plantillaOk')}.click()`); await esperar(100);
+  ok(await ev(`!${q('plantillaCampo')}.hidden && ${q('plantillaError')}.textContent.includes('1 a 40') && ${q('plantillaError')}.getAttribute('role') === 'alert'`) && (await lista()).length === 2, 'FOR-20: un nombre vacío no se guarda y el error sale junto al campo');
+  await key('Escape', 'Escape', 27);
+  // Nombres con caracteres especiales: texto, nunca HTML.
+  const raro = `<b>"hola" 'ñ' & <i>é</i>`;
+  await guardarPlantilla(raro);
+  ok((await lista()).includes(raro) && await ev(`!${q('plantillas')}.querySelector('b, i') && window.__x === undefined`), 'FOR-20: un nombre con «<b>», comillas y acentos se muestra como texto');
+  await guardarPlantilla('<img src=x onerror="window.__x=1">'); await esperar(200);
+  ok(await ev(`window.__x === undefined && !${q('plantillas')}.querySelector('img')`), 'FOR-20: un nombre con una etiqueta que ejecuta código no inyecta nada');
+  await cargar();
+  ok((await lista()).includes(raro) && await ev(`!${q('plantillas')}.querySelector('b, i, img')`), 'FOR-23: los nombres especiales vuelven del navegador como texto');
+  // Reparto de materiales: se guarda y se aplica; con un solo material no guarda el bloque.
+  await setSel('bloque', 'minecraft:bricks'); await setSel('relleno', 'minecraft:stone'); await esperar(200);
+  await guardarPlantilla('Con reparto');
+  const conRep = (await guardadas()).find(p => p.nombre === 'Con reparto');
+  ok(conRep && conRep.reparto && conRep.reparto.borde === 'minecraft:bricks' && conRep.reparto.relleno === 'minecraft:stone', 'FOR-20: la plantilla guarda el reparto de materiales');
+  await setSel('relleno', ''); await setSel('bloque', 'minecraft:glass'); await esperar(200);
+  await elegirPlantilla('Con reparto'); await ev(`${q('plantillaAplicar')}.click()`); await esperar(400);
+  ok(await ev(`${q('bloque')}.value === 'minecraft:bricks' && ${q('relleno')}.value === 'minecraft:stone'`), 'FOR-21: aplicar una plantilla con reparto lo recupera');
+  await elegirPlantilla('Cúpula grande'); await ev(`${q('plantillaAplicar')}.click()`); await esperar(400);
+  ok(await ev(`${q('relleno')}.value === '' && ${q('bloque')}.value === 'minecraft:bricks'`), 'FOR-21: una plantilla sin reparto lo quita y no toca el bloque');
+  // Ctrl+Z dentro del campo de nombre no deshace la forma.
+  await ev(`${q('plantillaGuardar')}.click()`); await ev(`${q('plantillaNombre')}.focus()`);
+  const formaCtrlZ = await formaDe();
+  await ev(`${q('plantillaNombre')}.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }))`); await esperar(200);
+  ok(await formaDe() === formaCtrlZ, 'FOR-20: Ctrl+Z dentro del campo de nombre no deshace la forma');
+  await key('Escape', 'Escape', 27);
+  // FOR-22: con 20 no se guarda una nueva; sustituir una existente sí.
+  await ev(`localStorage.clear()`); await cargar();
+  for (let i = 1; i <= 20; i++) await guardarPlantilla('Forma ' + i);
+  ok((await lista()).length === 20, 'FOR-22: caben 20 plantillas');
+  await ev(`${q('plantillaGuardar')}.click()`); await escribirNombre('Forma 21'); await ev(`${q('plantillaOk')}.click()`); await esperar(150);
+  const tope = await ev(`({ n: [...${q('plantillaSel')}.options].length - 1, error: ${q('plantillaError')}.textContent, abierto: !${q('plantillaCampo')}.hidden })`);
+  ok(tope.n === 20 && (await guardadas()).length === 20 && /20/.test(tope.error) && /borra/i.test(tope.error) && tope.abierto, `FOR-22: con 20, un nombre nuevo no se guarda y dice por qué (${tope.error})`);
+  await escribirNombre('Forma 7'); await ev(`${q('plantillaOk')}.click()`); await esperar(150);
+  ok((await lista()).length === 20 && /sustituida/.test((await aviso()).texto), 'FOR-22: con 20 se puede sustituir una existente');
+  await ev(`localStorage.clear()`); await cargar();
+
+  // FOR-21: en móvil (390 px) la lista y los botones caben y miden al menos 44 px; campo de 16 px; toques reales.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  await ev(`localStorage.setItem('mc-plantillas-v1', JSON.stringify({ version: 1, plantillas: [{ nombre: 'Torre redonda con nombre bastante largo', forma: { forma: 'circulo', w: 12, h: 12, igualar: true, modo: 'hueco', grosor: 2 } }] }))`);
+  await cargar(); await esperar(300);
+  await ev(`${q('verMenu')}.click()`); await esperar(300);
+  const tocarPl = async id => {
+    await ev(`${q(id)}.scrollIntoView({ block: 'center' })`); await esperar(200);
+    const c = await ev(`(() => { const r = ${q(id)}.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()`);
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: c[0], y: c[1], id: 1 }] });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await esperar(250);
+  };
+  await tocarPl('plantillaGuardar');
+  await esperar(200);
+  const mov = await ev(`(() => { const vw = document.documentElement.clientWidth, caja = id => { const r = document.getElementById(id).getBoundingClientRect(); return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right) }; };
+    const ids = ['plantillaSel', 'plantillaAplicar', 'plantillaBorrar', 'plantillaGuardar', 'plantillaNombre', 'plantillaOk', 'plantillaCancelar'];
+    return { vw, scroll: document.documentElement.scrollWidth, cajas: Object.fromEntries(ids.map(i => [i, caja(i)])), fuente: parseFloat(getComputedStyle(${q('plantillaNombre')}).fontSize), fuenteSel: parseFloat(getComputedStyle(${q('plantillaSel')}).fontSize), campoVisible: !${q('plantillaCampo')}.hidden }; })()`);
+  ok(mov.campoVisible && Object.values(mov.cajas).every(c => c.alto >= 44 && c.izq >= 0 && c.der <= mov.vw) && mov.fuente >= 16 && mov.fuenteSel >= 16 && mov.scroll <= mov.vw,
+    `FOR-21: a 390 px la lista, los botones y el campo caben, miden al menos 44 px y el texto 16 px (${JSON.stringify(mov)})`);
+  await shot('24-plantillas-movil.png');
+  await tocarPl('plantillaCancelar');
+  await setSel('plantillaSel', 'Torre redonda con nombre bastante largo'); await tocarPl('plantillaAplicar');
+  ok(await formaDe() === 'circulo||12|hueco|2', 'FOR-21: en móvil, un toque en «Aplicar» aplica la plantilla elegida (' + await formaDe() + ')');
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await ev(`localStorage.clear()`); await cargar();
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
 })().catch(e => { console.error(e); cerrar(); process.exit(1); });

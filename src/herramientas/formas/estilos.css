@@ -118,6 +118,15 @@ input:disabled { opacity: .5; }
 .fila2.solo { grid-template-columns: 1fr; }
 #rowBaseY { display: flex; flex-direction: column; gap: 4px; }
 
+/* Plantillas (FOR-20 a FOR-23): al principio de «Forma»; los nombres largos se cortan con puntos suspensivos. */
+.plantillas, .plantillas-lista, .plantillas-campo { display: flex; flex-direction: column; gap: 8px; }
+.plantillas { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.plantillas-campo { padding: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
+.plantilla-error { color: var(--error-texto); }
+.plantilla-error:empty { display: none; }
+#plantillaSel { text-overflow: ellipsis; min-width: 0; }
+input[type=text] { background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; font: inherit; min-height: 36px; }
+
 button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--muted); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; min-height: 36px; cursor: pointer; font: inherit; font-size: 14px; transition: background-color var(--t-rapida) ease-out, border-color var(--t-rapida) ease-out; }
 button:hover:not(:disabled) { background: var(--hover); border-color: var(--hover-borde); }
 button:active:not(:disabled) { background: var(--activo); }
@@ -212,7 +221,7 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
 @media (max-width: 800px) {
   body { font-size: 16px; padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   /* 16px en campos evita el zoom automatico de iOS al enfocarlos */
-  input[type=number], select { font-size: 16px; }
+  input[type=number], input[type=text], select { font-size: 16px; }
   label { font-size: 14px; }
   label.chk { font-size: 15px; min-height: 44px; }
   input[type=checkbox] { width: 22px; height: 22px; }
@@ -245,7 +254,7 @@ tr.completa td:first-child::after { content: " ✔"; color: var(--accent); }
   #secDibujo { scroll-margin-top: 12px; }
   .panel section, .barra { padding: 12px; }
 
-  button, select, input[type=number] { min-height: 44px; }
+  button, select, input[type=number], input[type=text] { min-height: 44px; }
   button.icono { min-width: 44px; }
   input[type=range] { min-height: 44px; }
 

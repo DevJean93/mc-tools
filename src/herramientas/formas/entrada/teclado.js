@@ -54,7 +54,7 @@ export const EntradaTeclado = (() => {
     });
 
     documento.addEventListener('keydown', ev => {
-      const enCampo = ev.target instanceof Element && ev.target.matches('input[type=number], select');
+      const enCampo = ev.target instanceof Element && ev.target.matches('input[type=number], input[type=text], select');
       if (!(ev.ctrlKey || ev.metaKey) || enCampo) return;
       const k = ev.key.toLowerCase();
       if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); historial.deshacer(); }

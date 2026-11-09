@@ -6,8 +6,10 @@ import { Formas } from './nucleo/formas.js';
 import { Documento } from './nucleo/documento.js';
 import { Materiales } from './nucleo/materiales.js';
 import { Litematica } from './nucleo/litematica.js';
+import { Plantillas } from './nucleo/plantillas.js';
 import { Avisos } from './interfaz/avisos.js';
 import { Panel } from './interfaz/panel.js';
+import { InterfazPlantillas } from './interfaz/plantillas.js';
 import { VistaMateriales } from './interfaz/vista-materiales.js';
 import { Exportar } from './interfaz/exportar.js';
 import { Menu } from './interfaz/menu.js';
@@ -323,6 +325,11 @@ globalThis.Render = Render;
       rango.setStart(texto, prefijo.length); rango.setEnd(texto, texto.length);
       const seleccion = getSelection(); seleccion.removeAllRanges(); seleccion.addRange(rango);
     }
+  });
+
+  // Plantillas: formas guardadas con nombre en el navegador (clave propia); aplicar una es abrir su forma.
+  InterfazPlantillas.crear({
+    plantillas: Plantillas.crear({ almacen }), st, leer: panel.leer, aplicar: doc.aplicarPlantilla, avisos,
   });
 
   Menu.crear({
