@@ -551,3 +551,43 @@ test('MAT-16: pedir el esquema no toca las marcas ni el historial (el documento 
   d.doc.capas(); d.doc.params();
   assert.deepEqual({ hechos: clavesHechas(d.doc), pasos: d.doc.puedeDeshacer(), avisos: d.avisos.dichos.length }, antes);
 });
+
+// --- MAT-21, MAR-19: el reparto de materiales viaja en el proyecto y no toca las marcas --------------------
+test('MAR-19: guardar y cargar un proyecto con reparto devuelve el mismo reparto', () => {
+  const origen = conMarcas({ forma: 'circulo', w: 16, h: 16, bloque: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  const { texto } = origen.doc.proyecto();
+  assert.deepEqual(JSON.parse(texto).reparto, { borde: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  const d = montar(); d.doc.regenerar();
+  d.doc.cargarProyecto(texto);
+  assert.equal(d.st.bloque, 'minecraft:bricks');
+  assert.equal(d.st.relleno, 'minecraft:stone');
+  assert.deepEqual(clavesHechas(d.doc), clavesHechas(origen.doc));
+  assert.equal(JSON.parse(d.almacen.leer('mc-formas-v1')).relleno, 'minecraft:stone', 'se guarda en el navegador');
+});
+
+test('MAR-19: un proyecto antiguo (sin reparto) carga con un solo material y no toca el bloque', () => {
+  const { texto } = conMarcas({ forma: 'circulo', w: 16, h: 16 }).doc.proyecto();
+  const d = montar(); d.doc.regenerar();
+  Object.assign(d.st, { bloque: 'minecraft:glass', relleno: 'minecraft:stone' });
+  d.doc.cargarProyecto(texto);
+  assert.equal(d.st.relleno, '');
+  assert.equal(d.st.bloque, 'minecraft:glass');
+});
+
+test('MAR-19: un Deshacer tras cargar no cambia el reparto (es una opción, no entra en el historial)', () => {
+  const { texto } = conMarcas({ forma: 'circulo', w: 16, h: 16, bloque: 'minecraft:bricks', relleno: 'minecraft:stone' }).doc.proyecto();
+  const d = montar(); d.doc.regenerar();
+  d.doc.cargarProyecto(texto);
+  d.doc.deshacer();
+  assert.equal(d.st.relleno, 'minecraft:stone');
+});
+
+test('MAT-21: cambiar el reparto no borra marcas ni saca aviso', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { hechos: clavesHechas(d.doc), avisos: d.avisos.dichos.length, pasos: d.doc.puedeDeshacer() };
+  Object.assign(d.st, { bloque: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  d.doc.regenerar();
+  Object.assign(d.st, { relleno: 'minecraft:glass' });
+  d.doc.regenerar();
+  assert.deepEqual({ hechos: clavesHechas(d.doc), avisos: d.avisos.dichos.length, pasos: d.doc.puedeDeshacer() }, antes);
+});

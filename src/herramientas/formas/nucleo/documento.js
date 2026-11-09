@@ -141,6 +141,8 @@ export const Documento = (() => {
       if (!r.ok) { avisos.avisar(r.mensaje); return r; }
       antesDeMarcar();
       Object.assign(st, r.forma);
+      // El reparto (MAR-19) es una opcion, no entra en el historial: un archivo sin el deja un solo material.
+      if (r.reparto) { st.bloque = r.reparto.borde; st.relleno = r.reparto.relleno; } else st.relleno = '';
       marcas.limpiar();
       regenerar({ sinLeer: true, conservar: true });
       const nueva = Estado.firma(st);

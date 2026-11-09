@@ -45,6 +45,7 @@ export const Estado = (() => {
     esfera: variantes()[0] || '', orient: orientaciones()[0] || '', zoom: 26, rel: true, tramos: true,
     tramosDentro: false, distEjes: true, guiasChunk: false, centroX: null, centroZ: null, baseY: null, capa: 0,
     bloque: Materiales.BLOQUE_DEFECTO,   // al final: lo guardado antes es un prefijo de lo de ahora
+    relleno: '',                         // material del relleno (011, MAT-21): '' = igual que el borde, un solo material
   };
 
   const num = (v, min, max, def) => {
@@ -99,6 +100,8 @@ export const Estado = (() => {
     for (const k of BOOLEANOS) if (typeof raw[k] === 'boolean') st[k] = raw[k];
     // Bloque del esquema de Litematica (MAT-17): una opcion de vista mas, solo de la lista corta.
     if (Materiales.BLOQUES.some(b => b.id === raw.bloque)) st.bloque = raw.bloque;
+    // Material del relleno (MAT-21): otra opcion mas, solo de la lista corta; cualquier otra cosa es «sin reparto».
+    if (Materiales.BLOQUES.some(b => b.id === raw.relleno)) st.relleno = raw.relleno;
     return st;
   }
 
@@ -164,7 +167,17 @@ export const Estado = (() => {
     const forma = {};
     for (const k of CLAVES_GEO) forma[k] = st[k];
     forma.capa = st.capa;
-    return JSON.stringify({ app: APP_ARCHIVO, version: VERSION_ARCHIVO, forma, marcas: compactarMarcas(firma, hechos) });
+    const archivo = { app: APP_ARCHIVO, version: VERSION_ARCHIVO, forma, marcas: compactarMarcas(firma, hechos) };
+    // El reparto (MAR-19) va al final y solo si lo hay: sin el, el archivo es el de siempre.
+    if (st.relleno && st.relleno !== st.bloque) archivo.reparto = { borde: st.bloque, relleno: st.relleno };
+    return JSON.stringify(archivo);
+  }
+
+  // Reparto de un archivo: { borde, relleno } con dos bloques distintos de la lista, o null.
+  function repartoValido(r) {
+    const esBloque = id => Materiales.BLOQUES.some(b => b.id === id);
+    return r && typeof r === 'object' && esBloque(r.borde) && esBloque(r.relleno) && r.borde !== r.relleno
+      ? { borde: r.borde, relleno: r.relleno } : null;
   }
 
   const MSG_NO_PROYECTO = 'No es un proyecto de Formas MC. Elige un archivo guardado con «Guardar proyecto».';
@@ -180,7 +193,7 @@ export const Estado = (() => {
     return forma;
   }
 
-  // Lee el texto de un archivo de proyecto. Devuelve { ok: true, forma, marcas } o
+  // Lee el texto de un archivo de proyecto. Devuelve { ok: true, forma, marcas, reparto } o
   // { ok: false, motivo, mensaje } sin tocar nada. Los valores de la forma se validan con las
   // mismas reglas que lo guardado en el navegador (los fuera de rango se recortan y los desconocidos
   // se descartan): se reutiliza `cargar` con un almacen de solo lectura. Las marcas se devuelven
@@ -193,7 +206,7 @@ export const Estado = (() => {
     }
     if (o.version > VERSION_ARCHIVO) return { ok: false, motivo: 'version-nueva', mensaje: MSG_VERSION_NUEVA };
     const crudo = o.forma && typeof o.forma === 'object' && !Array.isArray(o.forma) ? o.forma : {};
-    return { ok: true, forma: formaValidada(crudo), marcas: o.marcas && typeof o.marcas === 'object' ? o.marcas : null };
+    return { ok: true, forma: formaValidada(crudo), marcas: o.marcas && typeof o.marcas === 'object' ? o.marcas : null, reparto: repartoValido(o.reparto) };
   }
 
   // --- enlace para compartir -------------------------------------------------------------

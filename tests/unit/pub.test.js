@@ -50,8 +50,8 @@ test('PUB-09: las claves del navegador y el formato de lo guardado no cambian', 
   Estado.guardar(st, almacen);
   Estado.guardarMarcas(Estado.firma(st), new Set(MARCADOS), almacen);
   assert.deepEqual(Object.keys(escrito).sort(), ['mc-formas-v1', 'mc-formas-v1:marcas']);
-  // Solo se añade la clave `bloque` (016, MAT-17), al final: todo lo anterior queda igual, byte a byte.
-  assert.equal(escrito['mc-formas-v1'], GUARDADO.replace(/}$/, ',"bloque":"minecraft:stone"}'));
+  // Solo se añaden `bloque` (016, MAT-17) y `relleno` (011, MAT-21), al final: todo lo anterior queda igual, byte a byte.
+  assert.equal(escrito['mc-formas-v1'], GUARDADO.replace(/}$/, ',"bloque":"minecraft:stone","relleno":""}'));
   assert.equal(escrito['mc-formas-v1:marcas'], MARCAS);
 });
 
@@ -100,4 +100,10 @@ test('PUB-07: cada acción usada lleva una versión exacta (vX.Y.Z)', () => {
 
 test('PUB-07: Jekyll ya no aplica: no queda _config.yml', () => {
   assert.equal(fs.existsSync(path.join(raiz, '_config.yml')), false);
+});
+
+test('MAR-19: un proyecto de la versión anterior (sin reparto) carga con un solo material', () => {
+  const r = Estado.desdeArchivo(PROYECTO);
+  assert.equal(r.ok, true);
+  assert.equal(r.reparto, null);
 });

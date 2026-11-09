@@ -513,3 +513,60 @@ test('MAT-17: el bloque no entra en la firma de las marcas, en el enlace ni en e
   assert.ok(!('bloque' in JSON.parse(Estado.aArchivo({ ...base, bloque: 'minecraft:glass' }, 'f', new Set())).forma));
   assert.equal(Estado.aEnlace({ ...base, bloque: 'minecraft:glass' }), Estado.aEnlace(base));
 });
+
+// --- MAT-21, MAR-19: reparto de materiales (opcion guardada, fuera de la firma) -----------------------
+test('MAT-21: por defecto no hay reparto (relleno vacío) y se guarda y se recupera', () => {
+  assert.equal(Estado.DEFAULTS.relleno, '');
+  const almacen = Almacen.memoria();
+  const st = Estado.cargar(almacen);
+  assert.equal(st.relleno, '');
+  st.relleno = 'minecraft:glass';
+  assert.equal(Estado.guardar(st, almacen), true);
+  assert.equal(Estado.cargar(almacen).relleno, 'minecraft:glass');
+});
+
+test('MAT-21: un relleno ausente, desconocido o de otro tipo cae en «sin reparto»; el resto de lo guardado vale', () => {
+  const con = raw => Estado.cargar(conDatos('mc-formas-v1', JSON.stringify(raw)));
+  assert.equal(con({ forma: 'rombo' }).relleno, '', 'un guardado anterior, sin la clave');
+  assert.equal(con({ relleno: 'minecraft:bedrock' }).relleno, '');
+  assert.equal(con({ relleno: 7 }).relleno, '');
+  assert.equal(con({ relleno: 'minecraft:glass', forma: 'rombo' }).forma, 'rombo');
+  assert.equal(con({ relleno: 'minecraft:glass' }).relleno, 'minecraft:glass');
+});
+
+test('MAT-21: el relleno es la última clave de lo guardado y no entra en la firma, el enlace ni CLAVES_GEO', () => {
+  const base = { ...Estado.DEFAULTS, forma: 'circulo', w: 16, h: 16 };
+  assert.equal(Object.keys(Estado.DEFAULTS).pop(), 'relleno');
+  assert.equal(Estado.firma({ ...base, relleno: 'minecraft:glass' }), Estado.firma(base));
+  assert.ok(!Estado.CLAVES_GEO.includes('relleno') && !Estado.VISTA.includes('relleno'));
+  assert.equal(Estado.aEnlace({ ...base, relleno: 'minecraft:glass' }), Estado.aEnlace(base));
+  assert.ok(!('relleno' in JSON.parse(Estado.aArchivo({ ...base, relleno: 'minecraft:glass' }, 'f', new Set())).forma));
+});
+
+const conReparto = { ...stCirculo4, bloque: 'minecraft:bricks', relleno: 'minecraft:stone' };
+test('MAR-19: con reparto el archivo lo lleva al final y vuelve igual al leerlo', () => {
+  const texto = Estado.aArchivo(conReparto, 'f', new Set());
+  assert.deepEqual(Object.keys(JSON.parse(texto)), ['app', 'version', 'forma', 'marcas', 'reparto']);
+  assert.deepEqual(JSON.parse(texto).reparto, { borde: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  const r = Estado.desdeArchivo(texto);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.reparto, { borde: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  assert.equal(Estado.VERSION_ARCHIVO, 1, 'la versión del formato no cambia');
+});
+
+test('MAR-19: sin reparto el archivo no lleva el campo (es el de siempre) y al leerlo no hay reparto', () => {
+  assert.ok(!('reparto' in JSON.parse(Estado.aArchivo(stCirculo4, 'f', new Set()))));
+  assert.ok(!('reparto' in JSON.parse(Estado.aArchivo({ ...stCirculo4, bloque: 'minecraft:stone', relleno: 'minecraft:stone' }, 'f', new Set()))), 'el mismo material no es reparto');
+  assert.equal(Estado.desdeArchivo(archivoOk({})).reparto, null);
+});
+
+test('MAR-19: un reparto con bloques desconocidos, iguales o mal formado se ignora y el resto del archivo carga', () => {
+  const con = reparto => Estado.desdeArchivo(archivoOk({ forma: { forma: 'rombo', w: 8 }, reparto }));
+  for (const malo of [{ borde: 'minecraft:bedrock', relleno: 'minecraft:stone' }, { borde: 'minecraft:stone', relleno: 'minecraft:stone' },
+    { borde: 'minecraft:stone' }, 'texto', 7, [], null]) {
+    const r = con(malo);
+    assert.equal(r.ok, true);
+    assert.equal(r.reparto, null, JSON.stringify(malo));
+    assert.equal(r.forma.forma, 'rombo');
+  }
+});
