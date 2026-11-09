@@ -251,6 +251,6 @@ export const Estado = (() => {
   return {
     LIMITES, ENUMS, DEFAULTS, BOOLEANOS, VISTA, CLAVES_GEO, clamp, coordenada, alturaCapa,
     cargar, guardar, firma, compactarMarcas, marcasDesde, guardarMarcas, cargarMarcas,
-    VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace,
+    VERSION_ARCHIVO, aArchivo, desdeArchivo, nombreArchivoProyecto, aEnlace, desdeEnlace, formaValidada, repartoValido,
   };
 })();
