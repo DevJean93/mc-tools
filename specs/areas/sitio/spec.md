@@ -67,7 +67,7 @@ contenido ocupa la pantalla de forma equilibrada (presentación en dos columnas,
   no se promete lo que no hay) y no hay enlaces externos, coherente con «todos los derechos reservados».
   Estilo sobrio de la app con una rejilla de bloques de fondo; se descartaron texturas y títulos
   pixelados, que desentonan con la app y añadirían fuentes.
-- 2026-11-08 (cambio 017): la esfera de la portada es de 11 bloques y cambia de capa cada 800 ms. Sin
+- 2026-11-08 (cambio 017): la esfera de la portada es de 11 bloques y cambia de capa cada 800 ms. Con
   movimiento reducido se queda en la capa del ecuador (la 6.ª). La rejilla de fondo es el token `--grilla`
   de cada tema (5–6 % de opacidad), con un contraste del texto superior a 6:1 sobre ella. Los tokens siguen
   en `estilos.css` de Formas (la portada lo importa); no se movieron a `compartido/` para no tocar `/formas/`.
