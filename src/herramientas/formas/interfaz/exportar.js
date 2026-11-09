@@ -40,7 +40,7 @@ export const Exportar = (() => {
           const aux = document.createElement('canvas');
           render.dibujar(aux, {
             g: d.capas[c], capa: c, hechos: d.hechos, s: d.zoom, op: d.op, dpr: 1,
-            cabecera: cabecera(d, c),
+            cabecera: cabecera(d, c), relleno: d.rellenoCapa && d.rellenoCapa(c),
           });
           aux.toBlob(blob => {
             if (!blob) {
@@ -97,7 +97,7 @@ export const Exportar = (() => {
       pag.append(mat, tabla);
       const totales = d.totales;
       vista.crear({ materiales: mat, tabla, barra: crearEl('div'), progreso: crearEl('span'), lienzo: null })
-        .pintar(materiales.resumen(totales, totales.map(() => 0), -1), -1, { altura: d.altura, sinMarcas: true });
+        .pintar(materiales.resumen(totales, totales.map(() => 0), -1, d.reparto), -1, { altura: d.altura, sinMarcas: true });
       pag.appendChild(crearEl('p', 'ficha-pie', `Formas MC · ${new Date().toLocaleDateString('es')}`));
       return pag;
     }
@@ -108,7 +108,7 @@ export const Exportar = (() => {
 
     async function imagenCapa(d, c, aux) {
       const lineas = cabecera(d, c, { construidos: false });
-      render.dibujar(aux, { g: d.capas[c], capa: c, hechos: new Set(), s: CELDA_FICHA, op: d.op, dpr: 1, cabecera: lineas, paleta: render.PAPEL });   // siempre en papel (MAT-14)
+      render.dibujar(aux, { g: d.capas[c], capa: c, hechos: new Set(), s: CELDA_FICHA, op: d.op, dpr: 1, cabecera: lineas, paleta: render.PAPEL, relleno: d.rellenoCapa && d.rellenoCapa(c) });   // siempre en papel (MAT-14)
       const url = URL.createObjectURL(await aBlob(aux));
       urls.push(url);
       const img = crearEl('img');

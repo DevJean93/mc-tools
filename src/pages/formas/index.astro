@@ -120,6 +120,10 @@ import '../../herramientas/formas/estilos.css';
       <label>Bloque del esquema de Litematica
         <select id="bloque"></select>
       </label>
+      <label>Material del relleno
+        <select id="relleno"></select>
+      </label>
+      <p class="ayuda" id="ayudaRelleno"></p>
       <div class="botones">
         <button type="button" id="descargarLitematica" class="ancho"><svg class="ico" aria-hidden="true"><use href="#i-capas"/></svg>Descargar para Litematica</button>
         <button type="button" id="importarLitematica" class="ancho"><svg class="ico" aria-hidden="true"><use href="#i-capas"/></svg>Importar de Litematica</button>
@@ -172,7 +176,8 @@ import '../../herramientas/formas/estilos.css';
       <b>Ctrl+Z / Ctrl+Y:</b> deshacer / rehacer.</span>
     </p>
     <ul class="leyenda">
-      <li><span class="m bloque" aria-hidden="true"></span>Bloque</li>
+      <li><span class="m bloque" aria-hidden="true"></span><span id="leyendaBloque">Bloque</span></li>
+      <li id="leyendaRelleno" hidden><span class="m relleno" aria-hidden="true"></span>Relleno</li>
       <li><span class="m hecho" aria-hidden="true"></span>Construido (esquina marcada)</li>
       <li><span class="m centro" aria-hidden="true"></span>Franjas del centro; el recuadro dorado es el bloque central (1×1 o 2×2)</li>
       <li id="leyendaGuias" hidden><span class="m guia" aria-hidden="true"></span>Guía de chunk: frontera cada 16 bloques del mundo</li>

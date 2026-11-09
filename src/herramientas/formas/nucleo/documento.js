@@ -4,6 +4,7 @@ import { Estado } from './estado.js';
 import { Formas } from './formas.js';
 import { Marcas } from './marcas.js';
 import { Historial } from './historial.js';
+import { Materiales } from './materiales.js';
 export const Documento = (() => {
 
   const MSG_BLOQUEADO = 'El navegador bloquea el almacenamiento: el progreso no se guardará al recargar.';
@@ -14,6 +15,26 @@ export const Documento = (() => {
     let capas = [], totales = [], grosorMax = null;
     let firmaActual = null, firmaPedida = null, previos = null;
     let notaLlena = false;   // la nota fija visible es la de "almacenamiento lleno"
+
+    // Reparto entre borde y relleno (MAT-18): las zonas se calculan una vez por forma generada (capas nuevas) y
+    // solo si hay reparto; despues pintar o contar solo las lee.
+    let zonas = null, zonasDe = null;
+    const reparto = () => Materiales.repartoActivo(st);
+    function zonasActuales() {
+      if (zonasDe !== capas) { zonas = Materiales.rellenoDe(capas); zonasDe = capas; }
+      return zonas;
+    }
+    // Bloques de cada material por capa (borde y relleno), o null si es un solo material.
+    function materialesPorCapa() {
+      const r = reparto();
+      if (!r) return null;
+      const z = zonasActuales(), nombre = id => (Materiales.BLOQUES.find(b => b.id === id) || {}).nombre || id;
+      return { materiales: [
+        { id: r.borde, nombre: nombre(r.borde), porCapa: totales.map((n, i) => n - z.cuenta[i]) },
+        { id: r.relleno, nombre: nombre(r.relleno), porCapa: z.cuenta },
+      ] };
+    }
+    const rellenoCapa = c => (reparto() ? zonasActuales().celdas[c] || null : null);
 
     // El estado del almacenamiento es una nota fija, no un aviso temporal: sigue siendo cierto
     // mientras dure y no lo tapa ningun otro aviso (p. ej. el de grosor recortado).
@@ -199,7 +220,7 @@ export const Documento = (() => {
     }
 
     return {
-      capas: () => capas, capaActual, totales: () => totales, grosorMax: () => grosorMax,
+      capas: () => capas, capaActual, reparto: materialesPorCapa, rellenoCapa, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
       deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace, importarEsquema,

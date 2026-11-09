@@ -1836,6 +1836,102 @@ async function cargar() { await send('Page.navigate', { url: URL_APP }); await e
   await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await ev(`localStorage.clear()`); await cargar();
 
+  // MAT-18, MAT-19, MAT-20, MAT-21, MAR-19: varios materiales por forma (borde y relleno).
+  const elegirRelleno = id => ev(`(() => { const b = document.getElementById('relleno'); b.value = '${id}'; b.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+  // Pixeles del lienzo de un color exacto (r,g,b): el bloque y el relleno se distinguen por su color.
+  const pixelesDe = (r, g, b) => ev(`(() => { const c = document.getElementById('lienzo'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] === ${r} && d[i + 1] === ${g} && d[i + 2] === ${b}) n++; return n; })()`);
+  const BLOQUE_OSC = [34, 197, 94], RELLENO_OSC = [110, 156, 128], BLOQUE_CLA = [74, 222, 128], RELLENO_CLA = [134, 176, 150];
+  const matNombres = () => ev(`[...document.querySelectorAll('#materiales .mat-nombre')].map(h => h.textContent.replace(/[ \\n]+/g, ' ').trim())`);
+  await ev(`localStorage.clear()`); await cargar(); borrarEsquemas();
+  await ev(`document.getElementById('lienzo').focus()`);
+  await key('f', 'KeyF', 70); await esperar(200);
+  const ctrlRelleno = await ev(`(() => { const s = document.getElementById('relleno'); if (!s) return null; const l = s.closest('label');
+    return { opciones: [...s.options].map(o => o.value + '|' + o.textContent).join(';'), valor: s.value, deshabilitado: s.disabled, etiqueta: l.textContent.replace(/[ \\n]+/g, ' ').trim().startsWith('Material del relleno'),
+      enProyecto: document.getElementById('secProyecto').contains(s), tras: !!(document.getElementById('bloque').compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING) }; })()`);
+  ok(ctrlRelleno && ctrlRelleno.opciones.startsWith('|Igual que el borde;minecraft:stone|Piedra;') && ctrlRelleno.opciones.split(';').length === 9 && ctrlRelleno.valor === '' &&
+    !ctrlRelleno.deshabilitado && ctrlRelleno.etiqueta && ctrlRelleno.enProyecto && ctrlRelleno.tras,
+  `MAT-18: «Material del relleno» va bajo el selector de bloque, con «Igual que el borde» y la misma lista (${JSON.stringify(ctrlRelleno)})`);
+  // Sin reparto: nada nuevo en el desglose, la leyenda ni el lienzo.
+  const sinRep = await ev(`({ nombres: document.querySelectorAll('#materiales .mat-nombre').length, ley: !document.getElementById('leyendaRelleno').hidden, bloque: document.getElementById('leyendaBloque').textContent })`);
+  ok(sinRep.nombres === 0 && !sinRep.ley && sinRep.bloque === 'Bloque' && await pixelesDe(...RELLENO_OSC) === 0 && await pixelesDe(...BLOQUE_OSC) > 0,
+    `MAT-19, MAT-20: sin reparto el desglose, la leyenda y el lienzo no cambian (${JSON.stringify(sinRep)})`);
+
+  // Círculo de 16 con ladrillos y piedra: 208 en dos materiales, lienzo con dos tonos, leyenda con «Relleno».
+  const marcasAntesRep = await ev(`localStorage.getItem('mc-formas-v1:marcas')`);
+  const avisoAntesRep = (await aviso()).texto;
+  await elegirBloque('minecraft:bricks'); await elegirRelleno('minecraft:stone'); await esperar(300);
+  const nombresRep = await matNombres();
+  const sumaRep = nombresRep.map(t => +t.match(/([0-9]+) bloques/)[1]).reduce((a, b) => a + b, 0);
+  ok(nombresRep.length === 2 && /^Ladrillos/.test(nombresRep[0]) && /^Piedra/.test(nombresRep[1]) && sumaRep === 208 &&
+    await ev(`document.querySelector('#materiales .tot').textContent.startsWith('208')`),
+  `MAT-18, MAT-19: círculo de 16 con ladrillos y piedra: desglose por material que suma 208 (${JSON.stringify(nombresRep)})`);
+  ok(await pixelesDe(...RELLENO_OSC) > 0 && await pixelesDe(...BLOQUE_OSC) > 0 && await ev(`!document.getElementById('leyendaRelleno').hidden && document.getElementById('leyendaBloque').textContent === 'Borde'`),
+    'MAT-20: con reparto el lienzo pinta bloque y relleno en dos tonos y la leyenda tiene «Relleno»');
+  ok(await prog() === 'Construidos: 16/208 (8 %)' && await ev(`localStorage.getItem('mc-formas-v1:marcas')`) === marcasAntesRep && (await aviso()).texto === avisoAntesRep,
+    'MAT-21: cambiar el reparto no borra marcas ni saca aviso (' + await prog() + ')');
+  await shot('21-reparto-oscuro.png');
+  // Cambia el tema: el relleno claro tiene su tono apagado.
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  ok(await pixelesDe(...RELLENO_CLA) > 0 && await pixelesDe(...BLOQUE_CLA) > 0, 'MAT-20: en el tema claro el relleno tiene su tono apagado');
+  await shot('22-reparto-claro.png');
+  await ev(`document.getElementById('botonTema').click()`); await esperar(300);
+  // Se recuerda al recargar.
+  await cargar();
+  ok(await ev(`document.getElementById('relleno').value === 'minecraft:stone' && document.getElementById('bloque').value === 'minecraft:bricks'
+    && JSON.parse(localStorage.getItem('mc-formas-v1')).relleno === 'minecraft:stone'`) && (await matNombres()).length === 2 && await prog() === 'Construidos: 16/208 (8 %)',
+  'MAT-21: el reparto se guarda en el navegador y vuelve al recargar');
+  // Hueco: todo es borde; el control se deshabilita (con ayuda) y vuelve al pasar a sólido.
+  await ev(`(() => { const m = document.getElementById('modo'); m.value = 'hueco'; m.dispatchEvent(new Event('input')); })()`); await esperar(400);
+  const enHueco = await ev(`({ dis: document.getElementById('relleno').disabled, ayuda: document.getElementById('ayudaRelleno').textContent, nombres: document.querySelectorAll('#materiales .mat-nombre').length, ley: !document.getElementById('leyendaRelleno').hidden })`);
+  ok(enHueco.dis && /hueca/.test(enHueco.ayuda) && enHueco.nombres === 0 && !enHueco.ley && await pixelesDe(...RELLENO_OSC) === 0,
+    `MAT-18: en una forma hueca el relleno se deshabilita y todo es borde (${JSON.stringify(enHueco)})`);
+  await ev(`(() => { const m = document.getElementById('modo'); m.value = 'relleno'; m.dispatchEvent(new Event('input')); })()`); await esperar(400);
+  ok(await ev(`!document.getElementById('relleno').disabled && document.getElementById('relleno').value === 'minecraft:stone'`) && (await matNombres()).length === 2,
+    'MAT-18: al volver a sólido el reparto elegido sigue ahí');
+
+  // Esquema con dos materiales: paleta de tres y 208 bloques; al importarlo vuelve el reparto.
+  const esqRep = await descargarEsquema();
+  const palRep = esqRep && regionEsq(esqRep).BlockStatePalette.v.map(b => b.Name.v);
+  ok(esqRep && palRep.join() === 'minecraft:air,minecraft:bricks,minecraft:stone' && porCapaEsq(esqRep).join() === '208',
+    `MAT-21: «Descargar para Litematica» con dos materiales lleva aire, ladrillos y piedra (${palRep})`);
+  await elegirRelleno(''); await elegirBloque('minecraft:glass'); await esperar(300);
+  ok(await ev(`document.querySelectorAll('#materiales .mat-nombre').length === 0`) && await pixelesDe(...RELLENO_OSC) === 0, 'MAT-18: «Igual que el borde» quita el reparto');
+  await importarArchivo(esqRep.bytes);
+  ok(await ev(`document.getElementById('relleno').value === 'minecraft:stone' && document.getElementById('bloque').value === 'minecraft:bricks'`) && (await matNombres()).length === 2,
+    'FOR-19, MAT-21: importar un esquema con dos bloques recupera el reparto');
+  borrarEsquemas();
+
+  // Esfera de 11: la capa 1 es toda borde; la tabla por capas lleva una columna por material.
+  await ev(`(() => { const f = document.getElementById('forma'); f.value = 'esfera'; f.dispatchEvent(new Event('input')); })()`); await esperar(300);
+  await ponerCampo('w', '11'); await esperar(600);
+  const tablaRep = await ev(`(() => { const t = document.querySelector('#tablaCapas table'); if (!t) return null;
+    return { cab: [...t.querySelectorAll('thead th')].map(h => h.textContent), filas: [...t.querySelectorAll('tbody tr')].map(r => [...r.children].map(c => c.textContent)) }; })()`);
+  ok(tablaRep && tablaRep.cab.join('|') === 'Capa|Bloques|Stacks|Ladrillos|Piedra|Hechos' && tablaRep.filas.length === 11 &&
+    tablaRep.filas.every(f => +f[3] + +f[4] === +f[1]) && tablaRep.filas[0][4] === '0' && +tablaRep.filas[5][4] > 0,
+  `MAT-19: la tabla por capas de la esfera de 11 tiene una columna por material, suma el total y la capa 1 no tiene relleno (${tablaRep && tablaRep.cab.join('|')})`);
+  // La ficha lleva el desglose por material.
+  await pedirFicha();
+  const fichaRep = await fichaInfo();
+  ok(fichaRep && /Ladrillos/.test(fichaRep.texto) && /Piedra/.test(fichaRep.texto) && /Ladrillos\|Piedra/.test(fichaRep.cabTabla) && !/Hechos/.test(fichaRep.cabTabla) && fichaRep.cargadas,
+    `MAT-19: la ficha imprimible lleva el desglose por material (${fichaRep && fichaRep.cabTabla})`);
+  await ev(`window.dispatchEvent(new Event('afterprint'))`);
+  await ev(`localStorage.clear()`); await cargar();
+
+  // En móvil: el selector cabe, mide 44 px, tiene 16 px y la pantalla no desborda.
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true });
+  await cargar(); await esperar(300);
+  await ev(`document.getElementById('verMenu').click()`); await esperar(300);
+  await ev(`document.getElementById('relleno').scrollIntoView({ block: 'center' })`); await esperar(500);
+  const movilRel = await ev(`(() => { const e = document.getElementById('relleno'), r = e.getBoundingClientRect(), vw = document.documentElement.clientWidth, nav = document.querySelector('.navmovil').getBoundingClientRect();
+    return { alto: Math.round(r.height), izq: Math.round(r.left), der: Math.round(r.right), vw, fuente: parseFloat(getComputedStyle(e).fontSize), sobreNav: r.bottom <= nav.top, scroll: document.documentElement.scrollWidth }; })()`);
+  ok(movilRel.alto >= 44 && movilRel.izq >= 0 && movilRel.der <= movilRel.vw && movilRel.fuente >= 16 && movilRel.sobreNav && movilRel.scroll <= movilRel.vw,
+    `MAT-18: a 390 px el selector del relleno mide al menos 44 px, tiene 16 px y cabe (${JSON.stringify(movilRel)})`);
+  await shot('23-relleno-movil.png');
+  await send('Emulation.clearDeviceMetricsOverride'); await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await ev(`localStorage.clear()`); await cargar();
+
   ok(errores.length === 0, 'Consola sin errores ' + (errores.length ? JSON.stringify(errores) : ''));
   ws.close(); cerrar();
 })().catch(e => { console.error(e); cerrar(); process.exit(1); });

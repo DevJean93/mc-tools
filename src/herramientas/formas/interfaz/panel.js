@@ -33,6 +33,8 @@ export const Panel = (() => {
       st.zoom = Estado.clamp($('zoom').value, limites.zoomMin, limites.zoomMax);
       for (const k of TOGGLES) st[k] = $(k).checked;
       st.bloque = Materiales.BLOQUES.some(b => b.id === $('bloque').value) ? $('bloque').value : st.bloque;   // MAT-17
+      const rel = $('relleno').value;   // MAT-18: '' = igual que el borde
+      st.relleno = rel === '' || Materiales.BLOQUES.some(b => b.id === rel) ? rel : st.relleno;
       for (const id of COORDS) st[id] = Estado.coordenada($(id).value);   // vacio -> sin coordenada
       st.baseY = Estado.coordenada($('baseY').value);                    // vacio -> sin altura
       ponerGuias();
@@ -101,6 +103,20 @@ export const Panel = (() => {
       sel.value = st.bloque;
     }
 
+    // Material del relleno (MAT-18): «Igual que el borde» (sin reparto) y la misma lista de bloques. En una forma
+    // hueca todo es borde: el selector se deshabilita (no se oculta) y la ayuda lo dice; lo elegido se conserva.
+    function ponerRelleno() {
+      const sel = $('relleno'), hueco = st.modo === 'hueco';
+      if (!sel.options.length) {
+        sel.innerHTML = '<option value="">Igual que el borde</option>' + Materiales.BLOQUES.map(b => `<option value="${b.id}">${b.nombre}</option>`).join('');
+      }
+      sel.value = st.relleno;
+      sel.disabled = hueco;
+      $('ayudaRelleno').textContent = hueco
+        ? 'En una forma hueca todo es borde: el relleno solo se usa en las sólidas.'
+        : 'El bloque de arriba es el del borde. Con otro material de relleno, el desglose, el dibujo y el esquema los separan.';
+    }
+
     function poner(grosorMax) {
       const maxW = es3D() ? limites.w3d : limites.w2d;
       ponerFormas();
@@ -111,7 +127,7 @@ export const Panel = (() => {
       $('igualar').checked = st.igualar; $('modo').value = st.modo;
       ponerPropios(); $('zoom').value = st.zoom;
       for (const k of TOGGLES) $(k).checked = st[k];
-      ponerBloque();
+      ponerBloque(); ponerRelleno();
       // No se pisa un campo mientras se teclea en el (un "-" a medias se perderia).
       for (const id of COORDS) if (document.activeElement !== $(id)) $(id).value = st[id] === null ? '' : st[id];
       ponerGuias();
@@ -129,14 +145,15 @@ export const Panel = (() => {
 
     // Conecta el formulario con la app: cada cambio avisa de si toca regenerar (diferido
     // mientras se teclea) o solo repintar.
-    function conectar({ alCambiarGeo, alCambiarVista, alCambiarAltura }) {
+    function conectar({ alCambiarGeo, alCambiarVista, alCambiarAltura, alCambiarMateriales }) {
       for (const id of CAMPOS) {
         $(id).addEventListener('input', () => alCambiarGeo({ diferido: true }));
         $(id).addEventListener('change', () => alCambiarGeo({ diferido: false }));
       }
       for (const id of SELECTS) $(id).addEventListener('input', () => alCambiarGeo({ diferido: false }));
       for (const k of TOGGLES) $(k).addEventListener('input', () => alCambiarVista());
-      $('bloque').addEventListener('input', () => alCambiarVista());   // es solo de vista: no toca la forma ni las marcas
+      // Los materiales no tocan la forma ni las marcas, pero cambian el desglose y la leyenda ademas del dibujo.
+      for (const id of ['bloque', 'relleno']) $(id).addEventListener('input', () => alCambiarMateriales());
       for (const id of COORDS) $(id).addEventListener('input', () => alCambiarVista());
       $('baseY').addEventListener('input', () => alCambiarAltura());
     }

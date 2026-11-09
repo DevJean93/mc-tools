@@ -93,7 +93,7 @@ globalThis.Render = Render;
 
   function dibujar() {
     geo = Render.dibujar(cv, {
-      g: doc.capaActual(), capa: doc.capa(), hechos: doc.hechos(), s: st.zoom, op: st,
+      g: doc.capaActual(), capa: doc.capa(), hechos: doc.hechos(), s: st.zoom, op: st, relleno: doc.rellenoCapa(doc.capa()),
       cursor: document.activeElement === cv && teclado ? teclado.cursor() : null,
       dpr: window.devicePixelRatio || 1,
     });
@@ -139,7 +139,10 @@ globalThis.Render = Render;
     $('rehacer').disabled = !doc.puedeRehacer();
     dibujar();
 
-    const r = Materiales.resumen(doc.totales(), doc.porCapa(n), capa);
+    const reparto = doc.reparto();   // MAT-19: null con un solo material
+    $('leyendaRelleno').hidden = !reparto;
+    $('leyendaBloque').textContent = reparto ? 'Borde' : 'Bloque';
+    const r = Materiales.resumen(doc.totales(), doc.porCapa(n), capa, reparto);
     vista.pintar(r, capa, { nombre: nombreForma(), dimensiones: dimensiones(), modo: textoModo(), altura: alturaDeCapa });
     $('resumen').textContent = Materiales.textoResumenCentro(doc.capaActual(), Render.centro);
   }
@@ -236,6 +239,7 @@ globalThis.Render = Render;
       nombre: nombreForma(), dimensiones: dimensiones(), modoTexto: textoModo(), altura: alturaDeCapa,
       variante: doc.definicion().variantes ? st.esfera : st.forma, modo: st.modo, grosor: st.grosor, es3D: doc.es3D(),
       w: st.w, h: st.h, porCapa: doc.porCapa(doc.capas().length), stacks: Materiales.fmtStacks,
+      reparto: doc.reparto(), rellenoCapa: doc.rellenoCapa,
     }),
   });
 
@@ -243,6 +247,7 @@ globalThis.Render = Render;
   panel.conectar({
     alCambiarGeo: ({ diferido }) => (diferido ? regenerarDiferido() : doc.regenerar()),
     alCambiarVista: () => { panel.leer(); doc.guardarEstado(); programarDibujo(); },
+    alCambiarMateriales: () => { panel.leer(); doc.guardarEstado(); refrescar(); },
     alCambiarAltura: () => { panel.leer(); doc.guardarEstado(); refrescar(); },   // cambia el texto de la capa, no el dibujo
   });
   al('zoom', 'input', () => zoom.aplicar(+$('zoom').value));

@@ -166,6 +166,12 @@ canvas { display: block; cursor: crosshair; touch-action: none; }
 .mat { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 14px; }
 .mat span { color: var(--fg-mut); }
 .mat b { text-align: right; font-family: var(--mono); font-weight: 600; }
+/* Desglose por material (MAT-19): un titulo con su muestra de color y su nombre, y debajo sus cajas. */
+.mat-nombre { display: flex; align-items: center; gap: 8px; margin: 8px 0 2px; font-size: 14px; font-weight: 600; }
+.mat-nombre small { font-family: var(--mono); }
+.mat-m { width: 14px; height: 14px; border: 1px solid var(--borde-marca); border-radius: 2px; flex: none; }
+.mat-m.borde { background: var(--bloque); }
+.mat-m.relleno { background: var(--relleno); }
 .formula { margin: 4px 0 0; color: var(--fg-mut); font-size: 12px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; font-family: var(--mono); }
 td, th { padding: 4px 6px; border-bottom: 1px solid var(--muted); text-align: right; }

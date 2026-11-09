@@ -602,3 +602,41 @@ test('FOR-19: importar un esquema con dos materiales recupera el reparto; uno co
   d.doc.importarEsquema(esquema('forma=rombo&w=20', 'minecraft:glass'));
   assert.equal(d.st.relleno, '', 'un resultado sin la clave tampoco deja reparto');
 });
+
+// --- MAT-18, MAT-19: el documento calcula el reparto una vez por regeneración -----------------------
+test('MAT-18: sin reparto el documento no da zonas ni materiales', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  assert.equal(d.doc.reparto(), null);
+  assert.equal(d.doc.rellenoCapa(0), null);
+});
+
+test('MAT-18, MAT-19: círculo de 16 con ladrillos y piedra: dos materiales que suman los 208 bloques', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16, bloque: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  const rep = d.doc.reparto();
+  assert.deepEqual(rep.materiales.map(m => m.nombre), ['Ladrillos', 'Piedra']);
+  assert.equal(rep.materiales[0].porCapa[0] + rep.materiales[1].porCapa[0], 208);
+  const z = d.doc.rellenoCapa(0);
+  assert.equal(z.reduce((a, b) => a + b, 0), rep.materiales[1].porCapa[0]);
+});
+
+test('MAT-18: en hueco no hay reparto aunque haya un relleno elegido; al volver a sólido, vuelve', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16, bloque: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  Object.assign(d.st, { modo: 'hueco', grosor: 2 });
+  d.doc.regenerar();
+  assert.equal(d.doc.reparto(), null);
+  assert.equal(d.doc.rellenoCapa(0), null);
+  assert.equal(d.st.relleno, 'minecraft:stone', 'la elección se conserva');
+  Object.assign(d.st, { modo: 'relleno' });
+  d.doc.regenerar();
+  assert.ok(d.doc.reparto());
+});
+
+test('MAT-18: las zonas se calculan una vez por regeneración y no en cada pintado', () => {
+  const d = conMarcas({ forma: 'esfera', w: 11, esfera: 'esfera', bloque: 'minecraft:bricks', relleno: 'minecraft:stone' });
+  assert.equal(d.doc.rellenoCapa(3), d.doc.rellenoCapa(3), 'misma instancia: sin recalcular');
+  const antes = d.doc.rellenoCapa(3);
+  Object.assign(d.st, { w: 13 });
+  d.doc.regenerar();
+  assert.notEqual(d.doc.rellenoCapa(3), antes, 'una forma nueva da zonas nuevas');
+  assert.equal(d.doc.rellenoCapa(3).length, 13 * 13);
+});
