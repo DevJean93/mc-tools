@@ -640,3 +640,73 @@ test('MAT-18: las zonas se calculan una vez por regeneración y no en cada pinta
   assert.notEqual(d.doc.rellenoCapa(3), antes, 'una forma nueva da zonas nuevas');
   assert.equal(d.doc.rellenoCapa(3).length, 13 * 13);
 });
+
+// --- plantillas (FOR-21) ---------------------------------------------------------------
+const PLANTILLA = { nombre: 'Rombo grande', forma: { forma: 'rombo', w: 20, h: 20, igualar: true, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' } };
+
+test('FOR-21: aplicar una plantilla con marcas y otra geometria las borra, avisa con Deshacer y este devuelve forma y marcas', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const antes = { f: forma(d), hechos: clavesHechas(d.doc) };
+  assert.ok(antes.hechos.length > 0);
+  assert.equal(d.doc.aplicarPlantilla(PLANTILLA), true);
+  assert.equal(d.st.forma, 'rombo'); assert.equal(d.st.w, 20);
+  assert.equal(d.doc.hechos().size, 0);
+  assert.equal(ultimoAviso(d), 'Se aplicó la plantilla «Rombo grande». Tu progreso anterior se borró.');
+  const deshacer = d.avisos.acciones[d.avisos.acciones.length - 1];
+  assert.equal(typeof deshacer, 'function');
+  deshacer();
+  assert.deepEqual({ f: forma(d), hechos: clavesHechas(d.doc) }, antes);
+});
+
+test('FOR-21: aplicar una plantilla usa la misma regla que un enlace (mismo resultado y mismo paso de historial)', () => {
+  const a = conMarcas({ forma: 'circulo', w: 16, h: 16 }), b = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const lleno = a.doc.hechos().size;
+  a.doc.aplicarPlantilla(PLANTILLA);
+  b.doc.abrirEnlace('forma=rombo&w=20&h=20&igualar=1&modo=relleno&grosor=1');
+  assert.deepEqual(forma(a), forma(b));
+  assert.equal(a.doc.hechos().size, b.doc.hechos().size);
+  a.doc.deshacer();
+  assert.equal(a.st.forma, 'circulo');
+  assert.equal(a.doc.hechos().size, lleno, 'un solo Deshacer devuelve las marcas');
+});
+
+test('FOR-21: con la misma geometria las marcas siguen, y sin marcas no hay aviso de progreso', () => {
+  const d = conMarcas({ forma: 'circulo', w: 16, h: 16 });
+  const hechos = clavesHechas(d.doc);
+  d.doc.aplicarPlantilla({ nombre: 'Igual', forma: { forma: 'circulo', w: 16, h: 16, igualar: true, modo: 'relleno', grosor: 1, esfera: 'esfera', orient: 'plano' } });
+  assert.deepEqual(clavesHechas(d.doc), hechos);
+  assert.equal(d.doc.puedeDeshacer(), true, 'las marcas de antes siguen en el historial');
+  const sin = montar(); sin.doc.regenerar();
+  sin.doc.aplicarPlantilla(PLANTILLA);
+  assert.equal(sin.st.forma, 'rombo');
+  assert.ok(!/progreso/.test(ultimoAviso(sin)));
+});
+
+test('FOR-21: aplicar no cambia la capa actual, el zoom ni la vista', () => {
+  const d = montar(); d.doc.regenerar();
+  d.st.zoom = 31; d.st.rel = false; d.st.bloque = 'minecraft:glass';
+  d.doc.aplicarPlantilla({ nombre: 'Esfera', forma: { ...PLANTILLA.forma, forma: 'esfera', w: 11, esfera: 'esfera' } });
+  d.doc.irCapa(4);
+  d.doc.aplicarPlantilla({ nombre: 'Esfera 13', forma: { ...PLANTILLA.forma, forma: 'esfera', w: 13, esfera: 'esfera' } });
+  assert.equal(d.doc.capa(), 4);
+  assert.equal(d.st.zoom, 31); assert.equal(d.st.rel, false);
+  assert.equal(d.st.bloque, 'minecraft:glass', 'una plantilla sin reparto no toca el bloque');
+});
+
+test('FOR-21: una plantilla con reparto pone borde y relleno; una sin reparto quita el que hubiera', () => {
+  const d = montar(); d.doc.regenerar();
+  d.doc.aplicarPlantilla({ ...PLANTILLA, reparto: { borde: 'minecraft:bricks', relleno: 'minecraft:stone' } });
+  assert.equal(d.st.bloque, 'minecraft:bricks'); assert.equal(d.st.relleno, 'minecraft:stone');
+  assert.equal(JSON.parse(d.almacen.leer('mc-formas-v1')).relleno, 'minecraft:stone', 'se guarda en el navegador');
+  d.doc.aplicarPlantilla({ ...PLANTILLA, nombre: 'Otra', forma: { ...PLANTILLA.forma, w: 12 } });
+  assert.equal(d.st.relleno, ''); assert.equal(d.st.bloque, 'minecraft:bricks');
+});
+
+test('FOR-21: una plantilla que deja todo igual no ocupa historial', () => {
+  const d = montar(); d.doc.regenerar();
+  d.doc.aplicarPlantilla(PLANTILLA);
+  d.doc.deshacer();
+  const f = { nombre: 'Actual', forma: Object.fromEntries(Estado.CLAVES_GEO.map(k => [k, d.st[k]])) };
+  d.doc.aplicarPlantilla(f);
+  assert.equal(d.doc.puedeDeshacer(), false);
+});

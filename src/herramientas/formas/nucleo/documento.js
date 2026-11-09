@@ -205,6 +205,21 @@ export const Documento = (() => {
       return true;
     }
 
+    // Aplica una plantilla (nucleo/plantillas.js): la forma por la misma via que un enlace (`aplicarForma`: un
+    // solo paso de historial y, si cambia la geometria con marcas, se borran con aviso y Deshacer). La plantilla no
+    // lleva capa, asi que se conserva la actual. El reparto es una opcion, como en un esquema: con reparto se
+    // ponen borde y relleno y sin el se quita el que hubiera (el bloque no se toca); Deshacer no lo devuelve.
+    function aplicarPlantilla(p) {
+      const forma = { ...p.forma };
+      delete forma.capa;
+      if (p.reparto) { st.bloque = p.reparto.borde; st.relleno = p.reparto.relleno; } else st.relleno = '';
+      const res = aplicarForma(forma);
+      guardarEstado();
+      if (res.perdio) avisos.avisar(`Se aplicó la plantilla «${p.nombre}». Tu progreso anterior se borró.`, deshacer);
+      else avisos.avisar(`Plantilla «${p.nombre}» aplicada.`, res.cambio ? deshacer : null);
+      return true;
+    }
+
     // Importa un esquema de Litematica ya leido (Litematica.leer): { ok, forma, bloque, relleno } o { ok: false,
     // mensaje }. Uno no valido solo avisa del motivo. Uno valido pone la forma con la misma regla que un
     // enlace y el bloque (una opcion de vista: no entra en el historial ni en las marcas).
@@ -223,7 +238,7 @@ export const Documento = (() => {
       capas: () => capas, capaActual, reparto: materialesPorCapa, rellenoCapa, totales: () => totales, grosorMax: () => grosorMax,
       capa: () => st.capa, irCapa, todas, definicion, es3D, params,
       regenerar, fijar, hecho, hayBloque, antesDeMarcar, trasMarcar, descartarPaso,
-      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace, importarEsquema,
+      deshacer, rehacer, marcarCapas, marcarLinea, guardarEstado, proyecto, cargarProyecto, enlace, abrirEnlace, importarEsquema, aplicarPlantilla,
       hechos: marcas.conjunto, porCapa: n => marcas.porCapa(n),
       puedeDeshacer: historial.puedeDeshacer, puedeRehacer: historial.puedeRehacer,
     };
